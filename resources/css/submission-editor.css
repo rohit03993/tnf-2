@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .tnf-account-form .tnf-field {
+        @apply space-y-2;
+    }
+
+    .tnf-account-form .tnf-label {
+        @apply block text-tnf-sm font-semibold text-tnf-navy;
+    }
+
+    .tnf-account-form .tnf-input,
+    .tnf-account-form .tnf-select {
+        @apply w-full rounded-tnf-lg border border-tnf-gray-dark bg-white px-4 py-3 text-tnf-base text-tnf-navy shadow-sm transition;
+        @apply focus:border-tnf-red focus:outline-none focus:ring-2 focus:ring-tnf-red/15;
+    }
+
+    .tnf-account-form .tnf-select {
+        @apply appearance-none bg-[length:1rem] bg-[right_0.85rem_center] bg-no-repeat pr-10;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230F1320'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    }
+
+    .tnf-file-picker {
+        @apply block cursor-pointer;
+    }
+
+    .tnf-file-picker__box {
+        @apply flex min-h-[7rem] flex-col items-center justify-center gap-2 rounded-tnf-lg border-2 border-dashed border-tnf-gray-dark bg-tnf-gray px-4 py-6 text-center transition;
+        @apply hover:border-tnf-red/40 hover:bg-white;
+    }
+
+    .tnf-file-picker__icon {
+        @apply flex h-11 w-11 items-center justify-center rounded-full bg-white text-tnf-red shadow-sm;
+    }
+
+    .tnf-file-picker__title {
+        @apply text-tnf-sm font-semibold text-tnf-navy;
+    }
+
+    .tnf-file-picker__hint {
+        @apply text-tnf-xs text-tnf-muted;
+    }
+
+    .tnf-file-picker__name {
+        @apply mt-2 block truncate text-center text-tnf-xs font-medium text-tnf-muted;
+    }
+
+    .tnf-submission-editor {
+        @apply overflow-hidden rounded-tnf-lg border border-tnf-gray-dark bg-white shadow-sm;
+    }
+
+    .tnf-submission-editor__toolbar {
+        @apply flex flex-wrap items-center gap-2 border-b border-tnf-gray-dark bg-[#eceff3] px-3 py-2.5;
+    }
+
+    .tnf-submission-editor__group {
+        @apply flex items-center gap-0.5 rounded-tnf border border-tnf-gray-dark/70 bg-white p-0.5 shadow-sm;
+    }
+
+    .tnf-submission-editor__btn {
+        @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-tnf text-tnf-navy/80 transition;
+        @apply hover:bg-tnf-gray hover:text-tnf-navy;
+    }
+
+    .tnf-submission-editor__btn:disabled {
+        @apply cursor-not-allowed opacity-50;
+    }
+
+    .tnf-submission-editor__btn svg {
+        @apply h-[18px] w-[18px];
+    }
+
+    .tnf-submission-editor__btn.is-active {
+        @apply bg-tnf-red text-white shadow-sm;
+    }
+
+    .tnf-submission-editor__body {
+        @apply min-h-[320px] bg-white;
+    }
+
+    .tnf-submission-editor__content {
+        @apply min-h-[320px];
+    }
+
+    .tnf-submission-editor__content .ProseMirror {
+        @apply min-h-[320px] px-4 py-4 text-[1.0625rem] leading-[1.8] outline-none;
+    }
+
+    .tnf-submission-editor__content .ProseMirror p.is-editor-empty:first-child::before {
+        @apply pointer-events-none float-left h-0 text-tnf-muted;
+        content: attr(data-placeholder);
+    }
+
+    .tnf-submission-editor__content .ProseMirror table {
+        @apply my-4 w-full border-collapse text-left text-tnf-sm;
+    }
+
+    .tnf-submission-editor__content .ProseMirror th,
+    .tnf-submission-editor__content .ProseMirror td {
+        @apply border border-tnf-gray-dark px-3 py-2 align-top;
+    }
+
+    .tnf-submission-editor__content .ProseMirror th {
+        @apply bg-tnf-gray font-semibold;
+    }
+
+    .tnf-submission-editor__content .ProseMirror pre {
+        @apply my-4 overflow-x-auto rounded-tnf bg-tnf-gray p-4 text-tnf-sm;
+    }
+
+    .tnf-submission-editor__content .ProseMirror img {
+        @apply my-4 max-w-full rounded-tnf-lg;
+    }
+
+    @media (max-width: 640px) {
+        .tnf-submission-editor__toolbar {
+            @apply flex-nowrap overflow-x-auto pb-2;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .tnf-submission-editor__toolbar::-webkit-scrollbar {
+            display: none;
+        }
+    }
+}

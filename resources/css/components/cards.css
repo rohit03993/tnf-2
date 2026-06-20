@@ -1,0 +1,139 @@
+@layer components {
+    /* News card — grid & list variants */
+    .tnf-news-card {
+        @apply group block overflow-hidden rounded-tnf-lg bg-white shadow-card transition-shadow hover:shadow-card-hover;
+    }
+
+    .tnf-news-card-image {
+        @apply aspect-[16/10] w-full overflow-hidden bg-tnf-gray-dark object-cover transition-transform duration-300 group-hover:scale-[1.02];
+    }
+
+    .tnf-news-card-body {
+        @apply p-3 mobile-sm:p-2.5;
+    }
+
+    .tnf-news-card-title {
+        @apply tnf-line-clamp-3 text-tnf-base font-bold text-tnf-navy group-hover:text-tnf-red mobile-sm:text-tnf-sm;
+    }
+
+    .tnf-news-card-meta {
+        @apply mt-1.5 text-tnf-xs uppercase tracking-wide text-tnf-muted;
+    }
+
+    /* Hero lead story */
+    .tnf-hero-lead {
+        @apply tnf-news-card;
+    }
+
+    .tnf-hero-lead .tnf-news-card-image {
+        @apply aspect-[16/9] mobile-sm:aspect-[4/3];
+    }
+
+    .tnf-hero-lead .tnf-news-card-title {
+        @apply tnf-line-clamp-2 text-tnf-xl mobile-sm:text-tnf-lg;
+    }
+
+    /* Numbered headline list (Latest Headlines sidebar) */
+    .tnf-headline-list-item {
+        @apply flex gap-3 border-b border-tnf-gray-dark py-3 last:border-0;
+    }
+
+    .tnf-headline-list-num {
+        @apply flex h-6 w-6 shrink-0 items-center justify-center rounded bg-tnf-red text-tnf-xs font-bold text-white;
+    }
+
+    .tnf-headline-list-thumb {
+        @apply h-14 w-20 shrink-0 overflow-hidden rounded-tnf bg-tnf-gray-dark object-cover mobile-sm:h-12 mobile-sm:w-16;
+    }
+
+    .tnf-headline-list-title {
+        @apply tnf-line-clamp-2 flex-1 text-tnf-sm font-semibold text-tnf-navy hover:text-tnf-red;
+    }
+
+    /* Video card — horizontal rail */
+    .tnf-video-card {
+        @apply group relative shrink-0 w-[200px] overflow-hidden rounded-tnf-lg bg-tnf-navy mobile-sm:w-[160px];
+    }
+
+    .tnf-video-card-image {
+        @apply aspect-[9/16] w-full object-cover;
+    }
+
+    .tnf-video-card-play {
+        @apply absolute bottom-2 left-1/2 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full bg-tnf-red/90 text-white;
+    }
+
+    .tnf-video-card-badge {
+        @apply absolute left-2 top-2 tnf-badge-red;
+    }
+
+    .tnf-video-card-title {
+        @apply absolute bottom-0 left-0 right-0 bg-gradient-to-t from-tnf-navy to-transparent p-2 pt-8 text-tnf-xs font-semibold text-white tnf-line-clamp-2;
+    }
+
+    /* Category 4-card block */
+    .tnf-cat-block {
+        @apply mb-6;
+    }
+
+    .tnf-cat-block-header {
+        @apply mb-3 flex items-center justify-between;
+    }
+
+    .tnf-cat-block-grid {
+        @apply -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 snap-x snap-mandatory scroll-smooth lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:px-0 lg:snap-none;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+    }
+
+    .tnf-cat-block-grid > * {
+        @apply w-[74vw] max-w-[300px] shrink-0 snap-start lg:w-auto lg:max-w-none lg:shrink;
+    }
+
+    /* ePaper card */
+    .tnf-epaper-card {
+        @apply tnf-news-card min-w-0 text-center;
+    }
+
+    .tnf-epaper-card-cover-frame {
+        @apply relative aspect-[3/4] w-full overflow-hidden bg-tnf-gray-dark;
+    }
+
+    .tnf-epaper-card-cover {
+        @apply absolute inset-0 h-full w-full object-cover object-center;
+    }
+
+    .tnf-epaper-card-cover--pdf {
+        @apply static h-full w-full;
+    }
+
+    .tnf-epaper-card-cover--loading {
+        @apply animate-pulse bg-tnf-gray/70;
+    }
+
+    /* Trending sidebar item */
+    .tnf-trending-item {
+        @apply flex gap-3 py-2.5;
+    }
+
+    .tnf-trending-thumb {
+        @apply h-16 w-16 shrink-0 rounded-tnf object-cover mobile-sm:h-14 mobile-sm:w-14;
+    }
+
+    .tnf-trending-title {
+        @apply tnf-line-clamp-3 text-tnf-sm font-medium text-tnf-navy hover:text-tnf-red;
+    }
+
+    /* Horizontal scroll rail */
+    .tnf-scroll-rail {
+        @apply flex gap-3 overflow-x-auto pb-2 scrollbar-hide;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .tnf-scroll-rail::-webkit-scrollbar {
+        display: none;
+    }
+}

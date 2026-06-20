@@ -1,0 +1,106 @@
+@layer components {
+    /* Top masthead bar — Aaj Tak style navy header */
+    .tnf-header {
+        @apply sticky top-0 z-50 bg-tnf-navy text-white shadow-header;
+    }
+
+    .tnf-header-top {
+        @apply flex h-header items-center gap-3;
+    }
+
+    .tnf-header-logo {
+        @apply flex shrink-0 items-center gap-2 font-bold text-white;
+    }
+
+    .tnf-header-logo-mark {
+        @apply flex h-8 w-8 items-center justify-center rounded bg-tnf-red text-sm font-black;
+    }
+
+    .tnf-header-nav {
+        @apply hidden items-center gap-1 lg:flex;
+    }
+
+    .tnf-header-nav-link {
+        @apply rounded-tnf px-3 py-2 text-tnf-sm font-medium text-white/90 hover:bg-tnf-navy-light hover:text-white;
+    }
+
+    .tnf-header-nav-link--active {
+        @apply bg-tnf-red text-white;
+    }
+
+    .tnf-header-actions {
+        @apply ml-auto flex items-center gap-2;
+    }
+
+    .tnf-header-btn {
+        @apply inline-flex min-h-touch min-w-touch items-center justify-center gap-1.5 rounded-tnf px-3 text-tnf-sm font-semibold transition-colors;
+    }
+
+    .tnf-header-btn-epaper {
+        @apply tnf-header-btn border border-white/30 text-white hover:bg-white/10;
+    }
+
+    .tnf-header-btn-signin {
+        @apply tnf-header-btn bg-tnf-red text-white hover:bg-tnf-red-dark;
+    }
+
+    .tnf-hamburger {
+        @apply inline-flex min-h-touch min-w-touch items-center justify-center rounded-tnf text-white hover:bg-tnf-navy-light lg:hidden;
+    }
+
+    /* Breaking news ticker */
+    .tnf-ticker-wrap {
+        @apply bg-tnf-red;
+    }
+
+    .tnf-ticker {
+        @apply flex h-ticker items-center overflow-hidden text-white;
+    }
+
+    .tnf-ticker-label {
+        @apply shrink-0 bg-tnf-red-dark px-3 py-1 text-tnf-xs font-bold uppercase tracking-wider;
+    }
+
+    .tnf-ticker-track {
+        @apply flex min-w-0 flex-1 overflow-hidden;
+    }
+
+    .tnf-ticker-content {
+        @apply flex animate-ticker whitespace-nowrap;
+    }
+
+    .tnf-ticker-item {
+        @apply inline-flex items-center px-6 text-tnf-sm;
+    }
+
+    .tnf-ticker-item::after {
+        content: '•';
+        @apply ml-6 text-white/60;
+    }
+
+    /* Side drawer — styles live in resources/css/app.css (mobile menu) */
+
+    /* Topic pills — horizontal scroll */
+    .tnf-topic-pills {
+        @apply flex gap-2 overflow-x-auto px-4 py-2 scrollbar-hide;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .tnf-topic-pills::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tnf-topic-pill {
+        @apply shrink-0 rounded-full border border-tnf-gray-dark bg-white px-3 py-1.5 text-tnf-sm font-medium text-tnf-navy hover:border-tnf-red hover:text-tnf-red;
+    }
+
+    /* Masthead promo banner */
+    .tnf-masthead-banner {
+        @apply block w-full overflow-hidden bg-tnf-gray-dark;
+    }
+
+    .tnf-masthead-banner img {
+        @apply h-auto w-full object-cover;
+    }
+}

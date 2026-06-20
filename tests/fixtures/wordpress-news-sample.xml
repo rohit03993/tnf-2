@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0"
+    xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+    xmlns:content="http://purl.org/rss/1.0/modules/content/"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:wp="http://wordpress.org/export/1.2/">
+<channel>
+    <title>TNF Today Export</title>
+
+    <item>
+        <title><![CDATA[Sample National Story]]></title>
+        <dc:creator><![CDATA[Editor]]></dc:creator>
+        <content:encoded><![CDATA[<p>Story body from WordPress.</p>]]></content:encoded>
+        <excerpt:encoded><![CDATA[Short excerpt]]></excerpt:encoded>
+        <wp:post_id>101</wp:post_id>
+        <wp:post_date>2026-05-01 10:00:00</wp:post_date>
+        <wp:post_type>tnf_news</wp:post_type>
+        <wp:status>publish</wp:status>
+        <wp:post_name>sample-national-story</wp:post_name>
+        <wp:comment_count>12</wp:comment_count>
+        <category domain="category" nicename="national"><![CDATA[National]]></category>
+        <category domain="post_tag" nicename="breaking"><![CDATA[Breaking]]></category>
+        <wp:postmeta>
+            <wp:meta_key>embed_url</wp:meta_key>
+            <wp:meta_value><![CDATA[https://www.youtube.com/watch?v=dQw4w9WgXcQ]]></wp:meta_value>
+        </wp:postmeta>
+    </item>
+
+    <item>
+        <title><![CDATA[Draft Should Be Skipped From Publish Date]]></title>
+        <content:encoded><![CDATA[<p>Draft content</p>]]></content:encoded>
+        <wp:post_id>102</wp:post_id>
+        <wp:post_date>2026-05-02 10:00:00</wp:post_date>
+        <wp:post_type>post</wp:post_type>
+        <wp:status>draft</wp:status>
+        <wp:post_name>draft-story</wp:post_name>
+    </item>
+
+    <item>
+        <title><![CDATA[Video Item Ignored]]></title>
+        <content:encoded><![CDATA[<p>Not news</p>]]></content:encoded>
+        <wp:post_id>103</wp:post_id>
+        <wp:post_type>tnf_video</wp:post_type>
+        <wp:status>publish</wp:status>
+        <wp:post_name>ignored-video</wp:post_name>
+    </item>
+</channel>
+</rss>

@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body.tnf-auth-page {
+        @apply bg-tnf-gray font-sans text-tnf-navy antialiased;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+}
+
+@layer components {
+    .tnf-auth-wrap {
+        @apply flex min-h-screen flex-col items-center justify-center px-4 py-8;
+    }
+
+    .tnf-auth-card {
+        @apply w-full max-w-md rounded-tnf-lg bg-white p-6 shadow-card mobile-sm:p-5;
+    }
+
+    .tnf-auth-logo {
+        @apply mb-6 flex flex-col items-center text-center;
+    }
+
+    .tnf-auth-logo-mark {
+        @apply mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-tnf-red text-lg font-black text-white;
+    }
+
+    .tnf-auth-title {
+        @apply text-tnf-xl font-bold text-tnf-navy;
+    }
+
+    .tnf-auth-subtitle {
+        @apply mt-1 text-tnf-sm text-tnf-muted;
+    }
+
+    .tnf-auth-input {
+        @apply mt-1 block w-full rounded-tnf border-tnf-gray-dark shadow-sm focus:border-tnf-red focus:ring-tnf-red;
+    }
+
+    .tnf-auth-label {
+        @apply block text-tnf-sm font-medium text-tnf-navy;
+    }
+
+    .tnf-auth-submit {
+        @apply w-full rounded-tnf bg-tnf-red px-4 py-2.5 text-tnf-sm font-semibold text-white hover:bg-tnf-red-dark focus:outline-none focus:ring-2 focus:ring-tnf-red focus:ring-offset-2;
+    }
+
+    .tnf-auth-link {
+        @apply text-tnf-sm text-tnf-red hover:text-tnf-red-dark hover:underline;
+    }
+}
