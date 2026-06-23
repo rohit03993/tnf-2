@@ -475,7 +475,7 @@
     }
 
     .tnf-video-card-thumb {
-        @apply block bg-tnf-navy-dark;
+        @apply block bg-tnf-navy;
     }
 
     .tnf-video-card-thumb--instagram {
