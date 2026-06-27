@@ -175,6 +175,43 @@ function initShareButtons() {
     }
 }
 
+function initMobileSafeArea() {
+    if (! window.matchMedia('(max-width: 1023px)').matches) {
+        return;
+    }
+
+    const root = document.documentElement;
+    const headerChrome = 52; // 3.25rem
+
+    const applyTopInset = (px) => {
+        root.style.setProperty('--tnf-safe-top', `${px}px`);
+        root.style.setProperty('--tnf-header-total', `${headerChrome + px}px`);
+        document.body.classList.add('tnf-has-top-inset');
+    };
+
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;visibility:hidden;padding-top:constant(safe-area-inset-top);padding-top:env(safe-area-inset-top);';
+    document.body.appendChild(probe);
+    const envTop = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+    probe.remove();
+
+    if (envTop > 0) {
+        applyTopInset(envTop);
+
+        return;
+    }
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    const isApp = document.body.dataset.tnfApp === '1';
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const immersiveViewport = window.innerHeight >= window.screen.height * 0.92;
+
+    if (isStandalone || isApp || (isAndroid && immersiveViewport)) {
+        applyTopInset(28);
+    }
+}
+
 function initReadingProgress() {
     const bar = document.getElementById('tnf-reading-progress');
     const target = document.getElementById('tnf-reading-target');
@@ -208,6 +245,7 @@ export function initSiteUi() {
     initDrawer();
     initBackToTop();
     initShareButtons();
+    initMobileSafeArea();
     initReadingProgress();
 }
 

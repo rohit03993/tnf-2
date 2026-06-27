@@ -10,7 +10,10 @@
         --tnf-navy: #0F1320;
         --tnf-gray: #F4F5F7;
         --tnf-bottom-nav: 4.5rem;
+        --tnf-header-chrome: 3.25rem;
+        --tnf-safe-top: env(safe-area-inset-top, 0px);
         --tnf-safe-bottom: env(safe-area-inset-bottom, 0px);
+        --tnf-header-total: calc(var(--tnf-header-chrome) + var(--tnf-safe-top));
     }
 
     html {
@@ -132,6 +135,27 @@
     /* Header — see resources/css/components/header.css */
     .tnf-header {
         @apply sticky top-0 z-50 bg-tnf-navy text-white shadow-header;
+        padding-top: var(--tnf-safe-top);
+    }
+
+    @media (min-width: 1024px) {
+        .tnf-header {
+            padding-top: 0;
+        }
+    }
+
+    /* PWA / Capacitor / home-screen: env() is often 0 on Android — reserve status-bar space */
+    @media (max-width: 1023px) {
+        body.tnf-app-mode .tnf-header,
+        body.tnf-has-top-inset .tnf-header {
+            padding-top: max(28px, env(safe-area-inset-top, 0px));
+        }
+    }
+
+    @media (max-width: 1023px) and (display-mode: standalone) {
+        .tnf-header {
+            padding-top: max(28px, env(safe-area-inset-top, 0px));
+        }
     }
 
     .tnf-header-top {
@@ -203,7 +227,8 @@
 
     /* Sticky topic discovery rail (mobile) */
     .tnf-topic-pills {
-        @apply sticky top-[theme(spacing.header)] z-40 flex gap-2 overflow-x-auto overflow-y-hidden border-b border-tnf-gray-dark/80 bg-white/95 px-4 py-2.5 backdrop-blur-md;
+        @apply sticky z-40 flex gap-2 overflow-x-auto overflow-y-hidden border-b border-tnf-gray-dark/80 bg-white/95 px-4 py-2.5 backdrop-blur-md;
+        top: var(--tnf-header-total);
         -ms-overflow-style: none;
         scrollbar-width: none;
         max-width: 100%;
@@ -1086,7 +1111,8 @@
 
     /* Reading progress */
     .tnf-reading-progress {
-        @apply pointer-events-none fixed left-0 top-0 z-[100] h-[3px] w-full origin-left bg-tnf-red;
+        @apply pointer-events-none fixed left-0 z-[100] h-[3px] w-full origin-left bg-tnf-red;
+        top: var(--tnf-safe-top);
         transform: scaleX(0);
     }
 
