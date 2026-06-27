@@ -206,48 +206,37 @@
     }
 
     @media (max-width: 1023px) {
-        body.tnf-epaper-viewer-page {
-            overflow-x: auto;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior-y: contain;
-        }
-
-        body.tnf-epaper-viewer-page #tnf-main {
-            overflow-x: visible;
-            max-width: none;
-        }
-
         .tnf-ep-main {
             min-height: 0;
         }
 
-        .tnf-epaper-viewer--doc-scroll:not(.is-clip-mode) .tnf-ep-stage-wrap {
+        .tnf-ep-stage-wrap {
             overflow: visible;
-        }
-
-        .tnf-epaper-viewer--doc-scroll:not(.is-clip-mode) .tnf-ep-stage {
-            overflow: visible;
-            min-height: 0;
-            max-height: none;
-            touch-action: auto;
-            overscroll-behavior: auto;
-        }
-
-        .tnf-epaper-viewer--doc-scroll:not(.is-clip-mode) .tnf-ep-stage-inner {
-            position: relative;
-            left: auto;
-            transform: none;
-        }
-
-        .tnf-epaper-viewer--doc-scroll:not(.is-clip-mode) .tnf-ep-pdf-canvas,
-        .tnf-epaper-viewer--doc-scroll:not(.is-clip-mode) .tnf-ep-page-image {
-            touch-action: pan-x pan-y;
         }
 
         .tnf-ep-stage {
+            overflow-x: auto;
+            overflow-y: scroll;
             min-height: calc(100dvh - 12.5rem - env(safe-area-inset-top, 0px));
             max-height: calc(100dvh - 8.25rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+            touch-action: pan-x pan-y;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            border-radius: 0.75rem;
+        }
+
+        .tnf-ep-stage-inner {
+            position: relative;
+            left: auto;
+            top: auto;
+            margin-inline: auto;
+            transform: none;
+        }
+
+        .tnf-ep-pdf-canvas,
+        .tnf-ep-page-image {
+            touch-action: pan-x pan-y;
+            pointer-events: auto;
         }
 
         .tnf-epaper-viewer.is-clip-mode .tnf-ep-stage {

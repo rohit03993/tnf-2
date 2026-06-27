@@ -136,11 +136,6 @@ class TnfEpaperViewer {
         this.bindActions();
         this.bindTouchZoom();
         this.bindResizeHandler();
-
-        if (this.isCoarsePointer()) {
-            this.root.classList.add('tnf-epaper-viewer--doc-scroll');
-        }
-
         await this.setPage(this.currentPage, false);
         this.setPdfLoading(false);
 
@@ -169,81 +164,6 @@ class TnfEpaperViewer {
 
     isCoarsePointer() {
         return window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
-    }
-
-    usesDocumentScroll() {
-        return this.isCoarsePointer() && ! this.clipWorkspaceActive && ! this.config.clipMode;
-    }
-
-    getViewerScrollState(spacer) {
-        if (this.usesDocumentScroll()) {
-            const contentWidth = Number.parseFloat(spacer?.style.width) || spacer?.offsetWidth || 1;
-            const contentHeight = Number.parseFloat(spacer?.style.height) || spacer?.offsetHeight || 1;
-
-            return {
-                scrollLeft: window.scrollX,
-                scrollTop: window.scrollY,
-                viewportWidth: window.innerWidth,
-                viewportHeight: window.innerHeight,
-                contentWidth,
-                contentHeight,
-            };
-        }
-
-        const stage = this.els.stage;
-
-        return {
-            scrollLeft: stage?.scrollLeft || 0,
-            scrollTop: stage?.scrollTop || 0,
-            viewportWidth: stage?.clientWidth || 1,
-            viewportHeight: stage?.clientHeight || 1,
-            contentWidth: Number.parseFloat(spacer?.style.width) || stage?.scrollWidth || 1,
-            contentHeight: Number.parseFloat(spacer?.style.height) || stage?.scrollHeight || 1,
-        };
-    }
-
-    restoreViewerScroll(anchor, contentWidth, contentHeight) {
-        if (! anchor) {
-            return;
-        }
-
-        if (this.usesDocumentScroll()) {
-            window.scrollTo({
-                left: Math.max(0, anchor.ratioX * contentWidth - window.innerWidth * 0.5),
-                top: Math.max(0, anchor.ratioY * contentHeight - window.innerHeight * 0.5),
-            });
-
-            return;
-        }
-
-        const stage = this.els.stage;
-
-        if (! stage) {
-            return;
-        }
-
-        stage.scrollLeft = Math.max(0, anchor.ratioX * contentWidth - stage.clientWidth * 0.5);
-        stage.scrollTop = Math.max(0, anchor.ratioY * contentHeight - stage.clientHeight * 0.5);
-    }
-
-    resetViewerScroll() {
-        if (this.usesDocumentScroll()) {
-            const wrap = this.els.stageWrap;
-
-            if (wrap) {
-                const top = wrap.getBoundingClientRect().top + window.scrollY - 8;
-                window.scrollTo({ top: Math.max(0, top), left: 0 });
-            } else {
-                window.scrollTo({ top: 0, left: 0 });
-            }
-
-            return;
-        }
-
-        if (this.els.stage) {
-            this.els.stage.scrollTop = 0;
-            this.els.stage.scrollLeft = 0;
-        }
     }
 
     clipHintText() {
@@ -658,7 +578,10 @@ class TnfEpaperViewer {
 
         this.updateUi();
 
-        this.resetViewerScroll();
+        if (this.els.stage) {
+            this.els.stage.scrollTop = 0;
+            this.els.stage.scrollLeft = 0;
+        }
 
         if (pushHistory) {
             const url = new URL(window.location.href);
@@ -732,23 +655,13 @@ class TnfEpaperViewer {
         const stage = this.els.stage;
         const width = this.pageWidth;
 
-        if (! width) {
+        if (! stage || ! width) {
             this.fitZoom = 1;
             return;
         }
 
         const padding = 16;
-        let availableWidth;
-
-        if (this.usesDocumentScroll()) {
-            const wrap = this.els.stageWrap;
-            availableWidth = Math.max(200, (wrap?.clientWidth || window.innerWidth) - padding);
-        } else if (stage) {
-            availableWidth = Math.max(200, stage.clientWidth - padding);
-        } else {
-            this.fitZoom = 1;
-            return;
-        }
+        const availableWidth = Math.max(200, stage.clientWidth - padding);
 
         // Match newspaper e-papers: fill the column width, scroll vertically for height.
         this.fitZoom = availableWidth / width;
@@ -771,12 +684,7 @@ class TnfEpaperViewer {
         spacer.style.height = `${cssHeight}px`;
         inner.style.width = `${cssWidth}px`;
         inner.style.height = `${cssHeight}px`;
-
-        if (this.usesDocumentScroll()) {
-            inner.style.transform = 'none';
-        } else {
-            inner.style.transform = 'translateX(-50%)';
-        }
+        inner.style.transform = this.isCoarsePointer() ? 'none' : 'translateX(-50%)';
     }
 
     async applyPageZoom() {
@@ -791,12 +699,13 @@ class TnfEpaperViewer {
         const spacer = this.els.stageSpacer;
         let scrollAnchor = null;
 
-        if (spacer) {
-            const scrollState = this.getViewerScrollState(spacer);
+        if (stage && spacer) {
+            const prevW = Number.parseFloat(spacer.style.width) || stage.scrollWidth || 1;
+            const prevH = Number.parseFloat(spacer.style.height) || stage.scrollHeight || 1;
 
             scrollAnchor = {
-                ratioX: (scrollState.scrollLeft + scrollState.viewportWidth * 0.5) / scrollState.contentWidth,
-                ratioY: (scrollState.scrollTop + scrollState.viewportHeight * 0.5) / scrollState.contentHeight,
+                ratioX: (stage.scrollLeft + stage.clientWidth * 0.5) / prevW,
+                ratioY: (stage.scrollTop + stage.clientHeight * 0.5) / prevH,
             };
         }
 
@@ -832,8 +741,9 @@ class TnfEpaperViewer {
 
         this.updateZoomLabel();
 
-        if (scrollAnchor) {
-            this.restoreViewerScroll(scrollAnchor, cssWidth, cssHeight);
+        if (stage && scrollAnchor) {
+            stage.scrollLeft = Math.max(0, scrollAnchor.ratioX * cssWidth - stage.clientWidth * 0.5);
+            stage.scrollTop = Math.max(0, scrollAnchor.ratioY * cssHeight - stage.clientHeight * 0.5);
         }
 
         if (this.clipMode) {
