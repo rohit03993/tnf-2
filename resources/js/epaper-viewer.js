@@ -136,6 +136,7 @@ class TnfEpaperViewer {
         this.bindActions();
         this.bindTouchZoom();
         this.bindResizeHandler();
+        this.bindMobilePanScroll();
         await this.setPage(this.currentPage, false);
         this.setPdfLoading(false);
 
@@ -164,6 +165,108 @@ class TnfEpaperViewer {
 
     isCoarsePointer() {
         return window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+    }
+
+    bindCoarsePointerPanScroll(element, { isEnabled = () => true } = {}) {
+        if (! element || ! this.isCoarsePointer()) {
+            return null;
+        }
+
+        let panning = false;
+        let startX = 0;
+        let startY = 0;
+        let startScrollLeft = 0;
+        let startScrollTop = 0;
+
+        const interactiveSelector = [
+            '[data-ep-clip-move]',
+            '[data-ep-clip-handle]',
+            '.tnf-ep-clip-preset',
+            '.tnf-ep-clip-workspace-footer button',
+            '.tnf-ep-clip-workspace-header button',
+            '.tnf-ep-clip-workspace-cancel',
+            '.tnf-ep-clip-workspace-share',
+            '.tnf-ep-clip-workspace-whatsapp',
+            '.tnf-ep-mobile-icon-btn',
+            '.tnf-ep-mobile-clip-btn',
+            '.tnf-ep-mobile-share-btn',
+            '[data-ep-clip-zoom-in]',
+            '[data-ep-clip-zoom-out]',
+            '.tnf-ep-clip-zoom-btn',
+        ].join(', ');
+
+        const onTouchStart = (event) => {
+            if (! isEnabled() || event.touches.length !== 1) {
+                panning = false;
+
+                return;
+            }
+
+            if (event.target.closest(interactiveSelector)) {
+                panning = false;
+
+                return;
+            }
+
+            panning = true;
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+            startScrollLeft = element.scrollLeft;
+            startScrollTop = element.scrollTop;
+        };
+
+        const onTouchMove = (event) => {
+            if (! panning || ! isEnabled() || event.touches.length !== 1) {
+                return;
+            }
+
+            const dx = startX - event.touches[0].clientX;
+            const dy = startY - event.touches[0].clientY;
+
+            if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                event.preventDefault();
+                element.scrollLeft = startScrollLeft + dx;
+                element.scrollTop = startScrollTop + dy;
+            }
+        };
+
+        const onTouchEnd = () => {
+            panning = false;
+        };
+
+        element.addEventListener('touchstart', onTouchStart, { passive: true });
+        element.addEventListener('touchmove', onTouchMove, { passive: false });
+        element.addEventListener('touchend', onTouchEnd, { passive: true });
+        element.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+        return () => {
+            element.removeEventListener('touchstart', onTouchStart);
+            element.removeEventListener('touchmove', onTouchMove);
+            element.removeEventListener('touchend', onTouchEnd);
+            element.removeEventListener('touchcancel', onTouchEnd);
+        };
+    }
+
+    bindMobilePanScroll() {
+        if (this.stagePanCleanup) {
+            this.stagePanCleanup();
+            this.stagePanCleanup = null;
+        }
+
+        this.stagePanCleanup = this.bindCoarsePointerPanScroll(this.els.stage, {
+            isEnabled: () => ! this.clipMode && ! this.clipWorkspaceActive,
+        });
+    }
+
+    bindClipWorkspacePanScroll() {
+        if (this.clipPanCleanup) {
+            this.clipPanCleanup();
+            this.clipPanCleanup = null;
+        }
+
+        this.clipPanCleanup = this.bindCoarsePointerPanScroll(this.els.clipWorkspaceScroll, {
+            isEnabled: () => this.clipWorkspaceActive && ! this.clipDrawMode,
+        });
     }
 
     clipHintText() {
@@ -1379,6 +1482,7 @@ class TnfEpaperViewer {
         if (name === 'draw') {
             this.clipDrawMode = true;
             this.updateClipCatcherInteraction();
+            this.bindClipWorkspacePanScroll();
             this.updateClipPresetButtons('draw');
             this.setClipInstruction(
                 this.isCoarsePointer()
@@ -1391,6 +1495,7 @@ class TnfEpaperViewer {
 
         this.clipDrawMode = false;
         this.updateClipCatcherInteraction();
+        this.bindClipWorkspacePanScroll();
         this.clipNormalized = this.getClipPreset(name);
         this.syncClipOverlay(true);
         this.setClipInstruction(this.clipReadyMessage());
@@ -1417,6 +1522,7 @@ class TnfEpaperViewer {
 
         catcher.classList.toggle('is-draw-active', drawActive);
         screen?.classList.toggle('is-scroll-mode', this.isCoarsePointer() && ! this.clipDrawMode);
+        screen?.classList.toggle('is-draw-mode', this.isCoarsePointer() && this.clipDrawMode);
     }
 
     exitClipDrawMode() {
@@ -1426,6 +1532,7 @@ class TnfEpaperViewer {
 
         this.clipDrawMode = false;
         this.updateClipCatcherInteraction();
+        this.bindClipWorkspacePanScroll();
         this.updateClipPresetButtons(null);
         this.setClipInstruction(this.clipReadyMessage());
     }
@@ -1438,7 +1545,7 @@ class TnfEpaperViewer {
 
     clipReadyMessage() {
         return this.isCoarsePointer()
-            ? 'Scroll to explore · Move bar to adjust · −/+ to zoom'
+            ? 'Swipe to explore · tap Top/Lead/Full · Draw to custom-select · −/+ to zoom'
             : 'Resize or choose a preset, then Share · बॉक्स बदलें या शेयर करें';
     }
 
@@ -1723,6 +1830,8 @@ class TnfEpaperViewer {
             this.els.clipWorkspaceScroll?.addEventListener('scroll', this.clipScrollHandler, { passive: true });
             window.addEventListener('resize', this.clipScrollHandler, { passive: true });
         }
+
+        this.bindClipWorkspacePanScroll();
     }
 
     unmountClipScreen() {
@@ -1745,6 +1854,11 @@ class TnfEpaperViewer {
             this.els.clipWorkspaceScroll?.removeEventListener('scroll', this.clipScrollHandler);
             window.removeEventListener('resize', this.clipScrollHandler);
             this.clipScrollHandler = null;
+        }
+
+        if (this.clipPanCleanup) {
+            this.clipPanCleanup();
+            this.clipPanCleanup = null;
         }
     }
 

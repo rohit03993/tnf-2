@@ -211,14 +211,15 @@
         }
 
         .tnf-ep-stage-wrap {
-            overflow: visible;
+            overflow: hidden;
         }
 
         .tnf-ep-stage {
             overflow-x: auto;
             overflow-y: scroll;
-            min-height: calc(100dvh - 12.5rem - env(safe-area-inset-top, 0px));
-            max-height: calc(100dvh - 8.25rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+            height: calc(100dvh - 8.25rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+            max-height: none;
+            min-height: 0;
             touch-action: pan-x pan-y;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
@@ -228,17 +229,18 @@
         .tnf-epaper-viewer:not(.is-clip-mode) .tnf-ep-pdf-canvas,
         .tnf-epaper-viewer:not(.is-clip-mode) .tnf-ep-page-image {
             pointer-events: none;
-            touch-action: pan-x pan-y;
+            touch-action: none;
             user-select: none;
             -webkit-user-drag: none;
         }
 
-        .tnf-ep-stage-spacer {
-            touch-action: pan-x pan-y;
+        .tnf-ep-stage-spacer,
+        .tnf-ep-stage-inner {
+            touch-action: none;
         }
 
         .tnf-epaper-viewer.is-clip-mode .tnf-ep-stage {
-            max-height: calc(100dvh - 9.5rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+            height: calc(100dvh - 9.5rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
         }
     }
 
@@ -1209,6 +1211,23 @@
     height: auto;
     user-select: none;
     -webkit-user-drag: none;
+    pointer-events: none;
+    touch-action: none;
+}
+
+.tnf-ep-clip-screen.is-scroll-mode .tnf-ep-clip-box {
+    pointer-events: none;
+}
+
+.tnf-ep-clip-screen.is-scroll-mode .tnf-ep-clip-move-bar,
+.tnf-ep-clip-screen.is-scroll-mode .tnf-ep-clip-handle {
+    pointer-events: auto;
+    touch-action: none;
+}
+
+.tnf-ep-clip-screen.is-draw-mode .tnf-ep-clip-catcher.is-draw-active {
+    pointer-events: auto;
+    touch-action: none;
 }
 
 .tnf-ep-clip-workspace-page .tnf-ep-clip-screen {
