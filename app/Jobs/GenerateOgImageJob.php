@@ -57,6 +57,6 @@ class GenerateOgImageJob implements ShouldQueue
 
         $imageUrl = EpaperViewerService::shareImageSourceUrl($edition);
 
-        $ogImages->generateForEntity('epaper', $edition->id, $imageUrl);
+        $ogImages->generateForEntity('epaper', $edition->id, $imageUrl, 'contain');
     }
 }

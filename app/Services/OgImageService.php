@@ -30,13 +30,13 @@ class OgImageService
         return route('og.epaper.page', $edition);
     }
 
-    public function generateForEntity(string $type, int $id, ?string $imageUrl): ?OgImage
+    public function generateForEntity(string $type, int $id, ?string $imageUrl, string $fit = 'cover'): ?OgImage
     {
         if (! $imageUrl) {
             return null;
         }
 
-        $jpeg = $this->buildJpeg($imageUrl);
+        $jpeg = $this->buildJpeg($imageUrl, null, $fit);
 
         if ($jpeg === null) {
             return null;
@@ -47,7 +47,7 @@ class OgImageService
 
         return OgImage::query()->updateOrCreate(
             ['entity_type' => $type, 'entity_id' => $id],
-            ['path' => $path, 'signature_hash' => null],
+            ['path' => $path, 'signature_hash' => $fit],
         );
     }
 
@@ -65,10 +65,17 @@ class OgImageService
 
     public function serveOrGenerate(string $type, int $id, ?string $imageUrl): Response|RedirectResponse
     {
+        $fit = $type === 'epaper' ? 'contain' : 'cover';
         $og = OgImage::query()->where('entity_type', $type)->where('entity_id', $id)->first();
 
+        if ($og && $og->signature_hash !== $fit) {
+            Storage::disk('public')->delete($og->path);
+            $og->delete();
+            $og = null;
+        }
+
         if (! $og && $imageUrl) {
-            $og = $this->generateForEntity($type, $id, $imageUrl);
+            $og = $this->generateForEntity($type, $id, $imageUrl, $fit);
         }
 
         if (! $og && $imageUrl) {
@@ -89,7 +96,7 @@ class OgImageService
             return $this->serveDefault();
         }
 
-        $jpeg = $this->buildJpeg($imageUrl, $crop);
+        $jpeg = $this->buildJpeg($imageUrl, $crop, 'cover');
 
         if ($jpeg === null) {
             return $this->serveDefault();
@@ -150,7 +157,7 @@ class OgImageService
         return hash_equals($expected, (string) ($params['signature'] ?? ''));
     }
 
-    protected function buildJpeg(string $imageUrl, ?array $crop = null): ?string
+    protected function buildJpeg(string $imageUrl, ?array $crop = null, string $fit = 'cover'): ?string
     {
         if (! extension_loaded('gd')) {
             return null;
@@ -203,20 +210,37 @@ class OgImageService
         $srcRatio = $srcWidth / $srcHeight;
         $targetRatio = $targetWidth / $targetHeight;
 
-        if ($srcRatio > $targetRatio) {
-            $newHeight = $targetHeight;
-            $newWidth = (int) ($targetHeight * $srcRatio);
+        if ($fit === 'contain') {
+            if ($srcRatio > $targetRatio) {
+                $newWidth = $targetWidth;
+                $newHeight = (int) round($targetWidth / $srcRatio);
+            } else {
+                $newHeight = $targetHeight;
+                $newWidth = (int) round($targetHeight * $srcRatio);
+            }
+
+            $resized = imagecreatetruecolor($newWidth, $newHeight);
+            imagecopyresampled($resized, $source, 0, 0, 0, 0, $newWidth, $newHeight, $srcWidth, $srcHeight);
+
+            $destX = (int) (($targetWidth - $newWidth) / 2);
+            $destY = (int) (($targetHeight - $newHeight) / 2);
+            imagecopy($canvas, $resized, $destX, $destY, 0, 0, $newWidth, $newHeight);
         } else {
-            $newWidth = $targetWidth;
-            $newHeight = (int) ($targetWidth / $srcRatio);
+            if ($srcRatio > $targetRatio) {
+                $newHeight = $targetHeight;
+                $newWidth = (int) ($targetHeight * $srcRatio);
+            } else {
+                $newWidth = $targetWidth;
+                $newHeight = (int) ($targetWidth / $srcRatio);
+            }
+
+            $resized = imagecreatetruecolor($newWidth, $newHeight);
+            imagecopyresampled($resized, $source, 0, 0, 0, 0, $newWidth, $newHeight, $srcWidth, $srcHeight);
+
+            $x = (int) (($newWidth - $targetWidth) / 2);
+            $y = (int) (($newHeight - $targetHeight) / 2);
+            imagecopy($canvas, $resized, 0, 0, $x, $y, $targetWidth, $targetHeight);
         }
-
-        $resized = imagecreatetruecolor($newWidth, $newHeight);
-        imagecopyresampled($resized, $source, 0, 0, 0, 0, $newWidth, $newHeight, $srcWidth, $srcHeight);
-
-        $x = (int) (($newWidth - $targetWidth) / 2);
-        $y = (int) (($newHeight - $targetHeight) / 2);
-        imagecopy($canvas, $resized, 0, 0, $x, $y, $targetWidth, $targetHeight);
 
         ob_start();
         imagejpeg($canvas, null, 82);
