@@ -290,12 +290,12 @@
     }
 
     .tnf-ep-clip-catcher {
-        @apply absolute inset-0 cursor-crosshair;
+        @apply absolute inset-0 z-[1] cursor-crosshair;
         touch-action: none;
     }
 
     .tnf-ep-clip-visual {
-        @apply pointer-events-none absolute inset-0;
+        @apply pointer-events-none absolute inset-0 z-[2];
     }
 
     .tnf-ep-clip-screen-hint {
@@ -623,17 +623,10 @@
     z-index: 200;
 }
 
-.tnf-ep-clip-screen.hidden {
-    display: none;
-}
-
-body.tnf-ep-is-clipping {
-    cursor: crosshair;
-}
-
 .tnf-ep-clip-catcher {
     position: absolute;
     inset: 0;
+    z-index: 1;
     cursor: crosshair;
     touch-action: none;
 }
@@ -641,6 +634,7 @@ body.tnf-ep-is-clipping {
 .tnf-ep-clip-visual {
     position: absolute;
     inset: 0;
+    z-index: 2;
     pointer-events: none;
 }
 
@@ -676,9 +670,17 @@ body.tnf-ep-is-clipping {
     background: rgba(15, 19, 32, 0.7);
 }
 
+.tnf-ep-clip-screen.hidden {
+    display: none;
+}
+
+body.tnf-ep-is-clipping {
+    cursor: crosshair;
+}
+
 .tnf-ep-clip-box {
     position: absolute;
-    z-index: 10;
+    z-index: 20;
     border: 3px solid #bc1e38;
     background: rgba(188, 30, 56, 0.2);
     outline: 2px dashed rgba(255, 255, 255, 0.95);

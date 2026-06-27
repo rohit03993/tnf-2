@@ -741,6 +741,14 @@ class TnfEpaperViewer {
         }
 
         await this.applyPageZoom();
+
+        if (this.els.stage) {
+            this.els.stage.scrollTop = 0;
+            this.els.stage.scrollLeft = 0;
+        }
+
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+
         this.mountClipScreen();
         this.bindClipDrag();
         this.showClipMobileActions(this.isCoarsePointer());
@@ -766,20 +774,54 @@ class TnfEpaperViewer {
 
     getImageOverlayRect() {
         const imageRect = this.getImageScreenRect();
-        const stageRect = this.getStageWrapRect();
+        const reference = this.els.stage?.getBoundingClientRect() || this.getStageWrapRect();
 
-        if (! imageRect) {
+        if (! imageRect || imageRect.width < 1 || imageRect.height < 1) {
             return null;
         }
 
         return {
-            left: imageRect.left - stageRect.left,
-            top: imageRect.top - stageRect.top,
+            left: imageRect.left - reference.left,
+            top: imageRect.top - reference.top,
             width: imageRect.width,
             height: imageRect.height,
-            right: imageRect.right - stageRect.left,
-            bottom: imageRect.bottom - stageRect.top,
+            right: imageRect.right - reference.left,
+            bottom: imageRect.bottom - reference.top,
         };
+    }
+
+    getClipOverlayBounds() {
+        const stage = this.els.stage;
+        const wrap = this.els.stageWrap;
+
+        if (! stage || ! wrap) {
+            return {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                offsetLeft: 0,
+                offsetTop: 0,
+            };
+        }
+
+        const stageRect = stage.getBoundingClientRect();
+        const wrapRect = wrap.getBoundingClientRect();
+
+        return {
+            width: stage.clientWidth,
+            height: stage.clientHeight,
+            offsetLeft: stageRect.left - wrapRect.left,
+            offsetTop: stageRect.top - wrapRect.top,
+        };
+    }
+
+    scheduleClipOverlaySync(markComplete = false) {
+        const sync = () => this.syncClipOverlay(markComplete);
+
+        sync();
+        requestAnimationFrame(() => {
+            sync();
+            requestAnimationFrame(sync);
+        });
     }
 
     isPointInsideImage(clientX, clientY) {
@@ -913,18 +955,26 @@ class TnfEpaperViewer {
         this.els.clipScreen.setAttribute('aria-hidden', 'false');
         document.body.classList.add('tnf-ep-is-clipping');
         document.body.style.overflow = 'hidden';
-        this.resetClipScreenSelection();
+
+        this.pendingClip = null;
         this.clipNormalized = this.getDefaultClipNormalized();
-        this.syncClipOverlay(true);
 
         const hint = this.els.clipScreen.querySelector('[data-ep-clip-hint-text]');
         if (hint) {
-            hint.textContent = 'Resize the box or drag a new area, then tap Share';
+            hint.textContent = this.isCoarsePointer()
+                ? 'Drag to select an area, then tap Share clip'
+                : 'Drag to select an area, resize the box, then click Share';
         }
+
+        const ui = this.getClipScreenElements();
+        ui?.toolbar?.classList.add('hidden');
+        ui?.box?.classList.remove('is-complete');
+
+        this.scheduleClipOverlaySync(true);
 
         const source = this.getClipSourceElement();
         if (source && ! (source.complete && (source.naturalWidth || source.width))) {
-            source.addEventListener('load', () => this.syncClipOverlay(true), { once: true });
+            source.addEventListener('load', () => this.scheduleClipOverlaySync(true), { once: true });
         }
 
         if (! this.clipScrollHandler) {
@@ -953,14 +1003,15 @@ class TnfEpaperViewer {
     updateClipImageTint() {
         const rect = this.getImageOverlayRect();
         const tint = this.els.clipScreen?.querySelector('[data-ep-clip-image-tint]');
+        const bounds = this.getClipOverlayBounds();
 
         if (! rect || ! tint) {
             return;
         }
 
         Object.assign(tint.style, {
-            top: `${rect.top}px`,
-            left: `${rect.left}px`,
+            top: `${bounds.offsetTop + rect.top}px`,
+            left: `${bounds.offsetLeft + rect.left}px`,
             width: `${rect.width}px`,
             height: `${rect.height}px`,
         });
@@ -1029,37 +1080,69 @@ class TnfEpaperViewer {
             return;
         }
 
-        const stageWidth = this.els.stageWrap?.offsetWidth || window.innerWidth;
-        const stageHeight = this.els.stageWrap?.offsetHeight || window.innerHeight;
+        const bounds = this.getClipOverlayBounds();
+        const originLeft = bounds.offsetLeft;
+        const originTop = bounds.offsetTop;
+        const stageWidth = bounds.width;
+        const stageHeight = bounds.height;
+        const boxLeft = originLeft + left;
+        const boxTop = originTop + top;
+
+        if (width <= 0 || height <= 0) {
+            Object.values(ui.shades).forEach((shade) => {
+                if (shade) {
+                    shade.style.display = 'none';
+                }
+            });
+
+            if (ui.box) {
+                ui.box.style.display = 'none';
+            }
+
+            ui.visual?.classList.remove('is-active');
+            ui.tint?.classList.remove('hidden');
+
+            return;
+        }
+
+        Object.values(ui.shades).forEach((shade) => {
+            if (shade) {
+                shade.style.display = 'block';
+            }
+        });
+
+        if (ui.box) {
+            ui.box.style.display = 'block';
+        }
 
         Object.assign(ui.shades.top.style, {
-            top: '0',
-            left: '0',
-            width: '100%',
-            height: `${top}px`,
+            top: `${originTop}px`,
+            left: `${originLeft}px`,
+            width: `${stageWidth}px`,
+            height: `${Math.max(0, top)}px`,
         });
         Object.assign(ui.shades.bottom.style, {
-            top: `${top + height}px`,
-            left: '0',
-            width: '100%',
-            height: `${Math.max(0, stageHeight - top - height)}px`,
+            top: `${boxTop + height}px`,
+            left: `${originLeft}px`,
+            width: `${stageWidth}px`,
+            height: `${Math.max(0, originTop + stageHeight - boxTop - height)}px`,
         });
         Object.assign(ui.shades.left.style, {
-            top: `${top}px`,
-            left: '0',
-            width: `${left}px`,
+            top: `${boxTop}px`,
+            left: `${originLeft}px`,
+            width: `${Math.max(0, left)}px`,
             height: `${height}px`,
         });
         Object.assign(ui.shades.right.style, {
-            top: `${top}px`,
-            left: `${left + width}px`,
-            width: `${Math.max(0, stageWidth - left - width)}px`,
+            top: `${boxTop}px`,
+            left: `${boxLeft + width}px`,
+            width: `${Math.max(0, originLeft + stageWidth - boxLeft - width)}px`,
             height: `${height}px`,
         });
 
         Object.assign(ui.box.style, {
-            left: `${left}px`,
-            top: `${top}px`,
+            left: `${boxLeft}px`,
+            top: `${boxTop}px`,
             width: `${width}px`,
             height: `${height}px`,
         });
@@ -1144,7 +1227,7 @@ class TnfEpaperViewer {
     }
 
     clientPointToOverlay(clientX, clientY) {
-        const stageRect = this.getStageWrapRect();
+        const stageRect = this.els.stage?.getBoundingClientRect() || this.getStageWrapRect();
 
         return {
             x: clientX - stageRect.left,
