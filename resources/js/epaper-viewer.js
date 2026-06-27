@@ -14,6 +14,9 @@ class TnfEpaperViewer {
         this.clipMode = false;
         this.clipWorkspaceActive = false;
         this.clipWorkspaceImageDataUrl = '';
+        this.clipPageZoom = 1;
+        this.clipPageBaseWidth = 0;
+        this.lastClipPointerId = null;
         this.clipStart = null;
         this.clipRect = null;
         this.pdfDoc = null;
@@ -60,6 +63,9 @@ class TnfEpaperViewer {
             clipFooterCancel: document.querySelector('[data-ep-clip-footer-cancel]'),
             clipFooterWhatsapp: document.querySelector('[data-ep-clip-footer-whatsapp]'),
             clipFooterShare: document.querySelector('[data-ep-clip-footer-share]'),
+            clipZoomIn: document.querySelector('[data-ep-clip-zoom-in]'),
+            clipZoomOut: document.querySelector('[data-ep-clip-zoom-out]'),
+            clipZoomLabel: document.querySelector('[data-ep-clip-zoom-label]'),
             shareModal: root.querySelector('[data-ep-share-modal]'),
             shareUrl: root.querySelector('[data-ep-share-url]'),
             editionShare: root.querySelector('[data-ep-edition-share]'),
@@ -286,6 +292,9 @@ class TnfEpaperViewer {
                 this.applyClipPreset(preset.dataset.epClipPreset);
             }
         });
+
+        this.els.clipZoomIn?.addEventListener('click', () => this.adjustClipPageZoom(0.2));
+        this.els.clipZoomOut?.addEventListener('click', () => this.adjustClipPageZoom(-0.2));
     }
 
     bindTouchZoom() {
@@ -809,6 +818,9 @@ class TnfEpaperViewer {
             clipFooterCancel: '[data-ep-clip-footer-cancel]',
             clipFooterWhatsapp: '[data-ep-clip-footer-whatsapp]',
             clipFooterShare: '[data-ep-clip-footer-share]',
+            clipZoomIn: '[data-ep-clip-zoom-in]',
+            clipZoomOut: '[data-ep-clip-zoom-out]',
+            clipZoomLabel: '[data-ep-clip-zoom-label]',
         };
 
         Object.entries(selectors).forEach(([key, selector]) => {
@@ -1274,8 +1286,54 @@ class TnfEpaperViewer {
 
     clipHintMessage() {
         return this.isCoarsePointer()
-            ? 'Drag to select, then tap WhatsApp or Share · खींचकर चुनें, फिर शेयर करें'
-            : 'Drag to select, then WhatsApp or Share · खींचकर चुनें, फिर शेयर करें';
+            ? 'Use Move bar to reposition, −/+ to zoom · मूव बार से खिसकाएँ'
+            : 'Drag corners or Move bar, use −/+ to zoom · बॉक्स बदलें';
+    }
+
+    adjustClipPageZoom(delta) {
+        this.clipPageZoom = Math.min(2.5, Math.max(0.75, this.clipPageZoom + delta));
+        this.applyClipPageZoom();
+    }
+
+    applyClipPageZoom() {
+        const img = this.els.clipWorkspaceImage;
+        const page = this.els.clipWorkspacePage;
+
+        if (! img || ! page || ! this.clipPageBaseWidth) {
+            return;
+        }
+
+        const width = Math.round(this.clipPageBaseWidth * this.clipPageZoom);
+        img.style.width = `${width}px`;
+        img.style.maxWidth = 'none';
+        page.style.width = `${width}px`;
+
+        if (this.els.clipZoomLabel) {
+            this.els.clipZoomLabel.textContent = `${Math.round(this.clipPageZoom * 100)}%`;
+        }
+
+        this.scheduleClipOverlaySync(true);
+    }
+
+    resetClipPageZoom() {
+        this.clipPageZoom = 1;
+        this.clipPageBaseWidth = 0;
+
+        const img = this.els.clipWorkspaceImage;
+        const page = this.els.clipWorkspacePage;
+
+        if (img) {
+            img.style.width = '';
+            img.style.maxWidth = '';
+        }
+
+        if (page) {
+            page.style.width = '';
+        }
+
+        if (this.els.clipZoomLabel) {
+            this.els.clipZoomLabel.textContent = '100%';
+        }
     }
 
     showFirstClipHint() {
@@ -1451,6 +1509,13 @@ class TnfEpaperViewer {
         this.scheduleClipOverlaySync(true);
         this.showFirstClipHint();
 
+        this.resetClipPageZoom();
+
+        if (this.els.clipWorkspaceImage?.naturalWidth) {
+            this.clipPageBaseWidth = this.els.clipWorkspaceImage.clientWidth || this.els.clipWorkspaceImage.naturalWidth;
+            this.applyClipPageZoom();
+        }
+
         const source = this.getClipSourceElement();
         if (source && ! (source.complete && (source.naturalWidth || source.width))) {
             source.addEventListener('load', () => this.scheduleClipOverlaySync(true), { once: true });
@@ -1470,6 +1535,7 @@ class TnfEpaperViewer {
         this.els.clipScreen?.classList.add('hidden');
         this.els.clipScreen?.setAttribute('aria-hidden', 'true');
         this.clipWorkspaceActive = false;
+        this.resetClipPageZoom();
         document.body.classList.remove('tnf-ep-is-clipping');
         document.body.style.overflow = '';
         this.activePointerId = null;
@@ -1710,6 +1776,20 @@ class TnfEpaperViewer {
         let interactionMode = null;
         let dragStart = null;
         let startRect = null;
+        let lastDragRect = null;
+        let captureEl = null;
+        let trackingDocument = false;
+
+        const lockClipScroll = (locked) => {
+            const scrollEl = this.els.clipWorkspaceScroll;
+
+            if (! scrollEl) {
+                return;
+            }
+
+            scrollEl.style.overflow = locked ? 'hidden' : '';
+            scrollEl.style.touchAction = locked ? 'none' : '';
+        };
 
         const applyOverlayRect = (left, top, width, height) => {
             const normalized = this.overlayRectToNormalized(left, top, width, height);
@@ -1733,11 +1813,62 @@ class TnfEpaperViewer {
             return true;
         };
 
+        const boxStyleToOverlayRect = () => {
+            const elements = this.getClipScreenElements();
+            const boxStyle = elements?.box?.style;
+            const bounds = this.getClipOverlayBounds();
+            const left = Number.parseFloat(boxStyle?.left || '0') - bounds.offsetLeft;
+            const top = Number.parseFloat(boxStyle?.top || '0') - bounds.offsetTop;
+            const width = Number.parseFloat(boxStyle?.width || '0');
+            const height = Number.parseFloat(boxStyle?.height || '0');
+
+            return { left, top, width, height };
+        };
+
+        const startDocumentTracking = () => {
+            if (trackingDocument) {
+                return;
+            }
+
+            trackingDocument = true;
+            document.addEventListener('pointermove', onPointerMove, { passive: false });
+            document.addEventListener('pointerup', onPointerUp);
+            document.addEventListener('pointercancel', onPointerUp);
+        };
+
+        const stopDocumentTracking = () => {
+            if (! trackingDocument) {
+                return;
+            }
+
+            trackingDocument = false;
+            document.removeEventListener('pointermove', onPointerMove);
+            document.removeEventListener('pointerup', onPointerUp);
+            document.removeEventListener('pointercancel', onPointerUp);
+        };
+
         const finishInteraction = () => {
+            const pointerId = this.lastClipPointerId;
+
             interactionMode = null;
             dragStart = null;
             startRect = null;
+            lastDragRect = null;
             this.activePointerId = null;
+            this.lastClipPointerId = null;
+            lockClipScroll(false);
+
+            if (captureEl && pointerId !== null) {
+                try {
+                    captureEl.releasePointerCapture?.(pointerId);
+                } catch {
+                    // Ignore release errors.
+                }
+
+                captureEl = null;
+            }
+
+            stopDocumentTracking();
         };
 
         const onPointerDown = (event) => {
@@ -1745,24 +1876,32 @@ class TnfEpaperViewer {
                 return;
             }
 
-            this.dismissFirstClipHint();
-
+            const moveBar = event.target.closest('[data-ep-clip-move]');
             const handle = event.target.closest('[data-ep-clip-handle]');
             const box = event.target.closest('.tnf-ep-clip-box');
 
-            if (! this.isPointInsideImage(event.clientX, event.clientY)) {
+            if (! moveBar && ! box && ! this.isPointInsideImage(event.clientX, event.clientY)) {
                 return;
             }
 
-            event.preventDefault();
-            this.activePointerId = event.pointerId;
+            if (moveBar || box || handle || this.isPointInsideImage(event.clientX, event.clientY)) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
 
-            const target = event.currentTarget;
+            this.dismissFirstClipHint();
+            this.activePointerId = event.pointerId;
+            this.lastClipPointerId = event.pointerId;
+            captureEl = event.currentTarget;
+
             try {
-                target.setPointerCapture(event.pointerId);
+                captureEl.setPointerCapture?.(event.pointerId);
             } catch {
                 // Pointer capture is optional on some browsers.
             }
+
+            lockClipScroll(true);
+            startDocumentTracking();
 
             const point = this.clientPointToOverlay(event.clientX, event.clientY);
             const overlay = this.normalizedToOverlayRect(this.clipNormalized) || {
@@ -1776,13 +1915,15 @@ class TnfEpaperViewer {
                 interactionMode = `resize-${handle.dataset.epClipHandle}`;
                 startRect = { ...overlay };
                 dragStart = point;
+
                 return;
             }
 
-            if (box) {
+            if (moveBar || box) {
                 interactionMode = 'move';
                 startRect = { ...overlay };
                 dragStart = point;
+
                 return;
             }
 
@@ -1849,6 +1990,7 @@ class TnfEpaperViewer {
             }
 
             this.updateClipScreenShades(left, top, width, height);
+            lastDragRect = { left, top, width, height };
 
             const elements = this.getClipScreenElements();
             if (elements?.sizeLabel) {
@@ -1861,29 +2003,23 @@ class TnfEpaperViewer {
                 return;
             }
 
-            try {
-                event.currentTarget.releasePointerCapture(event.pointerId);
-            } catch {
-                // Ignore release errors.
-            }
-
             if (! interactionMode) {
                 finishInteraction();
+
                 return;
             }
 
-            const overlay = this.normalizedToOverlayRect(this.clipNormalized);
-            const elements = this.getClipScreenElements();
-            const boxStyle = elements?.box?.style;
-            const left = Number.parseFloat(boxStyle?.left || '0');
-            const top = Number.parseFloat(boxStyle?.top || '0');
-            const width = Number.parseFloat(boxStyle?.width || '0');
-            const height = Number.parseFloat(boxStyle?.height || '0');
+            const rect = lastDragRect || boxStyleToOverlayRect();
+            const { left, top, width, height } = rect;
 
             if (interactionMode === 'draw' || interactionMode === 'move' || interactionMode.startsWith('resize-')) {
                 applyOverlayRect(left, top, width, height);
-            } else if (overlay) {
-                applyOverlayRect(overlay.left, overlay.top, overlay.width, overlay.height);
+            } else {
+                const overlay = this.normalizedToOverlayRect(this.clipNormalized);
+
+                if (overlay) {
+                    applyOverlayRect(overlay.left, overlay.top, overlay.width, overlay.height);
+                }
             }
 
             finishInteraction();
@@ -1895,26 +2031,15 @@ class TnfEpaperViewer {
             }
         };
 
-        catcherEl?.addEventListener('pointerdown', onPointerDown);
-        catcherEl?.addEventListener('pointermove', onPointerMove);
-        catcherEl?.addEventListener('pointerup', onPointerUp);
-        catcherEl?.addEventListener('pointercancel', onPointerUp);
-        ui?.box?.addEventListener('pointerdown', onPointerDown);
-        ui?.box?.addEventListener('pointermove', onPointerMove);
-        ui?.box?.addEventListener('pointerup', onPointerUp);
-        ui?.box?.addEventListener('pointercancel', onPointerUp);
+        catcherEl?.addEventListener('pointerdown', onPointerDown, { passive: false });
+        ui?.box?.addEventListener('pointerdown', onPointerDown, { passive: false });
         document.addEventListener('keydown', onKeyDown);
 
         this.clipDragCleanup = () => {
             catcherEl?.removeEventListener('pointerdown', onPointerDown);
-            catcherEl?.removeEventListener('pointermove', onPointerMove);
-            catcherEl?.removeEventListener('pointerup', onPointerUp);
-            catcherEl?.removeEventListener('pointercancel', onPointerUp);
             ui?.box?.removeEventListener('pointerdown', onPointerDown);
-            ui?.box?.removeEventListener('pointermove', onPointerMove);
-            ui?.box?.removeEventListener('pointerup', onPointerUp);
-            ui?.box?.removeEventListener('pointercancel', onPointerUp);
             document.removeEventListener('keydown', onKeyDown);
+            stopDocumentTracking();
             finishInteraction();
         };
     }

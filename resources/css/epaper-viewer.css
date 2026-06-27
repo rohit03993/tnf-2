@@ -328,6 +328,7 @@
         outline: 2px dashed rgba(255, 255, 255, 0.95);
         outline-offset: -4px;
         pointer-events: auto;
+        touch-action: none;
     }
 
     .tnf-ep-clip-box.is-complete {
@@ -437,7 +438,11 @@
     }
 
     .tnf-ep-mobile-bar-inner {
-        @apply grid min-h-14 grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-1 px-1;
+        @apply grid min-h-14 grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] items-center gap-0.5 px-1;
+    }
+
+    .tnf-ep-mobile-zoom-btn {
+        @apply min-w-9 px-2 text-lg font-bold leading-none;
     }
 
     .tnf-ep-mobile-icon-btn {
@@ -800,6 +805,92 @@
     display: none;
 }
 
+.tnf-ep-clip-zoom-controls {
+    position: fixed;
+    right: 0.75rem;
+    bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+    z-index: 100001;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(15, 19, 32, 0.92);
+    padding: 0.375rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(6px);
+}
+
+@media (min-width: 1024px) {
+    .tnf-ep-clip-zoom-controls {
+        bottom: 1.5rem;
+    }
+}
+
+.tnf-ep-clip-zoom-btn {
+    display: inline-flex;
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    touch-action: manipulation;
+}
+
+.tnf-ep-clip-zoom-btn:active {
+    background: rgba(255, 255, 255, 0.22);
+    transform: scale(0.96);
+}
+
+.tnf-ep-clip-zoom-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.tnf-ep-clip-move-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 4;
+    display: flex;
+    min-height: 2rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(188, 30, 56, 0.92);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+    touch-action: none;
+    cursor: grab;
+}
+
+.tnf-ep-clip-move-bar:active {
+    cursor: grabbing;
+}
+
+.tnf-ep-clip-move-bar svg {
+    flex-shrink: 0;
+}
+
+.tnf-ep-clip-box .tnf-ep-clip-size {
+    top: 2.125rem;
+}
+
 @media (min-width: 640px) {
     .tnf-ep-clip-workspace-header {
         padding-inline: 1.5rem;
@@ -1100,6 +1191,7 @@ body.tnf-ep-is-clipping {
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9);
     pointer-events: auto;
     cursor: move;
+    touch-action: none;
 }
 
 .tnf-ep-clip-box.is-complete {
@@ -1116,6 +1208,7 @@ body.tnf-ep-is-clipping {
     background: #bc1e38;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     pointer-events: auto;
+    touch-action: none;
 }
 
 .tnf-ep-clip-handle--tl { top: -0.375rem; left: -0.375rem; cursor: nwse-resize; }
@@ -1170,13 +1263,18 @@ body.tnf-ep-is-clipping {
         border-width: 3px;
     }
 
-    .tnf-ep-clip-handle--tl { top: -0.625rem; left: -0.625rem; }
-    .tnf-ep-clip-handle--tr { top: -0.625rem; right: -0.625rem; }
-    .tnf-ep-clip-handle--bl { bottom: -0.625rem; left: -0.625rem; }
-    .tnf-ep-clip-handle--br { bottom: -0.625rem; right: -0.625rem; }
+    .tnf-ep-clip-handle--tl { top: -0.75rem; left: -0.75rem; }
+    .tnf-ep-clip-handle--tr { top: -0.75rem; right: -0.75rem; }
+    .tnf-ep-clip-handle--bl { bottom: -0.75rem; left: -0.75rem; }
+    .tnf-ep-clip-handle--br { bottom: -0.75rem; right: -0.75rem; }
 
     .tnf-ep-clip-box {
         border-width: 4px;
+    }
+
+    .tnf-ep-clip-move-bar {
+        min-height: 2.375rem;
+        font-size: 0.75rem;
     }
 }
 

@@ -111,6 +111,8 @@
                             <path stroke-linecap="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
                     </button>
+                    <button type="button" class="tnf-ep-mobile-icon-btn tnf-ep-mobile-zoom-btn" data-ep-action="zoom-out" aria-label="Zoom out">−</button>
+                    <button type="button" class="tnf-ep-mobile-icon-btn tnf-ep-mobile-zoom-btn" data-ep-action="zoom-in" aria-label="Zoom in">+</button>
                     <button type="button" class="tnf-ep-mobile-share-btn" data-ep-action="share" aria-label="Share edition">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
@@ -138,7 +140,7 @@
             </div>
 
             <p class="tnf-ep-mobile-zoom-hint lg:hidden" data-ep-mobile-zoom-hint>
-                Pinch to zoom · Double-tap to fit
+                Use − / + to zoom the page
             </p>
         @else
             <div class="tnf-container space-y-4 py-4">
@@ -395,8 +397,14 @@
             </header>
 
             <div class="tnf-ep-clip-workspace-scroll" data-ep-clip-workspace-scroll>
+                <div class="tnf-ep-clip-zoom-controls" data-ep-clip-zoom-controls aria-label="Zoom page">
+                    <button type="button" class="tnf-ep-clip-zoom-btn" data-ep-clip-zoom-out aria-label="Zoom out">−</button>
+                    <span class="tnf-ep-clip-zoom-label" data-ep-clip-zoom-label>100%</span>
+                    <button type="button" class="tnf-ep-clip-zoom-btn" data-ep-clip-zoom-in aria-label="Zoom in">+</button>
+                </div>
+
                 <p class="tnf-ep-clip-first-hint hidden" data-ep-clip-first-hint role="status">
-                    👆 Drag on the page to select a headline or article · पेज पर खींचकर हिस्सा चुनें
+                    👆 Use the Move bar to reposition, or drag corners · मूव बार से खिसकाएँ
                 </p>
 
                 <div class="tnf-ep-clip-workspace-page" data-ep-clip-workspace-page>
@@ -415,6 +423,12 @@
                             <div class="tnf-ep-clip-shade tnf-ep-clip-shade--right"></div>
                             <div class="tnf-ep-clip-shade tnf-ep-clip-shade--bottom"></div>
                             <div class="tnf-ep-clip-box">
+                                <button type="button" class="tnf-ep-clip-move-bar" data-ep-clip-move aria-label="Move selection">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-width="2" d="M4 8h16M4 16h16M10 4v16"/>
+                                    </svg>
+                                    <span>Move · खिसकाएँ</span>
+                                </button>
                                 <span class="tnf-ep-clip-handle tnf-ep-clip-handle--tl" data-ep-clip-handle="tl"></span>
                                 <span class="tnf-ep-clip-handle tnf-ep-clip-handle--tr" data-ep-clip-handle="tr"></span>
                                 <span class="tnf-ep-clip-handle tnf-ep-clip-handle--bl" data-ep-clip-handle="bl"></span>
