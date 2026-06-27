@@ -186,6 +186,19 @@
     .tnf-ep-stage {
         @apply relative flex min-h-[52dvh] justify-center overflow-auto;
         max-height: calc(100dvh - 11rem);
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    @media (max-width: 1023px) {
+        .tnf-ep-stage {
+            min-height: calc(100dvh - 12.5rem - env(safe-area-inset-top, 0px));
+            max-height: calc(100dvh - 8.25rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+        }
+
+        .tnf-epaper-viewer.is-clip-mode .tnf-ep-stage {
+            max-height: calc(100dvh - 9.5rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+        }
     }
 
     @media (min-width: 1024px) {
@@ -237,12 +250,43 @@
         @apply hidden;
     }
 
-    .tnf-ep-clip-screen {
-        @apply fixed inset-0 z-[200];
+    body.tnf-ep-is-clipping {
+        @apply overflow-hidden;
     }
 
-    body.tnf-ep-is-clipping {
-        @apply cursor-crosshair;
+    .tnf-ep-mobile-zoom-hint {
+        @apply px-3 pb-2 text-center text-tnf-xs text-tnf-muted;
+    }
+
+    body.tnf-ep-is-clipping .tnf-ep-mobile-zoom-hint {
+        @apply hidden;
+    }
+
+    .tnf-ep-clip-mobile-actions {
+        @apply fixed inset-x-0 bottom-0 z-[220] border-t border-tnf-gray-dark bg-white/95 backdrop-blur-md lg:hidden;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .tnf-ep-clip-mobile-actions-inner {
+        @apply grid grid-cols-2 gap-2 py-2;
+    }
+
+    .tnf-ep-clip-mobile-cancel,
+    .tnf-ep-clip-mobile-share {
+        @apply inline-flex min-h-touch items-center justify-center rounded-tnf px-4 text-tnf-sm font-semibold transition active:scale-[0.98];
+        touch-action: manipulation;
+    }
+
+    .tnf-ep-clip-mobile-cancel {
+        @apply border border-tnf-gray-dark bg-white text-tnf-navy;
+    }
+
+    .tnf-ep-clip-mobile-share {
+        @apply border border-tnf-red bg-tnf-red text-white disabled:cursor-not-allowed disabled:opacity-45;
+    }
+
+    .tnf-ep-clip-mobile-share.is-ready {
+        @apply shadow-card;
     }
 
     .tnf-ep-clip-catcher {

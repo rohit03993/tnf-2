@@ -47,6 +47,9 @@ class TnfEpaperViewer {
             shareCopyBtn: root.querySelector('[data-ep-copy-share]'),
             shareNativeBtn: root.querySelector('[data-ep-share-native]'),
             shareOpen: root.querySelector('[data-ep-share-open]'),
+            clipMobileActions: root.querySelector('[data-ep-clip-mobile-actions]'),
+            clipShareMobile: root.querySelector('[data-ep-clip-share-mobile]'),
+            clipCancelMobile: root.querySelector('[data-ep-clip-cancel-mobile]'),
         };
 
         this.activeClipUrl = '';
@@ -58,6 +61,9 @@ class TnfEpaperViewer {
         this.resizeHandler = null;
         this.pdfThumbCache = {};
         this.activePointerId = null;
+        this.pinchStartDistance = 0;
+        this.pinchStartZoom = 1;
+        this.lastTapAt = 0;
     }
 
     get effectiveZoom() {
@@ -83,6 +89,7 @@ class TnfEpaperViewer {
         this.buildThumbnails();
         this.buildPageSelect();
         this.bindActions();
+        this.bindTouchZoom();
         this.bindResizeHandler();
         await this.setPage(this.currentPage, false);
         this.setPdfLoading(false);
@@ -241,6 +248,70 @@ class TnfEpaperViewer {
             this.els.shareNativeBtn.classList.remove('hidden');
             this.els.shareNativeBtn.addEventListener('click', () => this.nativeShareEdition());
         }
+
+        this.els.clipCancelMobile?.addEventListener('click', () => this.toggleClipMode(true));
+        this.els.clipShareMobile?.addEventListener('click', () => this.confirmClipShare());
+    }
+
+    bindTouchZoom() {
+        const stage = this.els.stage;
+
+        if (! stage || ! this.isCoarsePointer()) {
+            return;
+        }
+
+        const touchDistance = (touches) => {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+
+            return Math.hypot(dx, dy);
+        };
+
+        stage.addEventListener('touchstart', (event) => {
+            if (this.clipMode) {
+                return;
+            }
+
+            if (event.touches.length === 2) {
+                this.pinchStartDistance = touchDistance(event.touches);
+                this.pinchStartZoom = this.userZoomFactor;
+                return;
+            }
+
+            if (event.touches.length === 1) {
+                const now = Date.now();
+
+                if (now - this.lastTapAt < 320) {
+                    event.preventDefault();
+
+                    if (Math.abs(this.userZoomFactor - 1) < 0.05) {
+                        this.userZoomFactor = 2;
+                    } else {
+                        this.fitPageToView();
+                    }
+
+                    void this.applyPageZoom();
+                }
+
+                this.lastTapAt = now;
+            }
+        }, { passive: false });
+
+        stage.addEventListener('touchmove', (event) => {
+            if (this.clipMode || event.touches.length !== 2 || ! this.pinchStartDistance) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const scale = touchDistance(event.touches) / this.pinchStartDistance;
+            this.userZoomFactor = Math.min(3, Math.max(0.75, this.pinchStartZoom * scale));
+            void this.applyPageZoom();
+        }, { passive: false });
+
+        stage.addEventListener('touchend', () => {
+            this.pinchStartDistance = 0;
+        });
     }
 
     getEditionShareUrl() {
@@ -271,7 +342,7 @@ class TnfEpaperViewer {
     closeShareModal() {
         this.els.shareModal?.classList.add('hidden');
 
-        if (this.els.clipModal?.classList.contains('hidden')) {
+        if (this.els.clipModal?.classList.contains('hidden') && ! this.clipMode) {
             document.body.style.overflow = '';
         }
     }
@@ -425,6 +496,11 @@ class TnfEpaperViewer {
         }
 
         this.updateUi();
+
+        if (this.els.stage) {
+            this.els.stage.scrollTop = 0;
+            this.els.stage.scrollLeft = 0;
+        }
 
         if (pushHistory) {
             const url = new URL(window.location.href);
@@ -642,12 +718,33 @@ class TnfEpaperViewer {
         });
 
         if (this.clipMode) {
-            this.mountClipScreen();
-            this.bindClipDrag();
+            void this.prepareClipMode();
         } else {
             this.unbindClipDrag();
             this.unmountClipScreen();
+            this.showClipMobileActions(false);
         }
+    }
+
+    async prepareClipMode() {
+        if (this.els.stage) {
+            this.els.stage.scrollTop = 0;
+            this.els.stage.scrollLeft = 0;
+        }
+
+        this.fitPageToView();
+
+        if (this.pdfDoc) {
+            this.setPdfLoading(true);
+            await this.renderPdfPage(this.currentPage);
+            this.setPdfLoading(false);
+        }
+
+        await this.applyPageZoom();
+        this.mountClipScreen();
+        this.bindClipDrag();
+        this.showClipMobileActions(this.isCoarsePointer());
+        this.updateClipMobileShareState();
     }
 
     getStageWrapRect() {
@@ -781,7 +878,30 @@ class TnfEpaperViewer {
     }
 
     getDefaultClipNormalized() {
+        if (this.isCoarsePointer()) {
+            return { x: 0.04, y: 0.06, w: 0.92, h: 0.38 };
+        }
+
         return { x: 0.3, y: 0.3, w: 0.4, h: 0.4 };
+    }
+
+    showClipMobileActions(show) {
+        if (! this.els.clipMobileActions) {
+            return;
+        }
+
+        this.els.clipMobileActions.classList.toggle('hidden', ! show);
+        this.els.clipMobileActions.setAttribute('aria-hidden', show ? 'false' : 'true');
+    }
+
+    updateClipMobileShareState() {
+        if (! this.els.clipShareMobile) {
+            return;
+        }
+
+        const ready = Boolean(this.pendingClip);
+        this.els.clipShareMobile.disabled = ! ready;
+        this.els.clipShareMobile.classList.toggle('is-ready', ready);
     }
 
     mountClipScreen() {
@@ -792,6 +912,7 @@ class TnfEpaperViewer {
         this.els.clipScreen.classList.remove('hidden');
         this.els.clipScreen.setAttribute('aria-hidden', 'false');
         document.body.classList.add('tnf-ep-is-clipping');
+        document.body.style.overflow = 'hidden';
         this.resetClipScreenSelection();
         this.clipNormalized = this.getDefaultClipNormalized();
         this.syncClipOverlay(true);
@@ -817,8 +938,10 @@ class TnfEpaperViewer {
         this.els.clipScreen?.classList.add('hidden');
         this.els.clipScreen?.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('tnf-ep-is-clipping');
+        document.body.style.overflow = '';
         this.activePointerId = null;
         this.resetClipScreenSelection();
+        this.updateClipMobileShareState();
 
         if (this.clipScrollHandler) {
             this.els.stage?.removeEventListener('scroll', this.clipScrollHandler);
@@ -873,6 +996,8 @@ class TnfEpaperViewer {
             this.clipNormalized = this.getDefaultClipNormalized();
             this.syncClipOverlay(true);
         }
+
+        this.updateClipMobileShareState();
     }
 
     getClipScreenElements() {
@@ -962,6 +1087,8 @@ class TnfEpaperViewer {
         if (ui.sizeLabel) {
             ui.sizeLabel.textContent = '';
         }
+
+        this.updateClipMobileShareState();
     }
 
     confirmClipShare() {
@@ -1478,7 +1605,10 @@ class TnfEpaperViewer {
 
     closeClipModal() {
         this.els.clipModal?.classList.add('hidden');
-        document.body.style.overflow = '';
+
+        if (this.els.shareModal?.classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
         this.els.clipPreviewWrap?.classList.add('hidden');
 
         if (this.els.clipPreview) {
@@ -1710,8 +1840,9 @@ class TnfEpaperViewer {
 
         const displayScale = this.effectiveZoom;
         const pixelRatio = window.devicePixelRatio || 1;
-        const previewScale = Math.max(1, displayScale * Math.min(pixelRatio, 1.25));
-        const finalScale = Math.max(previewScale, displayScale * pixelRatio * 1.5);
+        const mobileBoost = this.isCoarsePointer() ? 1.35 : 1;
+        const previewScale = Math.max(1, displayScale * Math.min(pixelRatio, 1.5) * mobileBoost);
+        const finalScale = Math.max(previewScale, displayScale * pixelRatio * 1.75);
 
         await this.paintPdfPage(pdfPage, baseViewport, previewScale);
 

@@ -157,6 +157,21 @@
                     </button>
                 </div>
             </div>
+
+            <div class="tnf-ep-clip-mobile-actions hidden lg:hidden" data-ep-clip-mobile-actions aria-hidden="true">
+                <div class="tnf-container tnf-ep-clip-mobile-actions-inner">
+                    <button type="button" class="tnf-ep-clip-mobile-cancel" data-ep-clip-cancel-mobile>
+                        Cancel
+                    </button>
+                    <button type="button" class="tnf-ep-clip-mobile-share" data-ep-clip-share-mobile disabled>
+                        Share clip
+                    </button>
+                </div>
+            </div>
+
+            <p class="tnf-ep-mobile-zoom-hint lg:hidden" data-ep-mobile-zoom-hint>
+                Pinch to zoom · Double-tap to fit
+            </p>
         @else
             <div class="tnf-container space-y-4 py-4">
                 <div class="tnf-ep-clip-cta">
