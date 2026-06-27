@@ -14,6 +14,8 @@ class TnfEpaperViewer {
         this.clipMode = false;
         this.clipWorkspaceActive = false;
         this.clipWorkspaceImageDataUrl = '';
+        this.clipCaptureSource = null;
+        this.clipMasterScale = 1;
         this.clipPageZoom = 1;
         this.clipPageBaseWidth = 0;
         this.lastClipPointerId = null;
@@ -1055,59 +1057,64 @@ class TnfEpaperViewer {
         return img.naturalWidth > 0 && img.naturalHeight > 0;
     }
 
+    getClipMasterScale(pageWidth) {
+        const targetWidth = this.isCoarsePointer() ? 1200 : 1600;
+
+        return Math.min(2.5, Math.max(1.25, targetWidth / pageWidth));
+    }
+
+    getClipExportScale(pageWidth, clipWidthFraction) {
+        const cropPageWidth = Math.max(1, pageWidth * clipWidthFraction);
+        const targetCropPx = this.isCoarsePointer() ? 1200 : 1800;
+
+        return Math.min(4, Math.max(2, targetCropPx / cropPageWidth));
+    }
+
     async captureCurrentPagePreview() {
-        const pageImage = this.els.pageImage;
-        const pdfCanvas = this.els.pdfCanvas;
+        if (this.config.pdfUrl) {
+            if (await this.ensurePdfDocForClip()) {
+                this.clipCaptureSource = 'pdf';
 
-        if (pageImage && ! pageImage.classList.contains('hidden')) {
-            if (! pageImage.complete || ! pageImage.naturalWidth) {
-                await new Promise((resolve, reject) => {
-                    pageImage.addEventListener('load', resolve, { once: true });
-                    pageImage.addEventListener('error', reject, { once: true });
-                });
-            }
-
-            const fromImage = this.imageElementToDataUrl(pageImage);
-
-            if (fromImage) {
-                return fromImage;
-            }
-        }
-
-        if (pdfCanvas && ! pdfCanvas.classList.contains('hidden') && pdfCanvas.width > 0) {
-            const fromCanvas = this.imageElementToDataUrl(pdfCanvas);
-
-            if (fromCanvas) {
-                return fromCanvas;
-            }
-        }
-
-        if (await this.ensurePdfDocForClip()) {
-            const fromPdf = await this.renderPdfClipPreviewDataUrl(this.currentPage);
-
-            if (fromPdf) {
-                return fromPdf;
+                return this.renderPdfClipMasterDataUrl(this.currentPage);
             }
         }
 
         const pageUrl = this.getPageUrl(this.currentPage);
 
         if (pageUrl) {
-            return this.fetchImageAsDataUrl(pageUrl);
+            this.clipCaptureSource = 'page-image';
+            const dataUrl = await this.fetchImageAsDataUrl(pageUrl);
+
+            if (dataUrl) {
+                return dataUrl;
+            }
+        }
+
+        const pageImage = this.els.pageImage;
+
+        if (pageImage && ! pageImage.classList.contains('hidden') && pageImage.naturalWidth) {
+            this.clipCaptureSource = 'page-image';
+
+            return this.imageElementToDataUrl(pageImage);
+        }
+
+        if (this.els.pdfCanvas && ! this.els.pdfCanvas.classList.contains('hidden') && this.els.pdfCanvas.width > 0) {
+            this.clipCaptureSource = 'pdf';
+
+            return this.imageElementToDataUrl(this.els.pdfCanvas);
         }
 
         return null;
     }
 
-    async renderPdfClipPreviewDataUrl(pageNum) {
+    async renderPdfClipMasterDataUrl(pageNum) {
         if (! this.pdfDoc) {
             return null;
         }
 
         const pdfPage = await this.pdfDoc.getPage(pageNum);
         const baseViewport = pdfPage.getViewport({ scale: 1 });
-        const maxWidth = 1200;
-        const scale = Math.min(1.5, maxWidth / baseViewport.width);
+        const scale = this.getClipMasterScale(baseViewport.width);
         const viewport = pdfPage.getViewport({ scale });
         const canvas = document.createElement('canvas');
         canvas.width = Math.floor(viewport.width);
@@ -1120,8 +1127,9 @@ class TnfEpaperViewer {
         }
 
         await pdfPage.render({ canvasContext: context, viewport }).promise;
+        this.clipMasterScale = scale;
 
-        return canvas.toDataURL('image/jpeg', 0.9);
+        return canvas.toDataURL('image/jpeg', 0.92);
     }
 
     getStageWrapRect() {
@@ -1144,18 +1152,22 @@ class TnfEpaperViewer {
     getImageOverlayRect() {
         if (this.clipWorkspaceActive) {
             const img = this.els.clipWorkspaceImage;
+            const page = this.els.clipWorkspacePage;
 
-            if (! img || img.clientWidth < 1 || img.clientHeight < 1) {
+            if (! img || ! page || img.clientWidth < 1 || img.clientHeight < 1) {
                 return null;
             }
 
+            const imgRect = img.getBoundingClientRect();
+            const pageRect = page.getBoundingClientRect();
+
             return {
-                left: 0,
-                top: 0,
-                width: img.clientWidth,
-                height: img.clientHeight,
-                right: img.clientWidth,
-                bottom: img.clientHeight,
+                left: imgRect.left - pageRect.left,
+                top: imgRect.top - pageRect.top,
+                width: imgRect.width,
+                height: imgRect.height,
+                right: imgRect.left - pageRect.left + imgRect.width,
+                bottom: imgRect.top - pageRect.top + imgRect.height,
             };
         }
 
@@ -1288,31 +1300,49 @@ class TnfEpaperViewer {
         const clipBottom = Math.min(top + height, imageRect.bottom);
         const clipWidth = clipRight - clipLeft;
         const clipHeight = clipBottom - clipTop;
-        const minSize = this.isCoarsePointer() ? 18 : 24;
+        const minSize = this.isCoarsePointer() ? 12 : 20;
 
         if (clipWidth < minSize || clipHeight < minSize) {
             return null;
         }
 
-        return {
+        const normalized = {
             x: (clipLeft - imageRect.left) / imageRect.width,
             y: (clipTop - imageRect.top) / imageRect.height,
             w: clipWidth / imageRect.width,
             h: clipHeight / imageRect.height,
         };
+
+        return this.clampNormalizedRect(normalized);
+    }
+
+    clampNormalizedRect(normalized) {
+        if (! normalized) {
+            return null;
+        }
+
+        let { x, y, w, h } = normalized;
+        x = Math.max(0, Math.min(1, x));
+        y = Math.max(0, Math.min(1, y));
+        w = Math.max(0.001, Math.min(1 - x, w));
+        h = Math.max(0.001, Math.min(1 - y, h));
+
+        return { x, y, w, h };
     }
 
     normalizedToClip(normalized) {
-        if (! normalized) {
+        const clamped = this.clampNormalizedRect(normalized);
+
+        if (! clamped) {
             return null;
         }
 
         return {
             page: this.currentPage,
-            x: normalized.x,
-            y: normalized.y,
-            w: normalized.w,
-            h: normalized.h,
+            x: clamped.x,
+            y: clamped.y,
+            w: clamped.w,
+            h: clamped.h,
         };
     }
 
@@ -1522,13 +1552,13 @@ class TnfEpaperViewer {
             return;
         }
 
-        if (this.isCoarsePointer()) {
-            wrap.classList.add('hidden');
+        const normalized = this.clampNormalizedRect(this.clipNormalized);
+
+        if (! normalized) {
+            wrap?.classList.add('hidden');
 
             return;
         }
-
-        const normalized = this.clipNormalized;
         const sx = Math.round(source.naturalWidth * normalized.x);
         const sy = Math.round(source.naturalHeight * normalized.y);
         const sw = Math.max(1, Math.round(source.naturalWidth * normalized.w));
@@ -1694,6 +1724,7 @@ class TnfEpaperViewer {
         this.els.clipScreen?.setAttribute('aria-hidden', 'true');
         this.clipWorkspaceActive = false;
         this.clipDrawMode = false;
+        this.clipCaptureSource = null;
         this.resetClipPageZoom();
         document.body.classList.remove('tnf-ep-is-clipping');
         document.body.style.overflow = '';
@@ -2455,10 +2486,63 @@ class TnfEpaperViewer {
     }
 
     async renderClipBitmap(clip) {
-        const pageUrl = this.getPageUrl(clip.page);
+        const clamped = {
+            ...clip,
+            x: clip.x,
+            y: clip.y,
+            w: clip.w,
+            h: clip.h,
+        };
+        const normalized = this.clampNormalizedRect({
+            x: clamped.x,
+            y: clamped.y,
+            w: clamped.w,
+            h: clamped.h,
+        });
+
+        if (! normalized) {
+            return null;
+        }
+
+        const exportClip = { ...clamped, ...normalized };
+        const preferPdf = this.clipCaptureSource === 'pdf' || (! this.clipCaptureSource && this.config.pdfUrl);
+
+        if (preferPdf) {
+            if (! this.pdfDoc && this.config.pdfUrl) {
+                await this.initPdfFallback();
+            }
+
+            if (this.pdfDoc) {
+                const fromPdf = await this.renderClipBitmapFromPdf(exportClip);
+
+                if (fromPdf) {
+                    return fromPdf;
+                }
+            }
+        }
+
+        if (this.clipWorkspaceImageDataUrl) {
+            const fromWorkspace = await this.renderClipBitmapFromDataUrl(exportClip, this.clipWorkspaceImageDataUrl);
+
+            if (fromWorkspace) {
+                return fromWorkspace;
+            }
+        }
+
+        const workspaceImg = this.els.clipWorkspaceImage;
+
+        if (workspaceImg?.naturalWidth) {
+            const fromDom = this.renderClipBitmapFromImageElement(exportClip, workspaceImg);
+
+            if (fromDom) {
+                return fromDom;
+            }
+        }
+
+        const pageUrl = this.getPageUrl(exportClip.page);
 
         if (pageUrl) {
-            return this.renderClipBitmapFromImageUrl(clip, pageUrl);
+            return this.renderClipBitmapFromImageUrl(exportClip, pageUrl);
         }
 
         if (! this.pdfDoc && this.config.pdfUrl) {
@@ -2466,16 +2550,25 @@ class TnfEpaperViewer {
         }
 
         if (this.pdfDoc) {
-            return this.renderClipBitmapFromPdf(clip);
+            return this.renderClipBitmapFromPdf(exportClip);
         }
 
         const liveSource = this.getClipSourceElement();
 
         if (liveSource && (liveSource.naturalWidth || liveSource.width)) {
-            return this.renderClipBitmapFromImageElement(clip, liveSource);
+            return this.renderClipBitmapFromImageElement(exportClip, liveSource);
         }
 
         return null;
+    }
+
+    async renderClipBitmapFromDataUrl(clip, dataUrl) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(this.renderClipBitmapFromImageElement(clip, img));
+            img.onerror = () => resolve(null);
+            img.src = dataUrl;
+        });
     }
 
     async renderClipBitmapFromImageUrl(clip, pageUrl) {
@@ -2495,22 +2588,32 @@ class TnfEpaperViewer {
             return null;
         }
 
-        const sx = Math.round(naturalWidth * clip.x);
-        const sy = Math.round(naturalHeight * clip.y);
-        const sw = Math.max(1, Math.round(naturalWidth * clip.w));
-        const sh = Math.max(1, Math.round(naturalHeight * clip.h));
+        const normalized = this.clampNormalizedRect(clip);
+
+        if (! normalized) {
+            return null;
+        }
+
+        const sx = Math.round(naturalWidth * normalized.x);
+        const sy = Math.round(naturalHeight * normalized.y);
+        const sw = Math.max(1, Math.round(naturalWidth * normalized.w));
+        const sh = Math.max(1, Math.round(naturalHeight * normalized.h));
         const canvas = document.createElement('canvas');
         canvas.width = sw;
         canvas.height = sh;
-        const context = canvas.getContext('2d');
+        const context = canvas.getContext('2d', { alpha: false });
 
         if (! context) {
             return null;
         }
 
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+
         try {
             context.drawImage(imageLike, sx, sy, sw, sh, 0, 0, sw, sh);
-            return canvas.toDataURL('image/jpeg', 0.92);
+
+            return canvas.toDataURL('image/jpeg', 0.94);
         } catch {
             return null;
         }
@@ -2521,12 +2624,19 @@ class TnfEpaperViewer {
             return null;
         }
 
+        const normalized = this.clampNormalizedRect(clip);
+
+        if (! normalized) {
+            return null;
+        }
+
         const pdfPage = await this.pdfDoc.getPage(clip.page);
-        const pixelRatio = window.devicePixelRatio || 1;
-        const renderViewport = pdfPage.getViewport({ scale: Math.max(2, pixelRatio * 2) });
+        const baseViewport = pdfPage.getViewport({ scale: 1 });
+        const scale = this.getClipExportScale(baseViewport.width, normalized.w);
+        const renderViewport = pdfPage.getViewport({ scale });
         const canvas = document.createElement('canvas');
-        canvas.width = renderViewport.width;
-        canvas.height = renderViewport.height;
+        canvas.width = Math.floor(renderViewport.width);
+        canvas.height = Math.floor(renderViewport.height);
         const context = canvas.getContext('2d', { alpha: false });
 
         if (! context) {
@@ -2536,10 +2646,10 @@ class TnfEpaperViewer {
         await pdfPage.render({ canvasContext: context, viewport: renderViewport }).promise;
 
         const clipCanvas = document.createElement('canvas');
-        const sx = Math.round(renderViewport.width * clip.x);
-        const sy = Math.round(renderViewport.height * clip.y);
-        const sw = Math.max(1, Math.round(renderViewport.width * clip.w));
-        const sh = Math.max(1, Math.round(renderViewport.height * clip.h));
+        const sx = Math.round(renderViewport.width * normalized.x);
+        const sy = Math.round(renderViewport.height * normalized.y);
+        const sw = Math.max(1, Math.round(renderViewport.width * normalized.w));
+        const sh = Math.max(1, Math.round(renderViewport.height * normalized.h));
         clipCanvas.width = sw;
         clipCanvas.height = sh;
 
@@ -2549,9 +2659,11 @@ class TnfEpaperViewer {
             return null;
         }
 
+        clipContext.imageSmoothingEnabled = true;
+        clipContext.imageSmoothingQuality = 'high';
         clipContext.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
 
-        return clipCanvas.toDataURL('image/jpeg', 0.92);
+        return clipCanvas.toDataURL('image/jpeg', 0.94);
     }
 
     async renderClipOnly() {
