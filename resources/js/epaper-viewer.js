@@ -1282,12 +1282,40 @@ class TnfEpaperViewer {
         this.dismissFirstClipHint();
         this.clipNormalized = this.getClipPreset(name);
         this.syncClipOverlay(true);
+        this.setClipInstruction(this.clipReadyMessage());
     }
 
     clipHintMessage() {
         return this.isCoarsePointer()
-            ? 'Use Move bar to reposition, −/+ to zoom · मूव बार से खिसकाएँ'
+            ? 'Drag Move bar · use −/+ to zoom'
             : 'Drag corners or Move bar, use −/+ to zoom · बॉक्स बदलें';
+    }
+
+    clipReadyMessage() {
+        return this.isCoarsePointer()
+            ? 'Move bar · −/+ · then Share'
+            : 'Resize or choose a preset, then Share · बॉक्स बदलें या शेयर करें';
+    }
+
+    setClipInstruction(message, { showOverlay = false } = {}) {
+        if (this.els.clipWorkspaceHint) {
+            this.els.clipWorkspaceHint.textContent = message;
+        }
+
+        const overlayHint = this.els.clipScreen?.querySelector('[data-ep-clip-hint-text]');
+
+        if (! overlayHint) {
+            return;
+        }
+
+        if (this.isCoarsePointer() || ! showOverlay) {
+            overlayHint.classList.add('hidden');
+
+            return;
+        }
+
+        overlayHint.textContent = message;
+        overlayHint.classList.remove('hidden');
     }
 
     adjustClipPageZoom(delta) {
@@ -1337,20 +1365,23 @@ class TnfEpaperViewer {
     }
 
     showFirstClipHint() {
-        if (localStorage.getItem('tnf_ep_clip_hint_seen')) {
+        if (localStorage.getItem('tnf_ep_clip_hint_seen') || this.isCoarsePointer()) {
             return;
         }
 
-        this.els.clipFirstHint?.classList.remove('hidden');
+        this.setClipInstruction(
+            'Drag on the page to select a headline or article · पेज पर खींचकर हिस्सा चुनें',
+            { showOverlay: true },
+        );
         this.getClipScreenElements()?.box?.classList.add('tnf-ep-clip-box--pulse');
 
-        window.setTimeout(() => this.dismissFirstClipHint(), 9000);
+        window.setTimeout(() => this.dismissFirstClipHint(), 6000);
     }
 
     dismissFirstClipHint() {
         localStorage.setItem('tnf_ep_clip_hint_seen', '1');
-        this.els.clipFirstHint?.classList.add('hidden');
         this.getClipScreenElements()?.box?.classList.remove('tnf-ep-clip-box--pulse');
+        this.setClipInstruction(this.clipReadyMessage());
     }
 
     scheduleLiveClipPreview() {
@@ -1371,6 +1402,12 @@ class TnfEpaperViewer {
 
         if (! preview || ! wrap || ! source || ! this.clipNormalized || ! source.naturalWidth) {
             wrap?.classList.add('hidden');
+
+            return;
+        }
+
+        if (this.isCoarsePointer()) {
+            wrap.classList.add('hidden');
 
             return;
         }
@@ -1494,14 +1531,10 @@ class TnfEpaperViewer {
 
         const hint = this.els.clipScreen?.querySelector('[data-ep-clip-hint-text]');
         if (hint) {
-            hint.textContent = this.clipHintMessage();
+            hint.classList.add('hidden');
         }
 
-        if (this.els.clipWorkspaceHint) {
-            this.els.clipWorkspaceHint.textContent = this.isCoarsePointer()
-                ? 'Touch and drag on the page · पेज पर छूकर खींचें'
-                : 'Click and drag on the page · पेज पर क्लिक करके खींचें';
-        }
+        this.setClipInstruction(this.clipReadyMessage());
 
         const ui = this.getClipScreenElements();
         ui?.box?.classList.remove('is-complete');
@@ -1793,22 +1826,16 @@ class TnfEpaperViewer {
 
         const applyOverlayRect = (left, top, width, height) => {
             const normalized = this.overlayRectToNormalized(left, top, width, height);
-            const hint = this.els.clipScreen?.querySelector('[data-ep-clip-hint-text]');
 
             if (! normalized) {
-                if (hint) {
-                    hint.textContent = 'Selection too small — try again';
-                }
+                this.setClipInstruction('Selection too small — try again');
 
                 return false;
             }
 
             this.clipNormalized = normalized;
             this.syncClipOverlay(true);
-
-            if (hint) {
-                hint.textContent = 'Resize or choose a preset, then Share · बॉक्स बदलें या शेयर करें';
-            }
+            this.setClipInstruction(this.clipReadyMessage());
 
             return true;
         };
@@ -1890,6 +1917,7 @@ class TnfEpaperViewer {
             }
 
             this.dismissFirstClipHint();
+            this.setClipInstruction(this.clipHintMessage());
             this.activePointerId = event.pointerId;
             this.lastClipPointerId = event.pointerId;
             captureEl = event.currentTarget;

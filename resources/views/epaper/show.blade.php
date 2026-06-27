@@ -352,10 +352,10 @@
                         </p>
                         <h2 class="tnf-ep-clip-workspace-title">
                             Select area to clip
-                            <span class="tnf-ep-clip-workspace-title-hi">हिस्सा चुनें</span>
+                            <span class="tnf-ep-clip-workspace-title-hi"> · हिस्सा चुनें</span>
                         </h2>
                         <p class="tnf-ep-clip-workspace-sub" data-ep-clip-workspace-hint>
-                            Drag on the page to highlight the section you want to share
+                            Touch and drag on the page to select
                         </p>
                     </div>
 
@@ -402,10 +402,6 @@
                     <span class="tnf-ep-clip-zoom-label" data-ep-clip-zoom-label>100%</span>
                     <button type="button" class="tnf-ep-clip-zoom-btn" data-ep-clip-zoom-in aria-label="Zoom in">+</button>
                 </div>
-
-                <p class="tnf-ep-clip-first-hint hidden" data-ep-clip-first-hint role="status">
-                    👆 Use the Move bar to reposition, or drag corners · मूव बार से खिसकाएँ
-                </p>
 
                 <div class="tnf-ep-clip-workspace-page" data-ep-clip-workspace-page>
                     <img
