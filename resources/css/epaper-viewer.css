@@ -640,6 +640,24 @@
     display: none !important;
 }
 
+.tnf-ep-clip-workspace.is-loading .tnf-ep-clip-workspace-scroll::after {
+    content: 'Preparing page…';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(15, 19, 32, 0.55);
+    pointer-events: none;
+}
+
+.tnf-ep-clip-workspace.is-loading .tnf-ep-clip-screen {
+    visibility: hidden;
+}
+
 .tnf-ep-clip-workspace-shell {
     display: flex;
     flex: 1;
@@ -733,6 +751,7 @@
 }
 
 .tnf-ep-clip-workspace-scroll {
+    position: relative;
     flex: 1;
     min-height: 0;
     overflow: auto;
