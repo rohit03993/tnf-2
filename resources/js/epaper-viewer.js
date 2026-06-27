@@ -41,6 +41,12 @@ class TnfEpaperViewer {
             clipPreviewFrame: root.querySelector('[data-ep-clip-preview-frame]'),
             clipPreviewWrap: root.querySelector('[data-ep-clip-preview-wrap]'),
             clipScreen: root.querySelector('[data-ep-clip-screen]'),
+            shareModal: root.querySelector('[data-ep-share-modal]'),
+            shareUrl: root.querySelector('[data-ep-share-url]'),
+            editionShare: root.querySelector('[data-ep-edition-share]'),
+            shareCopyBtn: root.querySelector('[data-ep-copy-share]'),
+            shareNativeBtn: root.querySelector('[data-ep-share-native]'),
+            shareOpen: root.querySelector('[data-ep-share-open]'),
         };
 
         this.activeClipUrl = '';
@@ -196,8 +202,14 @@ class TnfEpaperViewer {
                     this.fitPageToView();
                 } else if (action === 'clip') {
                     this.toggleClipMode();
+                } else if (action === 'share') {
+                    this.openShareModal();
                 }
             });
+        });
+
+        this.root.querySelectorAll('[data-ep-share-modal-close]').forEach((el) => {
+            el.addEventListener('click', () => this.closeShareModal());
         });
 
         this.root.querySelectorAll('[data-ep-modal-close]').forEach((el) => {
@@ -205,17 +217,114 @@ class TnfEpaperViewer {
         });
 
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && !this.els.clipModal?.classList.contains('hidden')) {
+            if (event.key !== 'Escape') {
+                return;
+            }
+
+            if (! this.els.shareModal?.classList.contains('hidden')) {
+                this.closeShareModal();
+            } else if (! this.els.clipModal?.classList.contains('hidden')) {
                 this.closeClipModal();
             }
         });
 
         this.els.clipCopyBtn?.addEventListener('click', () => this.copyClipUrl());
+        this.els.shareCopyBtn?.addEventListener('click', () => this.copyShareUrl());
         this.els.clipDownload?.addEventListener('click', () => this.downloadClipPreview());
 
         if (navigator.share && this.els.clipNativeBtn) {
             this.els.clipNativeBtn.classList.remove('hidden');
             this.els.clipNativeBtn.addEventListener('click', () => this.nativeShareClip());
+        }
+
+        if (navigator.share && this.els.shareNativeBtn) {
+            this.els.shareNativeBtn.classList.remove('hidden');
+            this.els.shareNativeBtn.addEventListener('click', () => this.nativeShareEdition());
+        }
+    }
+
+    getEditionShareUrl() {
+        if (this.config.shareUrl?.startsWith('http')) {
+            return this.config.shareUrl;
+        }
+
+        return new URL(this.config.shareUrl || window.location.pathname, window.location.origin).href;
+    }
+
+    openShareModal() {
+        const shareUrl = this.getEditionShareUrl();
+
+        if (this.els.shareUrl) {
+            this.els.shareUrl.value = shareUrl;
+        }
+
+        this.updateShareLinks(this.els.editionShare, shareUrl, this.config.title, this.els.shareOpen);
+        this.els.shareModal?.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        if (! this.isCoarsePointer()) {
+            this.els.shareUrl?.focus();
+            this.els.shareUrl?.select();
+        }
+    }
+
+    closeShareModal() {
+        this.els.shareModal?.classList.add('hidden');
+
+        if (this.els.clipModal?.classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
+    }
+
+    async copyShareUrl() {
+        const button = this.els.shareCopyBtn;
+        const url = this.els.shareUrl?.value || this.getEditionShareUrl();
+
+        if (! url || ! button) {
+            return;
+        }
+
+        const copyIcon = button.querySelector('.tnf-ep-clip-copy-icon');
+        const copiedIcon = button.querySelector('.tnf-ep-clip-copied-icon');
+        const copyText = button.querySelector('.tnf-ep-clip-copy-text');
+
+        try {
+            await navigator.clipboard.writeText(url);
+            copyIcon?.classList.add('hidden');
+            copiedIcon?.classList.remove('hidden');
+            button.classList.add('tnf-ep-clip-copy-btn--copied');
+            if (copyText) {
+                copyText.textContent = 'Copied';
+            }
+
+            window.setTimeout(() => {
+                copyIcon?.classList.remove('hidden');
+                copiedIcon?.classList.add('hidden');
+                button.classList.remove('tnf-ep-clip-copy-btn--copied');
+                if (copyText) {
+                    copyText.textContent = 'Copy';
+                }
+            }, 2000);
+        } catch {
+            // Clipboard unavailable
+        }
+    }
+
+    async nativeShareEdition() {
+        const url = this.getEditionShareUrl();
+
+        if (! url || ! navigator.share) {
+            return;
+        }
+
+        try {
+            await navigator.share({
+                title: this.config.title,
+                text: this.config.title,
+                url,
+            });
+        } catch {
+            // User cancelled or share unavailable
         }
     }
 
@@ -1154,7 +1263,11 @@ class TnfEpaperViewer {
     }
 
     updateClipShareLinks(clipUrl, title) {
-        const encoded = encodeURIComponent(clipUrl);
+        this.updateShareLinks(this.els.clipShare, clipUrl, title, this.els.clipOpen);
+    }
+
+    updateShareLinks(container, shareUrl, title, openLink = null) {
+        const encoded = encodeURIComponent(shareUrl);
         const encodedTitle = encodeURIComponent(title);
         const urls = {
             facebook: `https://www.facebook.com/sharer/sharer.php?u=${encoded}`,
@@ -1164,15 +1277,15 @@ class TnfEpaperViewer {
             email: `mailto:?subject=${encodedTitle}&body=${encodedTitle}%20${encoded}`,
         };
 
-        this.els.clipShare?.querySelectorAll('[data-ep-share]').forEach((link) => {
+        container?.querySelectorAll('[data-ep-share]').forEach((link) => {
             const type = link.dataset.epShare;
             if (urls[type]) {
                 link.href = urls[type];
             }
         });
 
-        if (this.els.clipOpen) {
-            this.els.clipOpen.href = clipUrl;
+        if (openLink) {
+            openLink.href = shareUrl;
         }
     }
 

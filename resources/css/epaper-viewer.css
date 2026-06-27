@@ -64,6 +64,14 @@
         @apply hidden sm:inline-flex;
     }
 
+    .tnf-ep-btn-share {
+        @apply inline-flex gap-1.5 border-tnf-red text-tnf-red hover:bg-tnf-red hover:text-white;
+    }
+
+    .tnf-ep-btn-share svg {
+        @apply shrink-0;
+    }
+
     .tnf-ep-page-select {
         @apply min-h-touch rounded-tnf border border-tnf-gray-dark bg-white px-2 text-tnf-sm;
     }
@@ -372,7 +380,7 @@
     }
 
     .tnf-ep-mobile-bar-inner {
-        @apply grid min-h-14 grid-cols-[auto_1fr_auto_auto] items-center gap-1 px-1;
+        @apply grid min-h-14 grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-1 px-1;
     }
 
     .tnf-ep-mobile-icon-btn {
@@ -385,12 +393,22 @@
     }
 
     .tnf-ep-mobile-clip-btn {
-        @apply inline-flex min-h-touch items-center justify-center gap-1.5 rounded-full border border-tnf-gray-dark bg-tnf-gray/60 px-4 text-tnf-sm font-semibold text-tnf-navy transition-colors active:scale-[0.98];
+        @apply inline-flex min-h-touch items-center justify-center gap-1.5 rounded-full border border-tnf-gray-dark bg-tnf-gray/60 px-3 text-tnf-sm font-semibold text-tnf-navy transition-colors active:scale-[0.98];
         touch-action: manipulation;
     }
 
+    .tnf-ep-mobile-share-btn {
+        @apply inline-flex min-h-touch items-center justify-center gap-1 rounded-full border border-tnf-red bg-tnf-red px-3 text-tnf-sm font-semibold text-white transition-colors active:scale-[0.98];
+        touch-action: manipulation;
+    }
+
+    .tnf-ep-mobile-share-btn svg,
     .tnf-ep-mobile-clip-btn svg {
-        @apply h-5 w-5 shrink-0 text-tnf-red;
+        @apply h-5 w-5 shrink-0;
+    }
+
+    .tnf-ep-mobile-clip-btn svg {
+        @apply text-tnf-red;
     }
 
     .tnf-ep-modal {

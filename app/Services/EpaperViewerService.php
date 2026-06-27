@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\EpaperEdition;
 use App\Models\OgImage;
+use App\Support\FrontendUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -36,7 +37,8 @@ class EpaperViewerService
                 'w' => (float) $request->query('tnf_cw', 0),
                 'h' => (float) $request->query('tnf_ch', 0),
             ] : null,
-            'shareUrl' => route('epaper.show', $edition->slug),
+            'shareUrl' => FrontendUrl::route('epaper.show', $edition->slug),
+            'pdfDownloadUrl' => self::pdfUrl($edition),
             'clipSignUrl' => route('epaper.sign-clip', $edition->slug),
         ];
     }
