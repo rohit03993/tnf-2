@@ -7,6 +7,15 @@
         padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
     }
 
+    body.tnf-epaper-viewer-page .tnf-ticker-wrap,
+    body.tnf-epaper-viewer-page .tnf-topic-pills {
+        @apply hidden;
+    }
+
+    body.tnf-epaper-viewer-page .tnf-ep-viewer-toolbar {
+        @apply top-[3.25rem];
+    }
+
     @media (max-width: 1023px) {
         body.tnf-epaper-viewer-page .tnf-footer,
         body.tnf-epaper-viewer-page .tnf-back-to-top {
@@ -27,7 +36,11 @@
     }
 
     .tnf-epaper-viewer {
-        @apply bg-tnf-gray;
+        @apply bg-[#e8eaed];
+    }
+
+    .tnf-ep-viewer-body {
+        @apply mx-auto flex w-full max-w-site gap-4 px-3 py-3 sm:px-4 sm:py-4 lg:py-5;
     }
 
     .tnf-ep-viewer-toolbar {
@@ -88,10 +101,6 @@
         @apply bg-tnf-red text-white;
     }
 
-    .tnf-ep-viewer-body {
-        @apply mx-auto flex w-full max-w-site gap-4 px-3 py-3 sm:px-4 sm:py-4;
-    }
-
     .tnf-ep-thumbs-sidebar {
         @apply hidden w-28 shrink-0 space-y-2 overflow-y-auto lg:block;
         max-height: calc(100vh - 12rem);
@@ -140,7 +149,7 @@
     }
 
     .tnf-ep-stage-wrap {
-        @apply relative overflow-hidden rounded-tnf-lg bg-tnf-navy/5;
+        @apply relative overflow-hidden rounded-tnf-lg bg-[#525659];
     }
 
     .tnf-epaper-viewer.is-pdf-loading .tnf-ep-stage-wrap::after {
@@ -203,8 +212,8 @@
 
     @media (min-width: 1024px) {
         .tnf-ep-stage {
-            min-height: 50vh;
-            max-height: calc(100vh - 14rem);
+            min-height: 55vh;
+            max-height: calc(100vh - 11rem);
         }
     }
 
@@ -220,7 +229,7 @@
 
     .tnf-ep-page-image,
     .tnf-ep-pdf-canvas {
-        @apply block h-auto max-w-none;
+        @apply block h-auto max-w-none bg-white shadow-[0_8px_32px_rgba(0,0,0,0.35)];
         width: auto;
     }
 
@@ -237,7 +246,7 @@
     }
 
     .tnf-epaper-viewer.is-clip-mode .tnf-ep-stage {
-        @apply ring-2 ring-inset ring-tnf-red/50;
+        @apply ring-0;
     }
 
     .tnf-epaper-viewer.is-clip-mode .tnf-ep-btn-clip,
@@ -616,7 +625,154 @@
     display: none !important;
 }
 
-/* Clip overlay — scoped to the page stage so thumbnails stay usable */
+/* Clip workspace — full-screen modal (reliable crop UX) */
+.tnf-ep-clip-workspace {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    background: rgba(15, 19, 32, 0.94);
+    backdrop-filter: blur(6px);
+}
+
+.tnf-ep-clip-workspace.hidden {
+    display: none !important;
+}
+
+.tnf-ep-clip-workspace-shell {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.tnf-ep-clip-workspace-header {
+    display: flex;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.875rem 1rem;
+    padding-top: calc(0.875rem + env(safe-area-inset-top, 0px));
+    color: #fff;
+}
+
+@media (min-width: 640px) {
+    .tnf-ep-clip-workspace-header {
+        padding-inline: 1.5rem;
+    }
+}
+
+.tnf-ep-clip-workspace-kicker {
+    margin: 0;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.tnf-ep-clip-workspace-title {
+    margin: 0.125rem 0 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.tnf-ep-clip-workspace-sub {
+    margin: 0.25rem 0 0;
+    max-width: 36rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.tnf-ep-clip-workspace-header-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tnf-ep-clip-workspace-cancel,
+.tnf-ep-clip-workspace-share {
+    min-height: 2.5rem;
+    border-radius: 0.625rem;
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.tnf-ep-clip-workspace-cancel {
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: transparent;
+    color: #fff;
+}
+
+.tnf-ep-clip-workspace-cancel:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.tnf-ep-clip-workspace-share {
+    border: none;
+    background: #bc1e38;
+    color: #fff;
+}
+
+.tnf-ep-clip-workspace-share:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.tnf-ep-clip-workspace-share.is-ready:not(:disabled) {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.tnf-ep-clip-workspace-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+    .tnf-ep-clip-workspace-scroll {
+        display: flex;
+        justify-content: center;
+        padding: 1.5rem;
+    }
+}
+
+.tnf-ep-clip-workspace-page {
+    position: relative;
+    display: inline-block;
+    width: min(920px, 100%);
+    margin: 0 auto;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+.tnf-ep-clip-workspace-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.tnf-ep-clip-workspace-page .tnf-ep-clip-screen {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+}
+
+/* Clip overlay — selection UI inside workspace page */
 .tnf-ep-stage-wrap .tnf-ep-clip-screen {
     position: absolute;
     inset: 0;

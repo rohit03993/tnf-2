@@ -1,4 +1,4 @@
-<x-site.layout :epaper-viewer="true" :seo="$seo">
+<x-site.layout :epaper-viewer="true" :seo="$seo" :compact-chrome="true">
     @push('styles')
         @vite(['resources/css/epaper-viewer.css'])
     @endpush
@@ -90,41 +90,6 @@
                             </svg>
                         </button>
                     </nav>
-
-                    <div class="tnf-ep-clip-screen hidden" data-ep-clip-screen aria-hidden="true">
-                        <div class="tnf-ep-clip-catcher" data-ep-clip-catcher></div>
-                        <div class="tnf-ep-clip-visual" data-ep-clip-visual>
-                            <div class="tnf-ep-clip-image-tint" data-ep-clip-image-tint></div>
-                            <div class="tnf-ep-clip-shade tnf-ep-clip-shade--top"></div>
-                            <div class="tnf-ep-clip-shade tnf-ep-clip-shade--left"></div>
-                            <div class="tnf-ep-clip-shade tnf-ep-clip-shade--right"></div>
-                            <div class="tnf-ep-clip-shade tnf-ep-clip-shade--bottom"></div>
-                            <div class="tnf-ep-clip-box">
-                                <div class="tnf-ep-clip-box-toolbar" data-ep-clip-toolbar>
-                                    <button type="button" class="tnf-ep-clip-toolbar-btn tnf-ep-clip-toolbar-btn--share" data-ep-clip-share>
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-                                        </svg>
-                                        <span>Share</span>
-                                    </button>
-                                    <button type="button" class="tnf-ep-clip-toolbar-btn tnf-ep-clip-toolbar-btn--cancel" data-ep-clip-cancel>
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                        </svg>
-                                        <span>Cancel</span>
-                                    </button>
-                                </div>
-                                <span class="tnf-ep-clip-handle tnf-ep-clip-handle--tl" data-ep-clip-handle="tl"></span>
-                                <span class="tnf-ep-clip-handle tnf-ep-clip-handle--tr" data-ep-clip-handle="tr"></span>
-                                <span class="tnf-ep-clip-handle tnf-ep-clip-handle--bl" data-ep-clip-handle="bl"></span>
-                                <span class="tnf-ep-clip-handle tnf-ep-clip-handle--br" data-ep-clip-handle="br"></span>
-                                <span class="tnf-ep-clip-size"></span>
-                            </div>
-                        </div>
-                        <p class="tnf-ep-clip-screen-hint" role="status" data-ep-clip-hint-text>
-                            Touch and drag on the newspaper to select the area you want to share
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -365,6 +330,75 @@
                     </svg>
                     Share from device
                 </button>
+            </div>
+        </div>
+
+        <div class="tnf-ep-clip-workspace hidden" data-ep-clip-workspace role="dialog" aria-modal="true" aria-label="Clip and share">
+            <div class="tnf-ep-clip-workspace-shell">
+                <header class="tnf-ep-clip-workspace-header">
+                    <div class="tnf-ep-clip-workspace-heading">
+                        <p class="tnf-ep-clip-workspace-kicker">
+                            Page <span data-ep-clip-workspace-page-num>1</span>
+                        </p>
+                        <h2 class="tnf-ep-clip-workspace-title">Select area to clip</h2>
+                        <p class="tnf-ep-clip-workspace-sub" data-ep-clip-workspace-hint>
+                            Drag on the page to highlight the section you want to share
+                        </p>
+                    </div>
+                    <div class="tnf-ep-clip-workspace-header-actions">
+                        <button type="button" class="tnf-ep-clip-workspace-cancel" data-ep-clip-workspace-cancel>
+                            Cancel
+                        </button>
+                        <button type="button" class="tnf-ep-clip-workspace-share" data-ep-clip-workspace-share disabled>
+                            Share clip
+                        </button>
+                    </div>
+                </header>
+
+                <div class="tnf-ep-clip-workspace-scroll" data-ep-clip-workspace-scroll>
+                    <div class="tnf-ep-clip-workspace-page" data-ep-clip-workspace-page>
+                        <img
+                            data-ep-clip-workspace-image
+                            alt=""
+                            class="tnf-ep-clip-workspace-image"
+                            draggable="false"
+                        >
+
+                        <div class="tnf-ep-clip-screen hidden" data-ep-clip-screen aria-hidden="true">
+                            <div class="tnf-ep-clip-catcher" data-ep-clip-catcher></div>
+                            <div class="tnf-ep-clip-visual" data-ep-clip-visual>
+                                <div class="tnf-ep-clip-shade tnf-ep-clip-shade--top"></div>
+                                <div class="tnf-ep-clip-shade tnf-ep-clip-shade--left"></div>
+                                <div class="tnf-ep-clip-shade tnf-ep-clip-shade--right"></div>
+                                <div class="tnf-ep-clip-shade tnf-ep-clip-shade--bottom"></div>
+                                <div class="tnf-ep-clip-box">
+                                    <div class="tnf-ep-clip-box-toolbar hidden" data-ep-clip-toolbar>
+                                        <button type="button" class="tnf-ep-clip-toolbar-btn tnf-ep-clip-toolbar-btn--share" data-ep-clip-share>
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                                            </svg>
+                                            <span>Share</span>
+                                        </button>
+                                        <button type="button" class="tnf-ep-clip-toolbar-btn tnf-ep-clip-toolbar-btn--cancel" data-ep-clip-cancel>
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                            <span>Cancel</span>
+                                        </button>
+                                    </div>
+                                    <span class="tnf-ep-clip-handle tnf-ep-clip-handle--tl" data-ep-clip-handle="tl"></span>
+                                    <span class="tnf-ep-clip-handle tnf-ep-clip-handle--tr" data-ep-clip-handle="tr"></span>
+                                    <span class="tnf-ep-clip-handle tnf-ep-clip-handle--bl" data-ep-clip-handle="bl"></span>
+                                    <span class="tnf-ep-clip-handle tnf-ep-clip-handle--br" data-ep-clip-handle="br"></span>
+                                    <span class="tnf-ep-clip-size"></span>
+                                </div>
+                            </div>
+                            <p class="tnf-ep-clip-screen-hint" role="status" data-ep-clip-hint-text>
+                                Drag on the page to select the area you want to share
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

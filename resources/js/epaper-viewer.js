@@ -12,6 +12,8 @@ class TnfEpaperViewer {
         this.pageWidth = 0;
         this.pageHeight = 0;
         this.clipMode = false;
+        this.clipWorkspaceActive = false;
+        this.clipWorkspaceImageDataUrl = '';
         this.clipStart = null;
         this.clipRect = null;
         this.pdfDoc = null;
@@ -41,6 +43,14 @@ class TnfEpaperViewer {
             clipPreviewFrame: root.querySelector('[data-ep-clip-preview-frame]'),
             clipPreviewWrap: root.querySelector('[data-ep-clip-preview-wrap]'),
             clipScreen: root.querySelector('[data-ep-clip-screen]'),
+            clipWorkspace: root.querySelector('[data-ep-clip-workspace]'),
+            clipWorkspaceImage: root.querySelector('[data-ep-clip-workspace-image]'),
+            clipWorkspacePage: root.querySelector('[data-ep-clip-workspace-page]'),
+            clipWorkspaceScroll: root.querySelector('[data-ep-clip-workspace-scroll]'),
+            clipWorkspaceCancel: root.querySelector('[data-ep-clip-workspace-cancel]'),
+            clipWorkspaceShare: root.querySelector('[data-ep-clip-workspace-share]'),
+            clipWorkspacePageNum: root.querySelector('[data-ep-clip-workspace-page-num]'),
+            clipWorkspaceHint: root.querySelector('[data-ep-clip-workspace-hint]'),
             shareModal: root.querySelector('[data-ep-share-modal]'),
             shareUrl: root.querySelector('[data-ep-share-url]'),
             editionShare: root.querySelector('[data-ep-edition-share]'),
@@ -251,6 +261,8 @@ class TnfEpaperViewer {
 
         this.els.clipCancelMobile?.addEventListener('click', () => this.toggleClipMode(true));
         this.els.clipShareMobile?.addEventListener('click', () => this.confirmClipShare());
+        this.els.clipWorkspaceCancel?.addEventListener('click', () => this.toggleClipMode(true));
+        this.els.clipWorkspaceShare?.addEventListener('click', () => this.confirmClipShare());
     }
 
     bindTouchZoom() {
@@ -727,32 +739,75 @@ class TnfEpaperViewer {
     }
 
     async prepareClipMode() {
-        if (this.els.stage) {
-            this.els.stage.scrollTop = 0;
-            this.els.stage.scrollLeft = 0;
-        }
-
-        this.fitPageToView();
-
         if (this.pdfDoc) {
             this.setPdfLoading(true);
             await this.renderPdfPage(this.currentPage);
             this.setPdfLoading(false);
         }
 
-        await this.applyPageZoom();
+        const imageReady = await this.loadClipWorkspaceImage();
 
-        if (this.els.stage) {
-            this.els.stage.scrollTop = 0;
-            this.els.stage.scrollLeft = 0;
+        if (! imageReady) {
+            this.toggleClipMode(true);
+            return;
         }
 
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-
+        this.clipWorkspaceActive = true;
         this.mountClipScreen();
         this.bindClipDrag();
-        this.showClipMobileActions(this.isCoarsePointer());
-        this.updateClipMobileShareState();
+        this.showClipMobileActions(false);
+        this.updateClipShareButtonsState();
+    }
+
+    async loadClipWorkspaceImage() {
+        const img = this.els.clipWorkspaceImage;
+
+        if (! img) {
+            return false;
+        }
+
+        this.fitPageToView();
+        await this.applyPageZoom();
+
+        const dataUrl = await this.captureCurrentPagePreview();
+
+        if (! dataUrl) {
+            return false;
+        }
+
+        this.clipWorkspaceImageDataUrl = dataUrl;
+        img.src = dataUrl;
+
+        await new Promise((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error('Clip workspace image failed to load'));
+        });
+
+        return img.naturalWidth > 0 && img.naturalHeight > 0;
+    }
+
+    async captureCurrentPagePreview() {
+        const pageImage = this.els.pageImage;
+        const pdfCanvas = this.els.pdfCanvas;
+
+        if (pageImage && ! pageImage.classList.contains('hidden') && pageImage.src) {
+            if (pageImage.complete && pageImage.naturalWidth) {
+                return pageImage.src;
+            }
+
+            await new Promise((resolve, reject) => {
+                pageImage.addEventListener('load', resolve, { once: true });
+                pageImage.addEventListener('error', reject, { once: true });
+            });
+
+            return pageImage.src;
+        }
+
+        if (pdfCanvas && ! pdfCanvas.classList.contains('hidden') && pdfCanvas.width > 0) {
+            return pdfCanvas.toDataURL('image/jpeg', 0.92);
+        }
+
+        return null;
     }
 
     getStageWrapRect() {
@@ -773,6 +828,23 @@ class TnfEpaperViewer {
     }
 
     getImageOverlayRect() {
+        if (this.clipWorkspaceActive) {
+            const img = this.els.clipWorkspaceImage;
+
+            if (! img || img.clientWidth < 1 || img.clientHeight < 1) {
+                return null;
+            }
+
+            return {
+                left: 0,
+                top: 0,
+                width: img.clientWidth,
+                height: img.clientHeight,
+                right: img.clientWidth,
+                bottom: img.clientHeight,
+            };
+        }
+
         const imageRect = this.getImageScreenRect();
         const reference = this.els.stage?.getBoundingClientRect() || this.getStageWrapRect();
 
@@ -791,6 +863,17 @@ class TnfEpaperViewer {
     }
 
     getClipOverlayBounds() {
+        if (this.clipWorkspaceActive && this.els.clipWorkspacePage) {
+            const page = this.els.clipWorkspacePage;
+
+            return {
+                width: page.clientWidth,
+                height: page.clientHeight,
+                offsetLeft: 0,
+                offsetTop: 0,
+            };
+        }
+
         const stage = this.els.stage;
         const wrap = this.els.stageWrap;
 
@@ -936,25 +1019,34 @@ class TnfEpaperViewer {
         this.els.clipMobileActions.setAttribute('aria-hidden', show ? 'false' : 'true');
     }
 
-    updateClipMobileShareState() {
-        if (! this.els.clipShareMobile) {
-            return;
+    updateClipShareButtonsState() {
+        const ready = Boolean(this.pendingClip);
+
+        if (this.els.clipShareMobile) {
+            this.els.clipShareMobile.disabled = ! ready;
+            this.els.clipShareMobile.classList.toggle('is-ready', ready);
         }
 
-        const ready = Boolean(this.pendingClip);
-        this.els.clipShareMobile.disabled = ! ready;
-        this.els.clipShareMobile.classList.toggle('is-ready', ready);
+        if (this.els.clipWorkspaceShare) {
+            this.els.clipWorkspaceShare.disabled = ! ready;
+            this.els.clipWorkspaceShare.classList.toggle('is-ready', ready);
+        }
     }
 
     mountClipScreen() {
-        if (! this.els.clipScreen) {
+        if (! this.els.clipScreen || ! this.els.clipWorkspace) {
             return;
         }
 
+        this.els.clipWorkspace.classList.remove('hidden');
         this.els.clipScreen.classList.remove('hidden');
         this.els.clipScreen.setAttribute('aria-hidden', 'false');
         document.body.classList.add('tnf-ep-is-clipping');
         document.body.style.overflow = 'hidden';
+
+        if (this.els.clipWorkspacePageNum) {
+            this.els.clipWorkspacePageNum.textContent = String(this.currentPage);
+        }
 
         this.pendingClip = null;
         this.clipNormalized = this.getDefaultClipNormalized();
@@ -964,6 +1056,12 @@ class TnfEpaperViewer {
             hint.textContent = this.isCoarsePointer()
                 ? 'Drag to select an area, then tap Share clip'
                 : 'Drag to select an area, resize the box, then click Share';
+        }
+
+        if (this.els.clipWorkspaceHint) {
+            this.els.clipWorkspaceHint.textContent = this.isCoarsePointer()
+                ? 'Touch and drag on the page to select what you want to share'
+                : 'Click and drag on the page to select what you want to share';
         }
 
         const ui = this.getClipScreenElements();
@@ -979,47 +1077,30 @@ class TnfEpaperViewer {
 
         if (! this.clipScrollHandler) {
             this.clipScrollHandler = () => this.syncClipOverlay();
-            this.els.stage?.addEventListener('scroll', this.clipScrollHandler, { passive: true });
+            this.els.clipWorkspaceScroll?.addEventListener('scroll', this.clipScrollHandler, { passive: true });
             window.addEventListener('resize', this.clipScrollHandler, { passive: true });
         }
     }
 
     unmountClipScreen() {
+        this.els.clipWorkspace?.classList.add('hidden');
         this.els.clipScreen?.classList.add('hidden');
         this.els.clipScreen?.setAttribute('aria-hidden', 'true');
+        this.clipWorkspaceActive = false;
         document.body.classList.remove('tnf-ep-is-clipping');
         document.body.style.overflow = '';
         this.activePointerId = null;
         this.resetClipScreenSelection();
-        this.updateClipMobileShareState();
+        this.updateClipShareButtonsState();
 
         if (this.clipScrollHandler) {
-            this.els.stage?.removeEventListener('scroll', this.clipScrollHandler);
+            this.els.clipWorkspaceScroll?.removeEventListener('scroll', this.clipScrollHandler);
             window.removeEventListener('resize', this.clipScrollHandler);
             this.clipScrollHandler = null;
         }
     }
 
-    updateClipImageTint() {
-        const rect = this.getImageOverlayRect();
-        const tint = this.els.clipScreen?.querySelector('[data-ep-clip-image-tint]');
-        const bounds = this.getClipOverlayBounds();
-
-        if (! rect || ! tint) {
-            return;
-        }
-
-        Object.assign(tint.style, {
-            top: `${bounds.offsetTop + rect.top}px`,
-            left: `${bounds.offsetLeft + rect.left}px`,
-            width: `${rect.width}px`,
-            height: `${rect.height}px`,
-        });
-    }
-
     syncClipOverlay(markComplete = false) {
-        this.updateClipImageTint();
-
         if (! this.clipNormalized) {
             return;
         }
@@ -1048,7 +1129,7 @@ class TnfEpaperViewer {
             this.syncClipOverlay(true);
         }
 
-        this.updateClipMobileShareState();
+        this.updateClipShareButtonsState();
     }
 
     getClipScreenElements() {
@@ -1069,7 +1150,6 @@ class TnfEpaperViewer {
             box: visual.querySelector('.tnf-ep-clip-box'),
             toolbar: visual.querySelector('[data-ep-clip-toolbar]'),
             sizeLabel: visual.querySelector('.tnf-ep-clip-size'),
-            tint: visual.querySelector('[data-ep-clip-image-tint]'),
         };
     }
 
@@ -1100,7 +1180,6 @@ class TnfEpaperViewer {
             }
 
             ui.visual?.classList.remove('is-active');
-            ui.tint?.classList.remove('hidden');
 
             return;
         }
@@ -1148,7 +1227,6 @@ class TnfEpaperViewer {
         });
 
         ui.visual.classList.toggle('is-active', width > 0 || height > 0);
-        ui.tint?.classList.toggle('hidden', width > 0 || height > 0);
     }
 
     resetClipScreenSelection() {
@@ -1164,14 +1242,13 @@ class TnfEpaperViewer {
 
         this.updateClipScreenShades(0, 0, 0, 0);
         ui.box?.classList.remove('is-complete');
-        ui.tint?.classList.remove('hidden');
         ui.visual?.classList.remove('is-active');
 
         if (ui.sizeLabel) {
             ui.sizeLabel.textContent = '';
         }
 
-        this.updateClipMobileShareState();
+        this.updateClipShareButtonsState();
     }
 
     confirmClipShare() {
@@ -1227,11 +1304,17 @@ class TnfEpaperViewer {
     }
 
     clientPointToOverlay(clientX, clientY) {
-        const stageRect = this.els.stage?.getBoundingClientRect() || this.getStageWrapRect();
+        const reference = this.clipWorkspaceActive
+            ? this.els.clipWorkspacePage?.getBoundingClientRect()
+            : this.els.stage?.getBoundingClientRect() || this.getStageWrapRect();
+
+        if (! reference) {
+            return { x: clientX, y: clientY };
+        }
 
         return {
-            x: clientX - stageRect.left,
-            y: clientY - stageRect.top,
+            x: clientX - reference.left,
+            y: clientY - reference.top,
         };
     }
 
@@ -1592,6 +1675,10 @@ class TnfEpaperViewer {
     }
 
     getClipSourceElement() {
+        if (this.clipWorkspaceActive && this.els.clipWorkspaceImage?.src) {
+            return this.els.clipWorkspaceImage;
+        }
+
         if (this.els.pageImage && ! this.els.pageImage.classList.contains('hidden')) {
             return this.els.pageImage;
         }
