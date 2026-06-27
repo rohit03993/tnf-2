@@ -24,11 +24,19 @@ export function openDrawer() {
 
     document.body.classList.add('tnf-drawer-open');
     document.body.style.overflow = 'hidden';
+    syncDrawerAria(true);
 }
 
 export function closeDrawer() {
     document.body.classList.remove('tnf-drawer-open');
     document.body.style.overflow = '';
+    syncDrawerAria(false);
+}
+
+function syncDrawerAria(open) {
+    document.querySelectorAll('[data-tnf-drawer-toggle]').forEach((toggle) => {
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
 }
 
 export function toggleDrawer() {
@@ -167,6 +175,32 @@ function initShareButtons() {
     }
 }
 
+function initReadingProgress() {
+    const bar = document.getElementById('tnf-reading-progress');
+    const target = document.getElementById('tnf-reading-target');
+
+    if (! bar || ! target) {
+        return;
+    }
+
+    const update = () => {
+        const rect = target.getBoundingClientRect();
+        const total = target.offsetHeight - window.innerHeight;
+
+        if (total <= 0) {
+            bar.style.transform = 'scaleX(0)';
+            return;
+        }
+
+        const scrolled = Math.min(Math.max(-rect.top, 0), total);
+        bar.style.transform = `scaleX(${scrolled / total})`;
+    };
+
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+}
+
 export function initSiteUi() {
     document.body.classList.remove('tnf-drawer-open');
     document.body.style.overflow = '';
@@ -174,6 +208,7 @@ export function initSiteUi() {
     initDrawer();
     initBackToTop();
     initShareButtons();
+    initReadingProgress();
 }
 
 document.addEventListener('alpine:init', () => {

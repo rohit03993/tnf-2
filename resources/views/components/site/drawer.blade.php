@@ -23,7 +23,7 @@
 
 <div class="tnf-drawer-overlay" data-tnf-drawer-close aria-hidden="true"></div>
 
-<aside class="tnf-drawer" role="dialog" aria-label="Site menu" aria-modal="true">
+<aside id="tnf-drawer" class="tnf-drawer" role="dialog" aria-label="Site menu" aria-modal="true">
     <div class="tnf-drawer-top">
         <div class="tnf-drawer-top-bar">
             <x-site.logo size="sm" data-tnf-drawer-close />

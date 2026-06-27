@@ -36,7 +36,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureRateLimiting();
 
-        Paginator::useTailwind();
+        Paginator::defaultView('vendor.pagination.tnf');
+        Paginator::defaultSimpleView('vendor.pagination.tnf');
 
         User::observe(UserObserver::class);
 

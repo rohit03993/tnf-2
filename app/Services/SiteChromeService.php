@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Article;
 use App\Models\Category;
 use App\Models\Setting;
+use App\Models\Tag;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -33,6 +34,14 @@ class SiteChromeService
                 'disclaimerText' => Setting::get('disclaimer_text', ''),
                 'disclaimerEmail' => Setting::get('disclaimer_email', 'contact@tnftoday.com'),
                 'creditsLine' => Setting::get('credits_line', ''),
+                'hotTags' => $authLite
+                    ? collect()
+                    : Tag::query()
+                        ->whereHas('articles')
+                        ->withCount('articles')
+                        ->orderByDesc('articles_count')
+                        ->limit(12)
+                        ->get(['id', 'name', 'slug']),
             ];
         });
     }

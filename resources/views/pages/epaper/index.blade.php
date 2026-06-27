@@ -1,19 +1,25 @@
 <x-site.layout title="ePaper — TNF Today">
     <div class="tnf-page-content">
-        <h1 class="tnf-section-title mb-6">ePaper</h1>
+        <x-site.page-header
+            title="ePaper"
+            description="Browse digital newspaper editions"
+            :breadcrumbs="[
+                ['label' => 'Home', 'url' => route('home')],
+                ['label' => 'ePaper', 'url' => null],
+            ]"
+            class="mb-6"
+        />
 
         @if($editions->isNotEmpty())
-            <div class="tnf-cat-block-grid tnf-cat-block-grid--epaper">
+            <div class="tnf-archive-grid tnf-archive-grid--epaper">
                 @foreach($editions as $edition)
                     <x-cards.epaper-card :edition="$edition" />
                 @endforeach
             </div>
         @else
-            <div class="rounded-tnf-lg bg-white p-8 text-center shadow-card">
-                <p class="text-tnf-muted">No ePaper editions published yet.</p>
-                <p class="mt-2 text-tnf-sm text-tnf-muted">
-                    Run <code class="rounded bg-tnf-gray px-1.5 py-0.5">php artisan db:seed --class=DemoContentSeeder</code> for demo editions.
-                </p>
+            <div class="tnf-empty-state">
+                <p class="tnf-empty-state-title">No editions yet</p>
+                <p class="tnf-empty-state-desc">No ePaper editions published yet.</p>
             </div>
         @endif
     </div>

@@ -43,17 +43,17 @@
                 </div>
             @endif
 
-            <div class="prose prose-tnf tnf-article-body mt-6">
+            <div class="prose prose-tnf tnf-article-body mt-6" id="tnf-reading-target">
                 {!! $article->content !!}
             </div>
 
-            <div class="mt-8">
+            <div class="mt-8 hidden lg:block">
                 <x-site.share-bar :title="$article->title" />
             </div>
         </div>
 
         @if($relatedArticles->isNotEmpty())
-            <section class="mt-10 tnf-cat-block">
+            <section class="tnf-article-related mx-auto mt-10 max-w-3xl lg:max-w-none">
                 <h2 class="tnf-section-title mb-4">Related News</h2>
                 <div class="tnf-cat-block-grid">
                     @foreach($relatedArticles as $related)
@@ -63,4 +63,8 @@
             </section>
         @endif
     </article>
+
+    <div class="tnf-share-sticky-wrap lg:hidden">
+        <x-site.share-bar :title="$article->title" class="tnf-share-bar--compact" />
+    </div>
 </x-site.layout>

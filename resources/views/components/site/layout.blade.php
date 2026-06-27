@@ -43,18 +43,24 @@
 <body
     @class([
         'tnf-auth-lite' => $chrome['authLite'],
-        'tnf-no-bottom-nav' => $chrome['authLite'] || ($isApp ?? false) || ($epaperViewer ?? false),
+        'tnf-no-bottom-nav' => $chrome['authLite'] || ($epaperViewer ?? false),
         'tnf-epaper-viewer-page' => $epaperViewer ?? false,
+        'tnf-app-mode' => $isApp ?? false,
     ])
     x-data="tnfSite()"
     @if($isApp ?? false) data-tnf-app="1" @endif
     @if(request()->routeIs('home')) data-tnf-home="1" @endif
 >
+    @if(request()->routeIs('article.show', 'videos.show'))
+        <div class="tnf-reading-progress" id="tnf-reading-progress" aria-hidden="true"></div>
+    @endif
+
     @unless($chrome['authLite'])
         <x-site.header :chrome="$chrome" />
         @unless($compactChrome ?? false)
             <x-site.masthead-banner :image="$chrome['bannerImage']" :url="$chrome['bannerLink']" />
         @endunless
+        <x-site.topic-pills :tags="$chrome['hotTags'] ?? collect()" />
         <x-site.drawer :groups="$chrome['drawerGroups']" />
     @endunless
 
