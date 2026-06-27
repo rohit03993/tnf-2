@@ -405,7 +405,7 @@
     </div>
 
     @push('scripts')
-        @if((! empty($config['pdfUrl']) && empty($config['pages'])) || ($config['clipMode'] ?? false))
+        @if(! empty($config['pdfUrl']) || ($config['clipMode'] ?? false))
             <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
         @endif
         @vite(['resources/js/epaper-viewer.js'])

@@ -491,12 +491,26 @@ class TnfEpaperViewer {
                         resolve();
                     };
 
+                    const onError = async () => {
+                        if (this.config.pdfUrl && ! this.pdfDoc) {
+                            await this.initPdfFallback();
+
+                            if (this.pdfDoc) {
+                                await this.renderPdfPage(next);
+                            }
+                        }
+
+                        resolve();
+                    };
+
                     this.els.pageImage.onload = onReady;
-                    this.els.pageImage.onerror = resolve;
+                    this.els.pageImage.onerror = onError;
                     this.els.pageImage.src = url;
 
                     if (this.els.pageImage.complete && this.els.pageImage.naturalWidth) {
                         onReady();
+                    } else if (this.els.pageImage.complete && ! this.els.pageImage.naturalWidth) {
+                        void onError();
                     }
                 });
 
@@ -730,8 +744,10 @@ class TnfEpaperViewer {
         });
 
         if (this.clipMode) {
+            this.resolveClipElements();
+
             if (! this.els.clipWorkspace || ! this.els.clipScreen) {
-                console.error('TNF ePaper: clip UI is missing. Deploy the latest build (npm run build) and hard refresh.');
+                console.error('TNF ePaper: clip UI is missing. Run npm run build on the server and hard refresh.');
                 this.clipMode = false;
                 this.root.classList.remove('is-clip-mode');
                 this.root.querySelectorAll('[data-ep-action="clip"]').forEach((button) => {
@@ -750,6 +766,24 @@ class TnfEpaperViewer {
         }
     }
 
+    resolveClipElements() {
+        const selectors = {
+            clipScreen: '[data-ep-clip-screen]',
+            clipWorkspace: '[data-ep-clip-workspace]',
+            clipWorkspaceImage: '[data-ep-clip-workspace-image]',
+            clipWorkspacePage: '[data-ep-clip-workspace-page]',
+            clipWorkspaceScroll: '[data-ep-clip-workspace-scroll]',
+            clipWorkspaceCancel: '[data-ep-clip-workspace-cancel]',
+            clipWorkspaceShare: '[data-ep-clip-workspace-share]',
+            clipWorkspacePageNum: '[data-ep-clip-workspace-page-num]',
+            clipWorkspaceHint: '[data-ep-clip-workspace-hint]',
+        };
+
+        Object.entries(selectors).forEach(([key, selector]) => {
+            this.els[key] = document.querySelector(selector);
+        });
+    }
+
     openClipWorkspaceShell() {
         const workspace = this.els.clipWorkspace;
 
@@ -761,20 +795,26 @@ class TnfEpaperViewer {
             document.body.appendChild(workspace);
         }
 
-        workspace.classList.remove('hidden');
+        workspace.classList.remove('hidden', 'has-error');
         workspace.classList.add('is-loading');
+        workspace.style.display = 'flex';
         document.body.classList.add('tnf-ep-is-clipping');
         document.body.style.overflow = 'hidden';
     }
 
+    showClipWorkspaceError(message) {
+        const workspace = this.els.clipWorkspace;
+
+        workspace?.classList.remove('is-loading');
+        workspace?.classList.add('has-error');
+
+        if (this.els.clipWorkspaceHint) {
+            this.els.clipWorkspaceHint.textContent = message;
+        }
+    }
+
     async prepareClipMode() {
         try {
-            if (this.pdfDoc) {
-                this.setPdfLoading(true);
-                await this.renderPdfPage(this.currentPage);
-                this.setPdfLoading(false);
-            }
-
             const imageReady = await this.loadClipWorkspaceImage();
 
             if (! imageReady) {
@@ -788,7 +828,111 @@ class TnfEpaperViewer {
             this.updateClipShareButtonsState();
         } catch (error) {
             console.error('TNF ePaper: clip mode failed.', error);
-            this.toggleClipMode(true);
+            this.showClipWorkspaceError('Could not prepare this page for clipping. Tap Cancel and try again, or refresh the page.');
+        } finally {
+            this.setPdfLoading(false);
+        }
+    }
+
+    async waitForImageElement(img) {
+        if (img.complete && img.naturalWidth > 0) {
+            return;
+        }
+
+        await new Promise((resolve, reject) => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', () => reject(new Error('Image failed to load')), { once: true });
+        });
+    }
+
+    imageElementToDataUrl(imageLike) {
+        const naturalWidth = imageLike.naturalWidth || imageLike.width;
+        const naturalHeight = imageLike.naturalHeight || imageLike.height;
+
+        if (! naturalWidth || ! naturalHeight) {
+            return null;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = naturalWidth;
+        canvas.height = naturalHeight;
+
+        const context = canvas.getContext('2d', { alpha: false });
+
+        if (! context) {
+            return null;
+        }
+
+        context.drawImage(imageLike, 0, 0, naturalWidth, naturalHeight);
+
+        try {
+            return canvas.toDataURL('image/jpeg', 0.9);
+        } catch (error) {
+            console.warn('TNF ePaper: canvas export failed.', error);
+
+            return null;
+        }
+    }
+
+    async fetchImageAsDataUrl(url) {
+        try {
+            const response = await fetch(url, { credentials: 'same-origin' });
+
+            if (! response.ok) {
+                return null;
+            }
+
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            const img = new Image();
+
+            try {
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = objectUrl;
+                });
+
+                return this.imageElementToDataUrl(img);
+            } finally {
+                URL.revokeObjectURL(objectUrl);
+            }
+        } catch (error) {
+            console.warn('TNF ePaper: fetch image for clip failed.', error);
+
+            return null;
+        }
+    }
+
+    async ensurePdfDocForClip() {
+        if (this.pdfDoc || ! this.config.pdfUrl) {
+            return Boolean(this.pdfDoc);
+        }
+
+        const pdfJsReady = await this.waitForPdfJs();
+
+        if (! pdfJsReady) {
+            console.error('TNF ePaper: PDF.js is not loaded — clip needs it when page images are unavailable.');
+
+            return false;
+        }
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        try {
+            const loadingTask = pdfjsLib.getDocument({
+                url: this.config.pdfUrl,
+                rangeChunkSize: 65536,
+                disableStream: false,
+                disableAutoFetch: false,
+            });
+            this.pdfDoc = await loadingTask.promise;
+
+            return true;
+        } catch (error) {
+            console.error('TNF ePaper: failed to open PDF for clip.', error);
+
+            return false;
         }
     }
 
@@ -799,9 +943,6 @@ class TnfEpaperViewer {
             return false;
         }
 
-        this.fitPageToView();
-        await this.applyPageZoom();
-
         const dataUrl = await this.captureCurrentPagePreview();
 
         if (! dataUrl) {
@@ -810,11 +951,7 @@ class TnfEpaperViewer {
 
         this.clipWorkspaceImageDataUrl = dataUrl;
         img.src = dataUrl;
-
-        await new Promise((resolve, reject) => {
-            img.onload = () => resolve();
-            img.onerror = () => reject(new Error('Clip workspace image failed to load'));
-        });
+        await this.waitForImageElement(img);
 
         return img.naturalWidth > 0 && img.naturalHeight > 0;
     }
@@ -823,29 +960,41 @@ class TnfEpaperViewer {
         const pageImage = this.els.pageImage;
         const pdfCanvas = this.els.pdfCanvas;
 
-        if (pageImage && ! pageImage.classList.contains('hidden') && pageImage.src) {
-            if (pageImage.complete && pageImage.naturalWidth) {
-                return pageImage.src;
+        if (pageImage && ! pageImage.classList.contains('hidden')) {
+            if (! pageImage.complete || ! pageImage.naturalWidth) {
+                await new Promise((resolve, reject) => {
+                    pageImage.addEventListener('load', resolve, { once: true });
+                    pageImage.addEventListener('error', reject, { once: true });
+                });
             }
 
-            await new Promise((resolve, reject) => {
-                pageImage.addEventListener('load', resolve, { once: true });
-                pageImage.addEventListener('error', reject, { once: true });
-            });
+            const fromImage = this.imageElementToDataUrl(pageImage);
 
-            return pageImage.src;
-        }
-
-        if (this.pdfDoc) {
-            return this.renderPdfClipPreviewDataUrl(this.currentPage);
+            if (fromImage) {
+                return fromImage;
+            }
         }
 
         if (pdfCanvas && ! pdfCanvas.classList.contains('hidden') && pdfCanvas.width > 0) {
-            try {
-                return pdfCanvas.toDataURL('image/jpeg', 0.92);
-            } catch (error) {
-                console.warn('TNF ePaper: display canvas capture failed.', error);
+            const fromCanvas = this.imageElementToDataUrl(pdfCanvas);
+
+            if (fromCanvas) {
+                return fromCanvas;
             }
+        }
+
+        if (await this.ensurePdfDocForClip()) {
+            const fromPdf = await this.renderPdfClipPreviewDataUrl(this.currentPage);
+
+            if (fromPdf) {
+                return fromPdf;
+            }
+        }
+
+        const pageUrl = this.getPageUrl(this.currentPage);
+
+        if (pageUrl) {
+            return this.fetchImageAsDataUrl(pageUrl);
         }
 
         return null;
@@ -1148,7 +1297,8 @@ class TnfEpaperViewer {
 
     unmountClipScreen() {
         this.els.clipWorkspace?.classList.add('hidden');
-        this.els.clipWorkspace?.classList.remove('is-loading');
+        this.els.clipWorkspace?.classList.remove('is-loading', 'has-error');
+        this.els.clipWorkspace?.style.removeProperty('display');
         this.els.clipScreen?.classList.add('hidden');
         this.els.clipScreen?.setAttribute('aria-hidden', 'true');
         this.clipWorkspaceActive = false;
