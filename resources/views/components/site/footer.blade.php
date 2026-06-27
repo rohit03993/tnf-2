@@ -30,7 +30,6 @@
                         <li><a href="{{ route('home') }}">Home</a></li>
                         <li><a href="{{ route('videos.index') }}">Videos</a></li>
                         <li><a href="{{ route('epaper.index') }}">ePaper</a></li>
-                        <li><a href="{{ route('search') }}">Search</a></li>
                     </ul>
                 </div>
 
@@ -53,7 +52,7 @@
         </div>
 
         @if(filled($disclaimer))
-            <div class="tnf-footer-disclaimer prose prose-invert max-w-none">
+            <div class="tnf-footer-disclaimer prose max-w-none">
                 {!! $disclaimer !!}
             </div>
         @endif

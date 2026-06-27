@@ -2,13 +2,7 @@
 
 <header class="tnf-header">
     <div class="tnf-container tnf-header-top">
-        <a href="{{ route('search') }}" class="tnf-header-icon-btn lg:hidden" aria-label="Search">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-        </a>
-
-        <x-site.logo class="tnf-header-logo--centered" />
+        <x-site.logo />
 
         <nav class="tnf-header-nav" aria-label="Primary">
             @foreach($chrome['primaryNav'] as $item)

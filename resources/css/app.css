@@ -134,7 +134,7 @@
 
     /* Header — see resources/css/components/header.css */
     .tnf-header {
-        @apply sticky top-0 z-50 bg-tnf-navy text-white shadow-header;
+        @apply sticky top-0 z-50 border-b border-tnf-gray-dark bg-white text-tnf-navy shadow-sm;
         padding-top: var(--tnf-safe-top);
     }
 
@@ -164,28 +164,24 @@
 
     @media (max-width: 1023px) {
         .tnf-header-top {
-            display: grid;
-            grid-template-columns: 2.75rem 1fr auto;
+            display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 0.5rem;
         }
 
-        .tnf-header-logo--centered {
-            justify-self: center;
-        }
-
         .tnf-header-actions {
-            @apply ml-0 justify-self-end;
+            @apply ml-0 shrink-0;
         }
     }
 
     .tnf-header-icon-btn {
-        @apply inline-flex min-h-touch min-w-touch items-center justify-center rounded-xl text-white transition hover:bg-tnf-navy-light active:scale-95;
+        @apply inline-flex min-h-touch min-w-touch items-center justify-center rounded-xl text-tnf-navy transition hover:bg-tnf-gray active:scale-95;
         touch-action: manipulation;
     }
 
     .tnf-header-logo {
-        @apply flex shrink-0 items-center gap-2 font-bold text-white;
+        @apply flex shrink-0 items-center gap-2 font-bold text-tnf-navy;
     }
 
     .tnf-header-logo-mark {
@@ -197,7 +193,7 @@
     }
 
     .tnf-header-nav-link {
-        @apply rounded-tnf px-3 py-2 text-tnf-sm font-medium text-white/90 hover:bg-tnf-navy-light hover:text-white;
+        @apply rounded-tnf px-3 py-2 text-tnf-sm font-medium text-tnf-navy/90 hover:bg-tnf-gray hover:text-tnf-navy;
     }
 
     .tnf-header-nav-link--active {
@@ -213,7 +209,7 @@
     }
 
     .tnf-header-btn-epaper {
-        @apply tnf-header-btn border border-white/30 px-2.5 text-white hover:bg-white/10 lg:px-3;
+        @apply tnf-header-btn border border-tnf-gray-dark px-2.5 text-tnf-navy hover:bg-tnf-gray lg:px-3;
     }
 
     .tnf-header-btn-signin {
@@ -221,7 +217,7 @@
     }
 
     .tnf-hamburger {
-        @apply inline-flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-tnf text-white hover:bg-tnf-navy-light lg:hidden;
+        @apply inline-flex min-h-touch min-w-touch cursor-pointer items-center justify-center rounded-tnf text-tnf-navy hover:bg-tnf-gray lg:hidden;
         touch-action: manipulation;
     }
 
@@ -706,7 +702,7 @@
     }
 
     .tnf-footer {
-        @apply relative bg-tnf-navy text-white/80 lg:mb-0;
+        @apply relative border-t border-tnf-gray-dark bg-white text-tnf-navy lg:mb-0;
         margin-bottom: calc(-1 * (var(--tnf-bottom-nav) + var(--tnf-safe-bottom)));
         padding-bottom: calc(var(--tnf-bottom-nav) + var(--tnf-safe-bottom) + 1.5rem);
     }
@@ -735,7 +731,7 @@
     }
 
     .tnf-footer-nav {
-        @apply grid grid-cols-1 gap-6 border-t border-white/10 pt-6 sm:grid-cols-2 md:grid-cols-3 lg:col-span-3 lg:border-0 lg:pt-0;
+        @apply grid grid-cols-1 gap-6 border-t border-tnf-gray-dark pt-6 sm:grid-cols-2 md:grid-cols-3 lg:col-span-3 lg:border-0 lg:pt-0;
     }
 
     .tnf-footer-col:last-child {
@@ -743,7 +739,7 @@
     }
 
     .tnf-footer-logo {
-        @apply inline-flex items-center gap-2.5 font-bold text-white;
+        @apply inline-flex items-center gap-2.5 font-bold text-tnf-navy;
     }
 
     .tnf-footer-logo-mark {
@@ -755,15 +751,15 @@
     }
 
     .tnf-footer-tagline {
-        @apply mt-3 max-w-sm text-tnf-sm leading-relaxed text-white/60;
+        @apply mt-3 max-w-sm text-tnf-sm leading-relaxed text-tnf-muted;
     }
 
     .tnf-footer-email {
-        @apply mt-4 inline-flex items-center gap-2 text-tnf-sm text-white/80 transition-colors hover:text-white;
+        @apply mt-4 inline-flex items-center gap-2 text-tnf-sm text-tnf-navy/80 transition-colors hover:text-tnf-red;
     }
 
     .tnf-footer-heading {
-        @apply mb-3 text-tnf-xs font-bold uppercase tracking-wider text-white/45;
+        @apply mb-3 text-tnf-xs font-bold uppercase tracking-wider text-tnf-muted;
     }
 
     .tnf-footer-links {
@@ -771,11 +767,11 @@
     }
 
     .tnf-footer-links a {
-        @apply block text-tnf-sm text-white/75 transition-colors hover:text-white;
+        @apply block text-tnf-sm text-tnf-navy/80 transition-colors hover:text-tnf-red;
     }
 
     .tnf-footer-disclaimer {
-        @apply mt-8 rounded-tnf-lg border border-white/10 bg-white/5 p-4 text-tnf-sm leading-relaxed text-white/60;
+        @apply mt-8 rounded-tnf-lg border border-tnf-gray-dark bg-tnf-gray p-4 text-tnf-sm leading-relaxed text-tnf-muted;
     }
 
     .tnf-footer-disclaimer p {
@@ -783,11 +779,11 @@
     }
 
     .tnf-footer-bottom {
-        @apply mt-8 border-t border-white/10 pt-6;
+        @apply mt-8 border-t border-tnf-gray-dark pt-6;
     }
 
     .tnf-footer-copyright {
-        @apply text-tnf-xs text-white/45;
+        @apply text-tnf-xs text-tnf-muted;
     }
 
     .tnf-footer-credits {
@@ -795,7 +791,7 @@
     }
 
     .tnf-footer-link {
-        @apply text-tnf-sm text-white/70 hover:text-white;
+        @apply text-tnf-sm text-tnf-navy/80 hover:text-tnf-red;
     }
 
     .tnf-back-to-top {

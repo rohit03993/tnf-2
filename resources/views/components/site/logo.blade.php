@@ -11,5 +11,5 @@
 
 <a {{ $attributes->merge(['href' => '/', 'class' => 'tnf-header-logo']) }}>
     <span class="tnf-header-logo-mark {{ $markClass }}">TNF</span>
-    <span class="text-tnf-base font-bold mobile-sm:text-tnf-sm">TNF Today</span>
+    <span class="text-tnf-base font-bold text-tnf-navy mobile-sm:text-tnf-sm">TNF Today</span>
 </a>
