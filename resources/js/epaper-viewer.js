@@ -50,7 +50,16 @@ class TnfEpaperViewer {
             clipWorkspaceCancel: document.querySelector('[data-ep-clip-workspace-cancel]'),
             clipWorkspaceShare: document.querySelector('[data-ep-clip-workspace-share]'),
             clipWorkspacePageNum: document.querySelector('[data-ep-clip-workspace-page-num]'),
+            clipWorkspacePageNumHi: document.querySelector('[data-ep-clip-workspace-page-num-hi]'),
             clipWorkspaceHint: document.querySelector('[data-ep-clip-workspace-hint]'),
+            clipWorkspaceWhatsapp: document.querySelector('[data-ep-clip-workspace-whatsapp]'),
+            clipLivePreview: document.querySelector('[data-ep-clip-live-preview]'),
+            clipLivePreviewWrap: document.querySelector('[data-ep-clip-live-preview-wrap]'),
+            clipFirstHint: document.querySelector('[data-ep-clip-first-hint]'),
+            clipPresets: document.querySelector('[data-ep-clip-presets]'),
+            clipFooterCancel: document.querySelector('[data-ep-clip-footer-cancel]'),
+            clipFooterWhatsapp: document.querySelector('[data-ep-clip-footer-whatsapp]'),
+            clipFooterShare: document.querySelector('[data-ep-clip-footer-share]'),
             shareModal: root.querySelector('[data-ep-share-modal]'),
             shareUrl: root.querySelector('[data-ep-share-url]'),
             editionShare: root.querySelector('[data-ep-edition-share]'),
@@ -74,6 +83,8 @@ class TnfEpaperViewer {
         this.pinchStartDistance = 0;
         this.pinchStartZoom = 1;
         this.lastTapAt = 0;
+        this.livePreviewFrame = null;
+        this.clipShareBusy = false;
     }
 
     get effectiveZoom() {
@@ -263,6 +274,18 @@ class TnfEpaperViewer {
         this.els.clipShareMobile?.addEventListener('click', () => this.confirmClipShare());
         this.els.clipWorkspaceCancel?.addEventListener('click', () => this.toggleClipMode(true));
         this.els.clipWorkspaceShare?.addEventListener('click', () => this.confirmClipShare());
+        this.els.clipFooterCancel?.addEventListener('click', () => this.toggleClipMode(true));
+        this.els.clipFooterShare?.addEventListener('click', () => this.confirmClipShare());
+        this.els.clipWorkspaceWhatsapp?.addEventListener('click', () => void this.shareClipViaWhatsApp());
+        this.els.clipFooterWhatsapp?.addEventListener('click', () => void this.shareClipViaWhatsApp());
+
+        this.els.clipPresets?.addEventListener('click', (event) => {
+            const preset = event.target.closest('[data-ep-clip-preset]');
+
+            if (preset?.dataset.epClipPreset) {
+                this.applyClipPreset(preset.dataset.epClipPreset);
+            }
+        });
     }
 
     bindTouchZoom() {
@@ -776,7 +799,16 @@ class TnfEpaperViewer {
             clipWorkspaceCancel: '[data-ep-clip-workspace-cancel]',
             clipWorkspaceShare: '[data-ep-clip-workspace-share]',
             clipWorkspacePageNum: '[data-ep-clip-workspace-page-num]',
+            clipWorkspacePageNumHi: '[data-ep-clip-workspace-page-num-hi]',
             clipWorkspaceHint: '[data-ep-clip-workspace-hint]',
+            clipWorkspaceWhatsapp: '[data-ep-clip-workspace-whatsapp]',
+            clipLivePreview: '[data-ep-clip-live-preview]',
+            clipLivePreviewWrap: '[data-ep-clip-live-preview-wrap]',
+            clipFirstHint: '[data-ep-clip-first-hint]',
+            clipPresets: '[data-ep-clip-presets]',
+            clipFooterCancel: '[data-ep-clip-footer-cancel]',
+            clipFooterWhatsapp: '[data-ep-clip-footer-whatsapp]',
+            clipFooterShare: '[data-ep-clip-footer-share]',
         };
 
         Object.entries(selectors).forEach(([key, selector]) => {
@@ -824,7 +856,6 @@ class TnfEpaperViewer {
             this.clipWorkspaceActive = true;
             this.mountClipScreen();
             this.bindClipDrag();
-            this.showClipMobileActions(false);
             this.updateClipShareButtonsState();
         } catch (error) {
             console.error('TNF ePaper: clip mode failed.', error);
@@ -1217,12 +1248,142 @@ class TnfEpaperViewer {
         };
     }
 
-    getDefaultClipNormalized() {
-        if (this.isCoarsePointer()) {
-            return { x: 0.04, y: 0.06, w: 0.92, h: 0.38 };
+    getClipPreset(name) {
+        const presets = {
+            lead: { x: 0.06, y: 0.05, w: 0.88, h: 0.4 },
+            top: { x: 0.04, y: 0.04, w: 0.92, h: 0.5 },
+            full: { x: 0.02, y: 0.02, w: 0.96, h: 0.96 },
+        };
+
+        if (name === 'reset') {
+            return presets.lead;
         }
 
-        return { x: 0.3, y: 0.3, w: 0.4, h: 0.4 };
+        return presets[name] || presets.lead;
+    }
+
+    getDefaultClipNormalized() {
+        return this.getClipPreset('lead');
+    }
+
+    applyClipPreset(name) {
+        this.dismissFirstClipHint();
+        this.clipNormalized = this.getClipPreset(name);
+        this.syncClipOverlay(true);
+    }
+
+    clipHintMessage() {
+        return this.isCoarsePointer()
+            ? 'Drag to select, then tap WhatsApp or Share · खींचकर चुनें, फिर शेयर करें'
+            : 'Drag to select, then WhatsApp or Share · खींचकर चुनें, फिर शेयर करें';
+    }
+
+    showFirstClipHint() {
+        if (localStorage.getItem('tnf_ep_clip_hint_seen')) {
+            return;
+        }
+
+        this.els.clipFirstHint?.classList.remove('hidden');
+        this.getClipScreenElements()?.box?.classList.add('tnf-ep-clip-box--pulse');
+
+        window.setTimeout(() => this.dismissFirstClipHint(), 9000);
+    }
+
+    dismissFirstClipHint() {
+        localStorage.setItem('tnf_ep_clip_hint_seen', '1');
+        this.els.clipFirstHint?.classList.add('hidden');
+        this.getClipScreenElements()?.box?.classList.remove('tnf-ep-clip-box--pulse');
+    }
+
+    scheduleLiveClipPreview() {
+        if (this.livePreviewFrame) {
+            cancelAnimationFrame(this.livePreviewFrame);
+        }
+
+        this.livePreviewFrame = requestAnimationFrame(() => {
+            this.livePreviewFrame = null;
+            this.updateLiveClipPreview();
+        });
+    }
+
+    updateLiveClipPreview() {
+        const preview = this.els.clipLivePreview;
+        const wrap = this.els.clipLivePreviewWrap;
+        const source = this.els.clipWorkspaceImage;
+
+        if (! preview || ! wrap || ! source || ! this.clipNormalized || ! source.naturalWidth) {
+            wrap?.classList.add('hidden');
+
+            return;
+        }
+
+        const normalized = this.clipNormalized;
+        const sx = Math.round(source.naturalWidth * normalized.x);
+        const sy = Math.round(source.naturalHeight * normalized.y);
+        const sw = Math.max(1, Math.round(source.naturalWidth * normalized.w));
+        const sh = Math.max(1, Math.round(source.naturalHeight * normalized.h));
+        const maxWidth = 128;
+        const scale = Math.min(1, maxWidth / sw);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(sw * scale));
+        canvas.height = Math.max(1, Math.round(sh * scale));
+        const context = canvas.getContext('2d', { alpha: false });
+
+        if (! context) {
+            return;
+        }
+
+        context.drawImage(source, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+        try {
+            preview.src = canvas.toDataURL('image/jpeg', 0.85);
+            wrap.classList.remove('hidden');
+        } catch {
+            wrap.classList.add('hidden');
+        }
+    }
+
+    setClipShareBusy(busy) {
+        this.clipShareBusy = busy;
+
+        [
+            this.els.clipWorkspaceShare,
+            this.els.clipFooterShare,
+            this.els.clipWorkspaceWhatsapp,
+            this.els.clipFooterWhatsapp,
+        ].forEach((button) => {
+            if (button) {
+                button.disabled = busy || ! this.pendingClip;
+                button.classList.toggle('is-busy', busy);
+            }
+        });
+    }
+
+    async shareClipViaWhatsApp() {
+        if (! this.pendingClip || this.clipShareBusy) {
+            return;
+        }
+
+        const clip = { ...this.pendingClip };
+
+        if (navigator.vibrate) {
+            navigator.vibrate(12);
+        }
+
+        this.setClipShareBusy(true);
+
+        try {
+            const clipUrl = await this.fetchSignedClipUrl(clip);
+            const encodedTitle = encodeURIComponent(this.config.title);
+            const encodedUrl = encodeURIComponent(clipUrl);
+            window.open(`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`, '_blank', 'noopener');
+            this.dismissFirstClipHint();
+            this.toggleClipMode(true);
+        } catch (error) {
+            console.error('TNF ePaper: WhatsApp share failed.', error);
+        } finally {
+            this.setClipShareBusy(false);
+        }
     }
 
     showClipMobileActions(show) {
@@ -1235,17 +1396,22 @@ class TnfEpaperViewer {
     }
 
     updateClipShareButtonsState() {
-        const ready = Boolean(this.pendingClip);
+        const ready = Boolean(this.pendingClip) && ! this.clipShareBusy;
 
-        if (this.els.clipShareMobile) {
-            this.els.clipShareMobile.disabled = ! ready;
-            this.els.clipShareMobile.classList.toggle('is-ready', ready);
-        }
+        [
+            this.els.clipShareMobile,
+            this.els.clipWorkspaceShare,
+            this.els.clipFooterShare,
+            this.els.clipWorkspaceWhatsapp,
+            this.els.clipFooterWhatsapp,
+        ].forEach((button) => {
+            if (! button) {
+                return;
+            }
 
-        if (this.els.clipWorkspaceShare) {
-            this.els.clipWorkspaceShare.disabled = ! ready;
-            this.els.clipWorkspaceShare.classList.toggle('is-ready', ready);
-        }
+            button.disabled = ! ready;
+            button.classList.toggle('is-ready', ready);
+        });
     }
 
     mountClipScreen() {
@@ -1261,27 +1427,29 @@ class TnfEpaperViewer {
             this.els.clipWorkspacePageNum.textContent = String(this.currentPage);
         }
 
+        if (this.els.clipWorkspacePageNumHi) {
+            this.els.clipWorkspacePageNumHi.textContent = String(this.currentPage);
+        }
+
         this.pendingClip = null;
         this.clipNormalized = this.getDefaultClipNormalized();
 
-        const hint = this.els.clipScreen.querySelector('[data-ep-clip-hint-text]');
+        const hint = this.els.clipScreen?.querySelector('[data-ep-clip-hint-text]');
         if (hint) {
-            hint.textContent = this.isCoarsePointer()
-                ? 'Drag to select an area, then tap Share clip'
-                : 'Drag to select an area, resize the box, then click Share';
+            hint.textContent = this.clipHintMessage();
         }
 
         if (this.els.clipWorkspaceHint) {
             this.els.clipWorkspaceHint.textContent = this.isCoarsePointer()
-                ? 'Touch and drag on the page to select what you want to share'
-                : 'Click and drag on the page to select what you want to share';
+                ? 'Touch and drag on the page · पेज पर छूकर खींचें'
+                : 'Click and drag on the page · पेज पर क्लिक करके खींचें';
         }
 
         const ui = this.getClipScreenElements();
-        ui?.toolbar?.classList.add('hidden');
         ui?.box?.classList.remove('is-complete');
 
         this.scheduleClipOverlaySync(true);
+        this.showFirstClipHint();
 
         const source = this.getClipSourceElement();
         if (source && ! (source.complete && (source.naturalWidth || source.width))) {
@@ -1338,13 +1506,13 @@ class TnfEpaperViewer {
         if (clip) {
             this.pendingClip = clip;
             ui?.box?.classList.add('is-complete');
-            ui?.toolbar?.classList.remove('hidden');
         } else if (markComplete) {
             this.clipNormalized = this.getDefaultClipNormalized();
             this.syncClipOverlay(true);
         }
 
         this.updateClipShareButtonsState();
+        this.scheduleLiveClipPreview();
     }
 
     getClipScreenElements() {
@@ -1363,7 +1531,6 @@ class TnfEpaperViewer {
                 bottom: visual.querySelector('.tnf-ep-clip-shade--bottom'),
             },
             box: visual.querySelector('.tnf-ep-clip-box'),
-            toolbar: visual.querySelector('[data-ep-clip-toolbar]'),
             sizeLabel: visual.querySelector('.tnf-ep-clip-size'),
         };
     }
@@ -1453,7 +1620,11 @@ class TnfEpaperViewer {
 
         this.pendingClip = null;
         this.clipNormalized = null;
-        ui.toolbar?.classList.add('hidden');
+        this.els.clipLivePreviewWrap?.classList.add('hidden');
+
+        if (this.els.clipLivePreview) {
+            this.els.clipLivePreview.removeAttribute('src');
+        }
 
         this.updateClipScreenShades(0, 0, 0, 0);
         ui.box?.classList.remove('is-complete');
@@ -1556,7 +1727,7 @@ class TnfEpaperViewer {
             this.syncClipOverlay(true);
 
             if (hint) {
-                hint.textContent = 'Resize the box or drag a new area, then tap Share';
+                hint.textContent = 'Resize or choose a preset, then Share · बॉक्स बदलें या शेयर करें';
             }
 
             return true;
@@ -1574,13 +1745,10 @@ class TnfEpaperViewer {
                 return;
             }
 
+            this.dismissFirstClipHint();
+
             const handle = event.target.closest('[data-ep-clip-handle]');
             const box = event.target.closest('.tnf-ep-clip-box');
-            const toolbar = event.target.closest('[data-ep-clip-toolbar]');
-
-            if (toolbar) {
-                return;
-            }
 
             if (! this.isPointInsideImage(event.clientX, event.clientY)) {
                 return;
@@ -1727,21 +1895,6 @@ class TnfEpaperViewer {
             }
         };
 
-        const onCancel = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            this.toggleClipMode(true);
-        };
-
-        const onShare = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            this.confirmClipShare();
-        };
-
-        const cancelBtn = this.els.clipScreen?.querySelector('[data-ep-clip-cancel]');
-        const shareBtn = this.els.clipScreen?.querySelector('[data-ep-clip-share]');
-
         catcherEl?.addEventListener('pointerdown', onPointerDown);
         catcherEl?.addEventListener('pointermove', onPointerMove);
         catcherEl?.addEventListener('pointerup', onPointerUp);
@@ -1750,8 +1903,6 @@ class TnfEpaperViewer {
         ui?.box?.addEventListener('pointermove', onPointerMove);
         ui?.box?.addEventListener('pointerup', onPointerUp);
         ui?.box?.addEventListener('pointercancel', onPointerUp);
-        cancelBtn?.addEventListener('click', onCancel);
-        shareBtn?.addEventListener('click', onShare);
         document.addEventListener('keydown', onKeyDown);
 
         this.clipDragCleanup = () => {
@@ -1763,8 +1914,6 @@ class TnfEpaperViewer {
             ui?.box?.removeEventListener('pointermove', onPointerMove);
             ui?.box?.removeEventListener('pointerup', onPointerUp);
             ui?.box?.removeEventListener('pointercancel', onPointerUp);
-            cancelBtn?.removeEventListener('click', onCancel);
-            shareBtn?.removeEventListener('click', onShare);
             document.removeEventListener('keydown', onKeyDown);
             finishInteraction();
         };

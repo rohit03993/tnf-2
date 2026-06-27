@@ -38,7 +38,10 @@
                             </svg>
                             <span>Share</span>
                         </button>
-                        <button type="button" class="tnf-ep-btn tnf-ep-btn-clip" data-ep-action="clip" aria-label="Clip and share">Clip</button>
+                        <button type="button" class="tnf-ep-btn tnf-ep-btn-clip" data-ep-action="clip" aria-label="Clip and share">
+                            <span class="tnf-ep-btn-clip-label">Clip</span>
+                            <span class="tnf-ep-btn-clip-label-hi" aria-hidden="true">क्लिप</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -118,7 +121,7 @@
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10v10H7zM3 3h4v4M17 3h4v4M3 17h4v4M17 17h4v4"/>
                         </svg>
-                        <span>Clip</span>
+                        <span>क्लिप</span>
                     </button>
                 </div>
             </div>
@@ -338,26 +341,64 @@
     <div class="tnf-ep-clip-workspace hidden" data-ep-clip-workspace role="dialog" aria-modal="true" aria-label="Clip and share">
         <div class="tnf-ep-clip-workspace-shell">
             <header class="tnf-ep-clip-workspace-header">
-                <div class="tnf-ep-clip-workspace-heading">
-                    <p class="tnf-ep-clip-workspace-kicker">
-                        Page <span data-ep-clip-workspace-page-num>1</span>
-                    </p>
-                    <h2 class="tnf-ep-clip-workspace-title">Select area to clip</h2>
-                    <p class="tnf-ep-clip-workspace-sub" data-ep-clip-workspace-hint>
-                        Drag on the page to highlight the section you want to share
-                    </p>
+                <div class="tnf-ep-clip-workspace-header-main">
+                    <div class="tnf-ep-clip-workspace-heading">
+                        <p class="tnf-ep-clip-workspace-kicker">
+                            <span>Page <span data-ep-clip-workspace-page-num>1</span></span>
+                            <span aria-hidden="true"> · </span>
+                            <span>पृष्ठ <span data-ep-clip-workspace-page-num-hi>1</span></span>
+                        </p>
+                        <h2 class="tnf-ep-clip-workspace-title">
+                            Select area to clip
+                            <span class="tnf-ep-clip-workspace-title-hi">हिस्सा चुनें</span>
+                        </h2>
+                        <p class="tnf-ep-clip-workspace-sub" data-ep-clip-workspace-hint>
+                            Drag on the page to highlight the section you want to share
+                        </p>
+                    </div>
+
+                    <div class="tnf-ep-clip-live-preview-wrap hidden" data-ep-clip-live-preview-wrap>
+                        <p class="tnf-ep-clip-live-preview-label">Preview · पूर्वावलोकन</p>
+                        <div class="tnf-ep-clip-live-preview-frame">
+                            <img src="" alt="Clip preview" class="tnf-ep-clip-live-preview" data-ep-clip-live-preview>
+                        </div>
+                    </div>
                 </div>
-                <div class="tnf-ep-clip-workspace-header-actions">
+
+                <div class="tnf-ep-clip-workspace-presets" data-ep-clip-presets role="toolbar" aria-label="Clip presets">
+                    <button type="button" class="tnf-ep-clip-preset" data-ep-clip-preset="lead">
+                        Lead story · मुख्य खबर
+                    </button>
+                    <button type="button" class="tnf-ep-clip-preset" data-ep-clip-preset="top">
+                        Top half · ऊपरी आधा
+                    </button>
+                    <button type="button" class="tnf-ep-clip-preset" data-ep-clip-preset="full">
+                        Full page · पूरा पृष्ठ
+                    </button>
+                    <button type="button" class="tnf-ep-clip-preset" data-ep-clip-preset="reset">
+                        Reset · रीसेट
+                    </button>
+                </div>
+
+                <div class="tnf-ep-clip-workspace-header-actions tnf-ep-clip-workspace-header-actions--desktop">
                     <button type="button" class="tnf-ep-clip-workspace-cancel" data-ep-clip-workspace-cancel>
-                        Cancel
+                        Cancel · रद्द
+                    </button>
+                    <button type="button" class="tnf-ep-clip-workspace-whatsapp" data-ep-clip-workspace-whatsapp disabled aria-label="Share on WhatsApp">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.984.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.884 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        WhatsApp
                     </button>
                     <button type="button" class="tnf-ep-clip-workspace-share" data-ep-clip-workspace-share disabled>
-                        Share clip
+                        Share clip · शेयर
                     </button>
                 </div>
             </header>
 
             <div class="tnf-ep-clip-workspace-scroll" data-ep-clip-workspace-scroll>
+                <p class="tnf-ep-clip-first-hint hidden" data-ep-clip-first-hint role="status">
+                    👆 Drag on the page to select a headline or article · पेज पर खींचकर हिस्सा चुनें
+                </p>
+
                 <div class="tnf-ep-clip-workspace-page" data-ep-clip-workspace-page>
                     <img
                         data-ep-clip-workspace-image
@@ -374,20 +415,6 @@
                             <div class="tnf-ep-clip-shade tnf-ep-clip-shade--right"></div>
                             <div class="tnf-ep-clip-shade tnf-ep-clip-shade--bottom"></div>
                             <div class="tnf-ep-clip-box">
-                                <div class="tnf-ep-clip-box-toolbar hidden" data-ep-clip-toolbar>
-                                    <button type="button" class="tnf-ep-clip-toolbar-btn tnf-ep-clip-toolbar-btn--share" data-ep-clip-share>
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-                                        </svg>
-                                        <span>Share</span>
-                                    </button>
-                                    <button type="button" class="tnf-ep-clip-toolbar-btn tnf-ep-clip-toolbar-btn--cancel" data-ep-clip-cancel>
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                        </svg>
-                                        <span>Cancel</span>
-                                    </button>
-                                </div>
                                 <span class="tnf-ep-clip-handle tnf-ep-clip-handle--tl" data-ep-clip-handle="tl"></span>
                                 <span class="tnf-ep-clip-handle tnf-ep-clip-handle--tr" data-ep-clip-handle="tr"></span>
                                 <span class="tnf-ep-clip-handle tnf-ep-clip-handle--bl" data-ep-clip-handle="bl"></span>
@@ -401,6 +428,19 @@
                     </div>
                 </div>
             </div>
+
+            <footer class="tnf-ep-clip-workspace-footer" data-ep-clip-workspace-footer>
+                <button type="button" class="tnf-ep-clip-workspace-footer-cancel" data-ep-clip-footer-cancel>
+                    Cancel · रद्द
+                </button>
+                <button type="button" class="tnf-ep-clip-workspace-footer-whatsapp" data-ep-clip-footer-whatsapp disabled aria-label="Share on WhatsApp">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.984.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.884 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    WhatsApp
+                </button>
+                <button type="button" class="tnf-ep-clip-workspace-footer-share" data-ep-clip-footer-share disabled>
+                    Share · शेयर
+                </button>
+            </footer>
         </div>
     </div>
 
