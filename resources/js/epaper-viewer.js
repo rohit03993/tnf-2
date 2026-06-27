@@ -18,6 +18,9 @@ class TnfEpaperViewer {
         this.clipPageBaseWidth = 0;
         this.lastClipPointerId = null;
         this.clipDrawMode = false;
+        this.cachedPdfRenderScale = 0;
+        this.pdfZoomRenderTimer = null;
+        this.clipInstructionTimer = null;
         this.clipStart = null;
         this.clipRect = null;
         this.pdfDoc = null;
@@ -100,7 +103,19 @@ class TnfEpaperViewer {
 
     async init() {
         if (this.config.clipMode && this.config.clip) {
+            this.root.classList.add('tnf-epaper-viewer--shared-clip');
+            this.setPdfLoading(true);
+
+            if (! this.isValidClip(this.config.clip)) {
+                this.showEmptyState('pdf');
+                this.setPdfLoading(false);
+
+                return;
+            }
+
             await this.renderClipOnly();
+            this.setPdfLoading(false);
+
             return;
         }
 
@@ -299,6 +314,11 @@ class TnfEpaperViewer {
     }
 
     bindTouchZoom() {
+        // Mobile uses explicit −/+ buttons so one-finger scroll is never blocked by pinch/double-tap.
+        if (this.isCoarsePointer()) {
+            return;
+        }
+
         const stage = this.els.stage;
 
         if (! stage || ! this.isCoarsePointer()) {
@@ -673,6 +693,20 @@ class TnfEpaperViewer {
             return;
         }
 
+        const stage = this.els.stage;
+        const spacer = this.els.stageSpacer;
+        let scrollAnchor = null;
+
+        if (stage && spacer) {
+            const prevW = Number.parseFloat(spacer.style.width) || stage.scrollWidth || 1;
+            const prevH = Number.parseFloat(spacer.style.height) || stage.scrollHeight || 1;
+
+            scrollAnchor = {
+                ratioX: (stage.scrollLeft + stage.clientWidth * 0.5) / prevW,
+                ratioY: (stage.scrollTop + stage.clientHeight * 0.5) / prevH,
+            };
+        }
+
         this.calculateFitZoom();
 
         const cssWidth = width * this.effectiveZoom;
@@ -680,14 +714,35 @@ class TnfEpaperViewer {
 
         this.updateStageLayout(cssWidth, cssHeight);
 
-        if (this.pdfDoc) {
-            await this.renderPdfPage(this.currentPage);
+        if (this.pdfDoc && this.els.pdfCanvas) {
+            this.els.pdfCanvas.style.width = `${cssWidth}px`;
+            this.els.pdfCanvas.style.height = `${cssHeight}px`;
+
+            const neededQuality = this.effectiveZoom * (window.devicePixelRatio || 1) * 1.75;
+
+            if (! this.cachedPdfRenderScale || neededQuality > this.cachedPdfRenderScale * 1.18) {
+                if (this.pdfZoomRenderTimer) {
+                    window.clearTimeout(this.pdfZoomRenderTimer);
+                }
+
+                this.pdfZoomRenderTimer = window.setTimeout(() => {
+                    this.pdfZoomRenderTimer = null;
+                    void this.renderPdfPage(this.currentPage).then(() => {
+                        this.cachedPdfRenderScale = neededQuality;
+                    });
+                }, this.isCoarsePointer() ? 220 : 90);
+            }
         } else if (this.els.pageImage && ! this.els.pageImage.classList.contains('hidden')) {
             this.els.pageImage.style.width = `${cssWidth}px`;
             this.els.pageImage.style.height = 'auto';
         }
 
         this.updateZoomLabel();
+
+        if (stage && scrollAnchor) {
+            stage.scrollLeft = Math.max(0, scrollAnchor.ratioX * cssWidth - stage.clientWidth * 0.5);
+            stage.scrollTop = Math.max(0, scrollAnchor.ratioY * cssHeight - stage.clientHeight * 0.5);
+        }
 
         if (this.clipMode) {
             requestAnimationFrame(() => this.syncClipOverlay());
@@ -1338,8 +1393,8 @@ class TnfEpaperViewer {
 
     clipHintMessage() {
         return this.isCoarsePointer()
-            ? 'Drag Move bar or corners · −/+ to zoom'
-            : 'Drag corners or Move bar, use −/+ to zoom · बॉक्स बदलें';
+            ? 'Move bar, edges or corners · −/+ to zoom'
+            : 'Drag edges, corners or Move bar · −/+ to zoom · बॉक्स बदलें';
     }
 
     clipReadyMessage() {
@@ -1348,29 +1403,39 @@ class TnfEpaperViewer {
             : 'Resize or choose a preset, then Share · बॉक्स बदलें या शेयर करें';
     }
 
-    setClipInstruction(message, { showOverlay = false } = {}) {
+    setClipInstruction(message, { showOverlay = false, autoHideMs = null } = {}) {
         if (this.els.clipWorkspaceHint) {
             this.els.clipWorkspaceHint.textContent = message;
         }
 
         const overlayHint = this.els.clipScreen?.querySelector('[data-ep-clip-hint-text]');
 
-        if (! overlayHint) {
-            return;
+        if (overlayHint) {
+            if (this.isCoarsePointer() || ! showOverlay) {
+                overlayHint.classList.add('hidden');
+            } else {
+                overlayHint.textContent = message;
+                overlayHint.classList.remove('hidden');
+            }
         }
 
-        if (this.isCoarsePointer() || ! showOverlay) {
-            overlayHint.classList.add('hidden');
-
-            return;
+        if (this.clipInstructionTimer) {
+            window.clearTimeout(this.clipInstructionTimer);
+            this.clipInstructionTimer = null;
         }
 
-        overlayHint.textContent = message;
-        overlayHint.classList.remove('hidden');
+        const hideAfter = autoHideMs ?? (this.isCoarsePointer() && message !== this.clipReadyMessage() ? 4500 : 0);
+
+        if (hideAfter > 0) {
+            this.clipInstructionTimer = window.setTimeout(() => {
+                this.clipInstructionTimer = null;
+                this.setClipInstruction(this.clipReadyMessage(), { autoHideMs: 0 });
+            }, hideAfter);
+        }
     }
 
     adjustClipPageZoom(delta) {
-        this.clipPageZoom = Math.min(2.5, Math.max(0.75, this.clipPageZoom + delta));
+        this.clipPageZoom = Math.min(3.5, Math.max(0.5, this.clipPageZoom + delta));
         this.applyClipPageZoom();
     }
 
@@ -2049,25 +2114,26 @@ class TnfEpaperViewer {
                 top = startRect.top + dy;
             } else if (interactionMode.startsWith('resize-')) {
                 const edge = interactionMode.replace('resize-', '');
+                const minEdge = this.isCoarsePointer() ? 16 : 24;
 
                 if (edge.includes('l')) {
                     const right = startRect.left + startRect.width;
-                    left = Math.min(clamped.left, right - 24);
+                    left = Math.min(clamped.left, right - minEdge);
                     width = right - left;
                 }
 
                 if (edge.includes('r')) {
-                    width = Math.max(24, clamped.left - startRect.left);
+                    width = Math.max(minEdge, clamped.left - startRect.left);
                 }
 
                 if (edge.includes('t')) {
                     const bottom = startRect.top + startRect.height;
-                    top = Math.min(clamped.top, bottom - 24);
+                    top = Math.min(clamped.top, bottom - minEdge);
                     height = bottom - top;
                 }
 
                 if (edge.includes('b')) {
-                    height = Math.max(24, clamped.top - startRect.top);
+                    height = Math.max(minEdge, clamped.top - startRect.top);
                 }
             }
 
@@ -2267,6 +2333,19 @@ class TnfEpaperViewer {
         }
 
         return null;
+    }
+
+    isValidClip(clip) {
+        return Boolean(
+            clip
+            && clip.page >= 1
+            && clip.w > 0
+            && clip.h > 0
+            && clip.x >= 0
+            && clip.y >= 0
+            && clip.x + clip.w <= 1.001
+            && clip.y + clip.h <= 1.001,
+        );
     }
 
     buildClipUrl(clip) {
@@ -2478,8 +2557,14 @@ class TnfEpaperViewer {
     async renderClipOnly() {
         const clip = this.config.clip;
 
-        if (! clip || ! this.els.stage) {
+        if (! clip || ! this.els.stage || ! this.isValidClip(clip)) {
+            this.showEmptyState(this.config.pdfUrl ? 'pdf' : 'empty');
+
             return;
+        }
+
+        if (! this.pdfDoc && this.config.pdfUrl) {
+            await this.initPdfFallback();
         }
 
         const bitmap = await this.renderClipBitmap(clip);
@@ -2498,9 +2583,12 @@ class TnfEpaperViewer {
         img.className = 'tnf-ep-clip-shared-image';
         img.src = bitmap;
         img.alt = `${this.config.title} — clip`;
+        img.decoding = 'async';
 
         viewport.appendChild(img);
         this.els.stage.replaceChildren(viewport);
+        this.els.stage.scrollTop = 0;
+        this.els.stage.scrollLeft = 0;
 
         const downloadBtn = this.root.querySelector('[data-ep-clip-page-download]');
 

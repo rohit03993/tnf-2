@@ -11,7 +11,7 @@
 
     <div
         id="tnf-epaper-viewer"
-        class="tnf-epaper-viewer"
+        class="tnf-epaper-viewer{{ ! empty($config['clipMode']) ? ' tnf-epaper-viewer--shared-clip' : '' }}"
         data-config='@json($config)'
         aria-label="ePaper viewer"
     >
@@ -432,6 +432,10 @@
                                 <span class="tnf-ep-clip-handle tnf-ep-clip-handle--tr" data-ep-clip-handle="tr"></span>
                                 <span class="tnf-ep-clip-handle tnf-ep-clip-handle--bl" data-ep-clip-handle="bl"></span>
                                 <span class="tnf-ep-clip-handle tnf-ep-clip-handle--br" data-ep-clip-handle="br"></span>
+                                <span class="tnf-ep-clip-handle tnf-ep-clip-handle--t" data-ep-clip-handle="t"></span>
+                                <span class="tnf-ep-clip-handle tnf-ep-clip-handle--r" data-ep-clip-handle="r"></span>
+                                <span class="tnf-ep-clip-handle tnf-ep-clip-handle--b" data-ep-clip-handle="b"></span>
+                                <span class="tnf-ep-clip-handle tnf-ep-clip-handle--l" data-ep-clip-handle="l"></span>
                                 <span class="tnf-ep-clip-size"></span>
                             </div>
                         </div>
