@@ -9,12 +9,18 @@ use App\Models\EpaperEdition;
 use App\Models\Video;
 use App\Services\EpaperViewerService;
 use App\Services\OgImageService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class OgImageController extends Controller
 {
-    public function article(Article $article, OgImageService $ogImages): Response
+    public function default(OgImageService $ogImages): Response
+    {
+        return $ogImages->serveDefault();
+    }
+
+    public function article(Article $article, OgImageService $ogImages): Response|RedirectResponse
     {
         abort_unless($article->status === ContentStatus::Published, 404);
 
@@ -23,7 +29,7 @@ class OgImageController extends Controller
         return $ogImages->serveOrGenerate('article', $article->id, $article->featuredMedia?->url());
     }
 
-    public function video(Video $video, OgImageService $ogImages): Response
+    public function video(Video $video, OgImageService $ogImages): Response|RedirectResponse
     {
         abort_unless($video->status === ContentStatus::Published, 404);
 

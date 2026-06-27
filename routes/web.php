@@ -59,6 +59,7 @@ Route::post('/epaper/{edition:slug}/sign-clip', EpaperClipSignController::class)
     ->name('epaper.sign-clip');
 
 Route::middleware('throttle:og')->group(function () {
+    Route::get('/og/default.jpg', [OgImageController::class, 'default'])->name('og.default');
     Route::get('/og/article/{article}', [OgImageController::class, 'article'])->name('og.article');
     Route::get('/og/video/{video}', [OgImageController::class, 'video'])->name('og.video');
     Route::get('/pdf-report/{edition}/page-og', [OgImageController::class, 'epaperPage'])->name('og.epaper.page');

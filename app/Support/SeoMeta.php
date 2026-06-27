@@ -12,6 +12,9 @@ class SeoMeta
         public string $type = 'website',
         public ?array $jsonLd = null,
         public bool $noindex = false,
+        public ?int $imageWidth = null,
+        public ?int $imageHeight = null,
+        public ?string $imageAlt = null,
     ) {}
 
     public function pageTitle(): string

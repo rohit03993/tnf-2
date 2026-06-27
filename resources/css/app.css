@@ -516,7 +516,6 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
-        touch-action: pan-x;
     }
 
     .tnf-cat-block-grid::-webkit-scrollbar {
@@ -537,7 +536,6 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
-        touch-action: pan-x;
     }
 
     .tnf-scroll-rail::-webkit-scrollbar,

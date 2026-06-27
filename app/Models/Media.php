@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\FrontendUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
@@ -20,6 +21,21 @@ class Media extends Model
         }
 
         return Storage::disk($this->disk)->url($this->path);
+    }
+
+    public function absoluteUrl(): ?string
+    {
+        $path = $this->url();
+
+        if (! $path) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        return FrontendUrl::to($path);
     }
 
     public function humanSize(): string

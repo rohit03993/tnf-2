@@ -31,7 +31,8 @@ class SecurityHeaders
 
     protected function contentSecurityPolicy(): string
     {
-        $scriptSrc = "'self' 'unsafe-inline' https://cdnjs.cloudflare.com";
+        // Filament/Livewire/Alpine need eval in non-CSP-safe mode (see livewire csp_safe config).
+        $scriptSrc = "'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com";
         $connectSrc = "'self'";
 
         if (app()->environment('local')) {

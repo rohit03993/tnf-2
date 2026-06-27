@@ -168,6 +168,9 @@ function initShareButtons() {
 }
 
 export function initSiteUi() {
+    document.body.classList.remove('tnf-drawer-open');
+    document.body.style.overflow = '';
+
     initDrawer();
     initBackToTop();
     initShareButtons();

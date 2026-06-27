@@ -6,6 +6,8 @@ use App\Models\Article;
 use App\Models\EpaperEdition;
 use App\Models\OgImage;
 use App\Models\Video;
+use App\Support\FrontendUrl;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -61,7 +63,7 @@ class OgImageService
         ]);
     }
 
-    public function serveOrGenerate(string $type, int $id, ?string $imageUrl): Response
+    public function serveOrGenerate(string $type, int $id, ?string $imageUrl): Response|RedirectResponse
     {
         $og = OgImage::query()->where('entity_type', $type)->where('entity_id', $id)->first();
 
@@ -69,9 +71,36 @@ class OgImageService
             $og = $this->generateForEntity($type, $id, $imageUrl);
         }
 
-        abort_unless($og, 404);
+        if (! $og && $imageUrl) {
+            return redirect(FrontendUrl::to($imageUrl));
+        }
+
+        if (! $og) {
+            return $this->serveDefault();
+        }
 
         return $this->serve($og);
+    }
+
+    public function serveDefault(): Response
+    {
+        $path = 'og/default.jpg';
+        $disk = Storage::disk('public');
+
+        if (! $disk->exists($path)) {
+            $jpeg = $this->buildDefaultBrandedJpeg();
+
+            if ($jpeg === null) {
+                abort(503, 'OG image unavailable');
+            }
+
+            $disk->put($path, $jpeg);
+        }
+
+        return response($disk->get($path), 200, [
+            'Content-Type' => 'image/jpeg',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
     }
 
     public function verifyClipSignature(EpaperEdition $edition, array $params): bool
@@ -152,6 +181,57 @@ class OgImageService
 
         imagedestroy($source);
         imagedestroy($resized);
+        imagedestroy($canvas);
+
+        return $jpeg;
+    }
+
+    protected function buildDefaultBrandedJpeg(): ?string
+    {
+        if (! extension_loaded('gd')) {
+            return null;
+        }
+
+        $width = 1200;
+        $height = 630;
+        $canvas = imagecreatetruecolor($width, $height);
+
+        $navy = imagecolorallocate($canvas, 15, 19, 32);
+        $red = imagecolorallocate($canvas, 188, 30, 56);
+        $white = imagecolorallocate($canvas, 255, 255, 255);
+        $muted = imagecolorallocate($canvas, 180, 186, 198);
+
+        imagefilledrectangle($canvas, 0, 0, $width, $height, $navy);
+        imagefilledrectangle($canvas, 0, 0, $width, 8, $red);
+
+        $siteName = config('app.name', 'TNF Today');
+        $titleSize = 5;
+        $subtitleSize = 3;
+        $titleWidth = imagefontwidth($titleSize) * strlen($siteName);
+        $subtitle = 'Latest Hindi News';
+        $subtitleWidth = imagefontwidth($subtitleSize) * strlen($subtitle);
+
+        imagestring(
+            $canvas,
+            $titleSize,
+            (int) (($width - $titleWidth) / 2),
+            (int) (($height / 2) - 24),
+            $siteName,
+            $white,
+        );
+        imagestring(
+            $canvas,
+            $subtitleSize,
+            (int) (($width - $subtitleWidth) / 2),
+            (int) (($height / 2) + 8),
+            $subtitle,
+            $muted,
+        );
+
+        ob_start();
+        imagejpeg($canvas, null, 85);
+        $jpeg = ob_get_clean() ?: null;
+
         imagedestroy($canvas);
 
         return $jpeg;

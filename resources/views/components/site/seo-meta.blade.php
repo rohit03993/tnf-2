@@ -14,6 +14,7 @@
     <link rel="canonical" href="{{ $seo->url }}">
 @endif
 
+<meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}">
 <meta property="og:site_name" content="{{ config('app.name', 'TNF Today') }}">
 <meta property="og:title" content="{{ $seo->title }}">
 @if($seo->description)
@@ -25,6 +26,16 @@
 <meta property="og:type" content="{{ $seo->type }}">
 @if($seo->image)
     <meta property="og:image" content="{{ $seo->image }}">
+    <meta property="og:image:secure_url" content="{{ $seo->image }}">
+    @if($seo->imageWidth)
+        <meta property="og:image:width" content="{{ $seo->imageWidth }}">
+    @endif
+    @if($seo->imageHeight)
+        <meta property="og:image:height" content="{{ $seo->imageHeight }}">
+    @endif
+    @if($seo->imageAlt)
+        <meta property="og:image:alt" content="{{ $seo->imageAlt }}">
+    @endif
 @endif
 
 <meta name="twitter:card" content="{{ $seo->image ? 'summary_large_image' : 'summary' }}">
@@ -34,6 +45,9 @@
 @endif
 @if($seo->image)
     <meta name="twitter:image" content="{{ $seo->image }}">
+    @if($seo->imageAlt)
+        <meta name="twitter:image:alt" content="{{ $seo->imageAlt }}">
+    @endif
 @endif
 
 @if($seo->jsonLd)
