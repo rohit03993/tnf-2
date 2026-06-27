@@ -355,7 +355,7 @@
                             <span class="tnf-ep-clip-workspace-title-hi"> · हिस्सा चुनें</span>
                         </h2>
                         <p class="tnf-ep-clip-workspace-sub" data-ep-clip-workspace-hint>
-                            Touch and drag on the page to select
+                            Scroll to explore · Move bar to adjust · −/+ to zoom
                         </p>
                     </div>
 
@@ -376,6 +376,9 @@
                     </button>
                     <button type="button" class="tnf-ep-clip-preset" data-ep-clip-preset="full">
                         Full page · पूरा पृष्ठ
+                    </button>
+                    <button type="button" class="tnf-ep-clip-preset" data-ep-clip-preset="draw">
+                        Draw · खींचें
                     </button>
                     <button type="button" class="tnf-ep-clip-preset" data-ep-clip-preset="reset">
                         Reset · रीसेट
