@@ -684,7 +684,16 @@ class TnfEpaperViewer {
         spacer.style.height = `${cssHeight}px`;
         inner.style.width = `${cssWidth}px`;
         inner.style.height = `${cssHeight}px`;
-        inner.style.transform = this.isCoarsePointer() ? 'none' : 'translateX(-50%)';
+
+        if (this.isCoarsePointer()) {
+            inner.style.position = 'relative';
+            inner.style.left = 'auto';
+            inner.style.transform = 'none';
+        } else {
+            inner.style.position = '';
+            inner.style.left = '';
+            inner.style.transform = 'translateX(-50%)';
+        }
     }
 
     async applyPageZoom() {
