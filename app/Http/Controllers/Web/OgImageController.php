@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\EpaperEdition;
 use App\Models\Video;
+use App\Services\EpaperClipSignatureService;
 use App\Services\EpaperViewerService;
 use App\Services\OgImageService;
 use Illuminate\Http\RedirectResponse;
@@ -42,9 +43,7 @@ class OgImageController extends Controller
     {
         abort_unless($edition->status === ContentStatus::Published, 404);
 
-        $edition->load('featuredMedia');
-        $pages = EpaperViewerService::normalizePages($edition);
-        $imageUrl = $pages[0]['url'] ?? $edition->featuredMedia?->url();
+        $imageUrl = EpaperViewerService::shareImageSourceUrl($edition);
 
         return $ogImages->serveOrGenerate('epaper', $edition->id, $imageUrl);
     }
@@ -52,13 +51,52 @@ class OgImageController extends Controller
     public function epaperClip(Request $request, EpaperEdition $edition, OgImageService $ogImages): Response
     {
         abort_unless($edition->status === ContentStatus::Published, 404);
-        abort_unless($ogImages->verifyClipSignature($edition, $request->query()), 403);
 
-        $edition->load('featuredMedia');
-        $pages = EpaperViewerService::normalizePages($edition);
-        $pageIndex = max(0, (int) $request->query('pg', 1) - 1);
-        $imageUrl = $pages[$pageIndex]['url'] ?? $edition->featuredMedia?->url();
+        if (! EpaperClipSignatureService::hasValidClipParams($this->clipRequest($request))) {
+            abort(404);
+        }
 
-        return $ogImages->serveOrGenerate('epaper_clip', $edition->id, $imageUrl);
+        $pageIndex = max(0, $this->clipPage($request) - 1);
+        $imageUrl = EpaperViewerService::shareImageSourceUrl($edition, $pageIndex);
+
+        $crop = [
+            'x' => (float) $this->clipQuery($request, 'cx', 0),
+            'y' => (float) $this->clipQuery($request, 'cy', 0),
+            'w' => (float) $this->clipQuery($request, 'cw', 0),
+            'h' => (float) $this->clipQuery($request, 'ch', 0),
+        ];
+
+        return $ogImages->serveCropped($imageUrl, $crop);
+    }
+
+    protected function clipRequest(Request $request): Request
+    {
+        if ($request->has('tnf_pg') || $request->has('tnf_cw')) {
+            return $request;
+        }
+
+        return Request::create('/', 'GET', [
+            'tnf_pg' => $request->query('pg', 1),
+            'tnf_cx' => $request->query('cx', 0),
+            'tnf_cy' => $request->query('cy', 0),
+            'tnf_cw' => $request->query('cw', 0),
+            'tnf_ch' => $request->query('ch', 0),
+        ]);
+    }
+
+    protected function clipPage(Request $request): int
+    {
+        return max(1, (int) $request->query('tnf_pg', $request->query('pg', 1)));
+    }
+
+    protected function clipQuery(Request $request, string $key, float $default): float
+    {
+        $tnfKey = 'tnf_'.$key;
+
+        if ($request->query($tnfKey) !== null) {
+            return (float) $request->query($tnfKey, $default);
+        }
+
+        return (float) $request->query($key, $default);
     }
 }

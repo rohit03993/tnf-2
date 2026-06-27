@@ -4,10 +4,13 @@ namespace App\Services;
 
 use App\Models\Article;
 use App\Models\Category;
+use App\Models\EpaperEdition;
 use App\Models\Page;
 use App\Models\Video;
+use App\Services\EpaperClipSignatureService;
 use App\Support\FrontendUrl;
 use App\Support\SeoMeta;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class SeoService
@@ -130,6 +133,83 @@ class SeoService
             url: FrontendUrl::route('search', $query ? ['q' => $query] : []),
             noindex: true,
         );
+    }
+
+    public function forEpaperIndex(): SeoMeta
+    {
+        return new SeoMeta(
+            title: 'ePaper',
+            description: 'Browse digital newspaper editions from TNF Today.',
+            image: $this->defaultShareImage(),
+            url: FrontendUrl::route('epaper.index'),
+            imageWidth: self::OG_IMAGE_WIDTH,
+            imageHeight: self::OG_IMAGE_HEIGHT,
+            imageAlt: 'TNF Today ePaper',
+        );
+    }
+
+    public function forEpaper(EpaperEdition $edition, ?Request $request = null): SeoMeta
+    {
+        $edition->loadMissing('featuredMedia');
+        $description = $this->excerpt($edition->excerpt, $edition->content)
+            ?: 'Read the digital newspaper edition on TNF Today.';
+        $isClip = $request?->boolean('tnf_clip')
+            && EpaperClipSignatureService::hasValidClipParams($request);
+
+        if ($isClip) {
+            return new SeoMeta(
+                title: 'Newspaper clip — '.$edition->title,
+                description: $description,
+                image: $this->resolveEpaperClipShareImage($edition, $request),
+                url: FrontendUrl::to($request->fullUrl()),
+                type: 'article',
+                imageWidth: self::OG_IMAGE_WIDTH,
+                imageHeight: self::OG_IMAGE_HEIGHT,
+                imageAlt: 'Newspaper clip from '.$edition->title,
+            );
+        }
+
+        return new SeoMeta(
+            title: $edition->title,
+            description: $description,
+            image: $this->resolveEpaperShareImage($edition),
+            url: FrontendUrl::route('epaper.show', $edition->slug),
+            type: 'article',
+            imageWidth: self::OG_IMAGE_WIDTH,
+            imageHeight: self::OG_IMAGE_HEIGHT,
+            imageAlt: $edition->title,
+            jsonLd: [
+                '@context' => 'https://schema.org',
+                '@type' => 'NewsArticle',
+                'headline' => $edition->title,
+                'description' => $description,
+                'datePublished' => $edition->published_at?->toIso8601String(),
+                'dateModified' => $edition->updated_at?->toIso8601String(),
+                'publisher' => [
+                    '@type' => 'Organization',
+                    'name' => config('app.name', 'TNF Today'),
+                ],
+                'mainEntityOfPage' => FrontendUrl::route('epaper.show', $edition->slug),
+                'image' => $this->resolveEpaperShareImage($edition),
+            ],
+        );
+    }
+
+    protected function resolveEpaperShareImage(EpaperEdition $edition): string
+    {
+        return route('og.epaper.page', $edition, absolute: true);
+    }
+
+    protected function resolveEpaperClipShareImage(EpaperEdition $edition, Request $request): string
+    {
+        return route('og.epaper.clip', [
+            'edition' => $edition->id,
+            'tnf_pg' => (int) $request->query('tnf_pg', 1),
+            'tnf_cx' => $request->query('tnf_cx'),
+            'tnf_cy' => $request->query('tnf_cy'),
+            'tnf_cw' => $request->query('tnf_cw'),
+            'tnf_ch' => $request->query('tnf_ch'),
+        ], absolute: true);
     }
 
     public function defaultShareImage(): string

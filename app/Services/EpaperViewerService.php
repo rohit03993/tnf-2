@@ -127,4 +127,27 @@ class EpaperViewerService
 
         return null;
     }
+
+    /**
+     * Best source URL for social preview generation (page 1 image or PDF cover).
+     */
+    public static function shareImageSourceUrl(EpaperEdition $edition, int $pageIndex = 0): ?string
+    {
+        $edition->loadMissing('featuredMedia');
+        $pages = self::normalizePages($edition);
+        $url = $pages[$pageIndex]['url'] ?? null;
+
+        if (! $url && $pageIndex === 0) {
+            $url = $edition->featuredMedia?->url();
+        }
+
+        if (! $url && $pageIndex === 0 && $edition->pdf_path) {
+            app(EpaperCoverService::class)->ensureCover($edition->fresh());
+            $edition->refresh()->load('featuredMedia');
+            $pages = self::normalizePages($edition);
+            $url = $pages[0]['url'] ?? $edition->featuredMedia?->url();
+        }
+
+        return filled($url) ? $url : null;
+    }
 }

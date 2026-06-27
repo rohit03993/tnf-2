@@ -8,12 +8,13 @@ use App\Models\EpaperEdition;
 use App\Services\EpaperAccessService;
 use App\Services\EpaperClipSignatureService;
 use App\Services\EpaperViewerService;
+use App\Services\SeoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class EpaperSingleController extends Controller
 {
-    public function __invoke(EpaperEdition $edition): View|RedirectResponse
+    public function __invoke(EpaperEdition $edition, SeoService $seo): View|RedirectResponse
     {
         abort_unless(
             $edition->status === ContentStatus::Published
@@ -28,6 +29,7 @@ class EpaperSingleController extends Controller
             return view('epaper.premium-gate', [
                 'edition' => $edition,
                 'isGuest' => ! auth()->check(),
+                'seo' => $seo->forEpaper($edition, request()),
             ]);
         }
 
@@ -38,6 +40,7 @@ class EpaperSingleController extends Controller
         return view('epaper.show', [
             'edition' => $edition,
             'config' => EpaperViewerService::config($edition, request()),
+            'seo' => $seo->forEpaper($edition, request()),
         ]);
     }
 }

@@ -1,4 +1,4 @@
-<x-site.layout title="ePaper — TNF Today">
+<x-site.layout title="ePaper — TNF Today" :seo="$seo">
     <div class="tnf-page-content">
         <x-site.page-header
             title="ePaper"

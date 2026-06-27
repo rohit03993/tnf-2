@@ -82,6 +82,25 @@ class OgImageService
         return $this->serve($og);
     }
 
+    /** @param array{x: float, y: float, w: float, h: float} $crop */
+    public function serveCropped(?string $imageUrl, array $crop): Response
+    {
+        if (! $imageUrl) {
+            return $this->serveDefault();
+        }
+
+        $jpeg = $this->buildJpeg($imageUrl, $crop);
+
+        if ($jpeg === null) {
+            return $this->serveDefault();
+        }
+
+        return response($jpeg, 200, [
+            'Content-Type' => 'image/jpeg',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
     public function serveDefault(): Response
     {
         $path = 'og/default.jpg';
@@ -131,7 +150,7 @@ class OgImageService
         return hash_equals($expected, (string) ($params['signature'] ?? ''));
     }
 
-    protected function buildJpeg(string $imageUrl): ?string
+    protected function buildJpeg(string $imageUrl, ?array $crop = null): ?string
     {
         if (! extension_loaded('gd')) {
             return null;
@@ -149,14 +168,38 @@ class OgImageService
             return null;
         }
 
+        $srcWidth = imagesx($source);
+        $srcHeight = imagesy($source);
+
+        if ($crop !== null) {
+            $cropX = (int) round(max(0, min(1, (float) ($crop['x'] ?? 0))) * $srcWidth);
+            $cropY = (int) round(max(0, min(1, (float) ($crop['y'] ?? 0))) * $srcHeight);
+            $cropW = (int) round(max(0.01, min(1, (float) ($crop['w'] ?? 1))) * $srcWidth);
+            $cropH = (int) round(max(0.01, min(1, (float) ($crop['h'] ?? 1))) * $srcHeight);
+
+            $cropW = min($cropW, $srcWidth - $cropX);
+            $cropH = min($cropH, $srcHeight - $cropY);
+
+            if ($cropW < 1 || $cropH < 1) {
+                imagedestroy($source);
+
+                return null;
+            }
+
+            $cropped = imagecreatetruecolor($cropW, $cropH);
+            imagecopy($cropped, $source, 0, 0, $cropX, $cropY, $cropW, $cropH);
+            imagedestroy($source);
+            $source = $cropped;
+            $srcWidth = $cropW;
+            $srcHeight = $cropH;
+        }
+
         $targetWidth = 1200;
         $targetHeight = 630;
         $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
         $white = imagecolorallocate($canvas, 255, 255, 255);
         imagefill($canvas, 0, 0, $white);
 
-        $srcWidth = imagesx($source);
-        $srcHeight = imagesy($source);
         $srcRatio = $srcWidth / $srcHeight;
         $targetRatio = $targetWidth / $targetHeight;
 

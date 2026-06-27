@@ -1,4 +1,4 @@
-<x-site.layout :epaper-viewer="true" :title="$edition->title.' — TNF Today'">
+<x-site.layout :epaper-viewer="true" :seo="$seo">
     @push('styles')
         @vite(['resources/css/epaper-viewer.css'])
     @endpush

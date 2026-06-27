@@ -43,6 +43,7 @@ class PdfCallbackService
 
         $edition = $edition->fresh();
         $this->syncFeaturedFromFirstPage($edition, $pages);
+        $edition = $edition->fresh();
         GenerateOgImageJob::dispatchSync('epaper', $edition->id);
 
         return $edition->fresh();

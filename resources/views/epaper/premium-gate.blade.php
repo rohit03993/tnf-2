@@ -1,4 +1,4 @@
-<x-site.layout :title="$edition->title.' — TNF Today'">
+<x-site.layout :seo="$seo">
     <div class="tnf-page-content mx-auto max-w-lg">
         <div class="rounded-tnf-lg bg-white p-8 text-center shadow-card">
             <p class="text-tnf-xs font-bold uppercase tracking-wider text-tnf-red">Subscriber ePaper</p>
