@@ -9,7 +9,9 @@ class BrandLogoService
 {
     public const CANONICAL_PATH = 'settings/brand/logo.png';
 
-    public const OUTPUT_SIZE = 512;
+    public const MAX_WIDTH = 1400;
+
+    public const MAX_HEIGHT = 360;
 
     public static function url(?string $path = null): ?string
     {
@@ -50,22 +52,23 @@ class BrandLogoService
             throw new RuntimeException('The uploaded image has invalid dimensions.');
         }
 
-        $canvas = imagecreatetruecolor(self::OUTPUT_SIZE, self::OUTPUT_SIZE);
-        $white = imagecolorallocate($canvas, 255, 255, 255);
-        imagefill($canvas, 0, 0, $white);
-        imagealphablending($canvas, true);
-
-        $scale = min(self::OUTPUT_SIZE / $srcWidth, self::OUTPUT_SIZE / $srcHeight);
+        $scale = min(self::MAX_WIDTH / $srcWidth, self::MAX_HEIGHT / $srcHeight, 1);
         $targetWidth = max(1, (int) round($srcWidth * $scale));
         $targetHeight = max(1, (int) round($srcHeight * $scale));
-        $offsetX = (int) ((self::OUTPUT_SIZE - $targetWidth) / 2);
-        $offsetY = (int) ((self::OUTPUT_SIZE - $targetHeight) / 2);
+
+        $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
+        imagealphablending($canvas, false);
+        imagesavealpha($canvas, true);
+
+        $transparent = imagecolorallocatealpha($canvas, 255, 255, 255, 127);
+        imagefill($canvas, 0, 0, $transparent);
+        imagealphablending($canvas, true);
 
         imagecopyresampled(
             $canvas,
             $source,
-            $offsetX,
-            $offsetY,
+            0,
+            0,
             0,
             0,
             $targetWidth,

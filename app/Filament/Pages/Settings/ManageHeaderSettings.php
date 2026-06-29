@@ -47,7 +47,7 @@ class ManageHeaderSettings extends SettingsPage
     {
         return $schema->components([
                 Section::make('Brand logo')
-                    ->description('Your square logo appears in the site header, mobile menu, footer, and sign-in page.')
+                    ->description('Upload your full-width Hindi logo (टीएनएफ टुडे). It displays large in the site header — no crop step.')
                     ->schema([
                         TnfImageUpload::logoField(
                             FileUpload::make('site_logo')

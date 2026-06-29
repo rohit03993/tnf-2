@@ -56,8 +56,8 @@ class TnfImageUpload
             ->maxSize(2048)
             ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
             ->helperText(
-                'Upload your square brand logo (PNG, JPG, or WebP, max 2 MB). '
-                .'No cropping step — we resize and center it automatically for header, footer, and sign-in.',
+                'Upload your full brand logo (horizontal PNG or JPG, max 2 MB). '
+                .'No cropping — we keep the original shape and resize it for header, footer, and sign-in.',
             );
     }
 

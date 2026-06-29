@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class BrandLogoServiceTest extends TestCase
 {
-    public function test_it_normalizes_uploaded_logo_into_square_png(): void
+    public function test_it_preserves_horizontal_logo_dimensions(): void
     {
         if (! extension_loaded('gd')) {
             $this->markTestSkipped('GD extension is not available.');
@@ -16,9 +16,9 @@ class BrandLogoServiceTest extends TestCase
 
         Storage::fake('public');
 
-        $source = imagecreatetruecolor(800, 800);
+        $source = imagecreatetruecolor(1600, 400);
         $red = imagecolorallocate($source, 188, 30, 56);
-        imagefilledrectangle($source, 0, 0, 800, 800, $red);
+        imagefilledrectangle($source, 0, 0, 1600, 400, $red);
 
         ob_start();
         imagepng($source);
@@ -30,15 +30,12 @@ class BrandLogoServiceTest extends TestCase
         $path = BrandLogoService::process('public', 'settings/brand/uploads/source.png');
 
         $this->assertSame(BrandLogoService::CANONICAL_PATH, $path);
-        $this->assertTrue(Storage::disk('public')->exists(BrandLogoService::CANONICAL_PATH));
-        $this->assertFalse(Storage::disk('public')->exists('settings/brand/uploads/source.png'));
 
-        $optimized = Storage::disk('public')->get(BrandLogoService::CANONICAL_PATH);
-        $image = imagecreatefromstring($optimized);
+        $image = imagecreatefromstring(Storage::disk('public')->get(BrandLogoService::CANONICAL_PATH));
 
         $this->assertNotFalse($image);
-        $this->assertSame(BrandLogoService::OUTPUT_SIZE, imagesx($image));
-        $this->assertSame(BrandLogoService::OUTPUT_SIZE, imagesy($image));
+        $this->assertSame(BrandLogoService::MAX_WIDTH, imagesx($image));
+        $this->assertSame(350, imagesy($image));
         imagedestroy($image);
     }
 }

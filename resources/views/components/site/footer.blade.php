@@ -8,19 +8,11 @@
             <div class="tnf-footer-brand">
                 <a href="{{ route('home') }}" class="tnf-footer-logo">
                     @if(filled($logo))
-                        <img
-                            src="{{ asset('storage/'.$logo) }}"
-                            alt="{{ config('app.name') }}"
-                            class="tnf-brand-logo-image tnf-brand-logo-image--lg"
-                            width="40"
-                            height="40"
-                            loading="lazy"
-                            decoding="async"
-                        >
+                        <x-site.brand-mark :logo="$logo" size="footer" :show-wordmark="false" loading="lazy" />
                     @else
                         <span class="tnf-footer-logo-mark">TNF</span>
+                        <span class="tnf-footer-logo-text">{{ config('app.name') }}</span>
                     @endif
-                    <span class="tnf-footer-logo-text">{{ config('app.name') }}</span>
                 </a>
                 <p class="tnf-footer-tagline">
                     News, videos, and digital ePaper — curated for readers across India.

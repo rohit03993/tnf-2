@@ -159,7 +159,11 @@
     }
 
     .tnf-header-top {
-        @apply flex h-header items-center gap-2 lg:gap-3;
+        @apply flex min-h-header items-center gap-2 py-2 lg:gap-3;
+    }
+
+    .tnf-header:has(.tnf-header-logo--brand) .tnf-header-top {
+        @apply min-h-[4.25rem] py-2.5 lg:min-h-[4.75rem];
     }
 
     @media (max-width: 1023px) {
@@ -181,31 +185,47 @@
     }
 
     .tnf-header-logo {
-        @apply flex shrink-0 items-center gap-2.5 font-bold text-tnf-navy;
+        @apply flex min-w-0 shrink items-center gap-2.5 font-bold text-tnf-navy;
+    }
+
+    .tnf-header-logo--brand {
+        @apply max-w-[min(82vw,22rem)] flex-1 lg:max-w-[28rem] lg:flex-initial;
     }
 
     .tnf-brand-logo-image {
-        @apply block shrink-0 rounded-xl bg-white object-contain shadow-sm ring-1 ring-black/5;
+        @apply block shrink-0 object-contain object-left;
+    }
+
+    .tnf-brand-logo-image--header {
+        @apply h-12 w-auto max-w-full bg-transparent shadow-none ring-0 mobile-sm:h-11 sm:h-14 lg:h-16;
+    }
+
+    .tnf-brand-logo-image--footer {
+        @apply h-12 w-auto max-w-[15rem] rounded-lg bg-white shadow-sm ring-1 ring-black/5;
+    }
+
+    .tnf-brand-logo-image--auth {
+        @apply mx-auto h-16 w-auto max-w-[18rem] rounded-xl bg-white shadow-card ring-1 ring-black/5 sm:h-20 sm:max-w-[22rem];
     }
 
     .tnf-brand-logo-image--xs {
-        @apply h-7 w-7;
+        @apply h-8 w-auto max-w-[9rem] rounded-lg bg-white ring-1 ring-black/5;
     }
 
     .tnf-brand-logo-image--sm {
-        @apply h-8 w-8;
+        @apply h-9 w-auto max-w-[10rem] rounded-lg bg-white ring-1 ring-black/5;
     }
 
     .tnf-brand-logo-image--md {
-        @apply h-9 w-9;
+        @apply h-9 w-9 rounded-xl bg-white shadow-sm ring-1 ring-black/5;
     }
 
     .tnf-brand-logo-image--lg {
-        @apply h-10 w-10 rounded-[0.65rem];
+        @apply h-10 w-10 rounded-[0.65rem] bg-white shadow-sm ring-1 ring-black/5;
     }
 
     .tnf-brand-logo-image--xl {
-        @apply h-[4.5rem] w-[4.5rem] rounded-2xl shadow-card ring-1 ring-black/10;
+        @apply h-[4.5rem] w-[4.5rem] rounded-2xl bg-white shadow-card ring-1 ring-black/10;
     }
 
     .tnf-brand-logo-wordmark {

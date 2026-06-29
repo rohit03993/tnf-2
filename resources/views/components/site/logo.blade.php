@@ -1,5 +1,21 @@
 @props(['size' => 'md', 'logo' => null])
 
-<a {{ $attributes->merge(['href' => '/', 'class' => 'tnf-header-logo']) }}>
-    <x-site.brand-mark :size="$size" :logo="$logo" :show-wordmark="true" />
+@php
+    $hasBrandLogo = filled($logo);
+    $logoSize = match (true) {
+        $hasBrandLogo && $size === 'md' => 'header',
+        $hasBrandLogo && $size === 'sm' => 'xs',
+        default => $size,
+    };
+@endphp
+
+<a {{ $attributes->merge([
+    'href' => '/',
+    'class' => 'tnf-header-logo'.($hasBrandLogo ? ' tnf-header-logo--brand' : ''),
+]) }}>
+    <x-site.brand-mark
+        :size="$logoSize"
+        :logo="$logo"
+        :show-wordmark="! $hasBrandLogo"
+    />
 </a>

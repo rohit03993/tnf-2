@@ -9,15 +9,17 @@
     $wordmarkText = $wordmark ?: config('app.name', 'TNF Today');
     $logoPath = filled($logo) ? $logo : null;
     $sizeClass = match ($size) {
+        'header' => 'tnf-brand-logo-image--header',
+        'footer' => 'tnf-brand-logo-image--footer',
+        'auth' => 'tnf-brand-logo-image--auth',
         'xs' => 'tnf-brand-logo-image--xs',
         'sm' => 'tnf-brand-logo-image--sm',
         'lg' => 'tnf-brand-logo-image--lg',
         default => 'tnf-brand-logo-image--md',
     };
     $fallbackClass = match ($size) {
-        'xs' => 'h-7 w-7 text-xs',
-        'sm' => 'h-7 w-7 text-xs',
-        'lg' => 'h-12 w-12 text-lg',
+        'xs', 'sm' => 'h-7 w-7 text-xs',
+        'lg', 'auth' => 'h-12 w-12 text-lg',
         default => 'h-8 w-8 text-sm',
     };
 @endphp
@@ -27,8 +29,6 @@
         src="{{ asset('storage/'.$logoPath) }}"
         alt="{{ $wordmarkText }}"
         class="tnf-brand-logo-image {{ $sizeClass }}"
-        width="36"
-        height="36"
         decoding="async"
         {{ $attributes->only('loading') }}
     >
@@ -36,6 +36,6 @@
     <span class="tnf-header-logo-mark {{ $fallbackClass }}">TNF</span>
 @endif
 
-@if($showWordmark)
+@if($showWordmark && ! $logoPath)
     <span {{ $attributes->class(['tnf-brand-logo-wordmark']) }}>{{ $wordmarkText }}</span>
 @endif
