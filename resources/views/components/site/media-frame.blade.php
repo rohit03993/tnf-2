@@ -17,6 +17,7 @@
     $wrapperStyle = match ($variant) {
         'thumb' => 'position:relative;overflow:hidden;background:#E8EAED;width:4rem;flex-shrink:0;border-radius:0.375rem;',
         'article' => 'position:relative;overflow:hidden;background:#E8EAED;width:100%;border-radius:0.5rem;',
+        'card', 'hero' => 'position:relative;overflow:hidden;background:#fff;width:100%;',
         default => 'position:relative;overflow:hidden;background:#E8EAED;width:100%;',
     };
 
