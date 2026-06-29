@@ -205,10 +205,9 @@ function initMobileSafeArea() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
         || window.navigator.standalone === true;
     const isApp = document.body.dataset.tnfApp === '1';
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const immersiveViewport = window.innerHeight >= window.screen.height * 0.92;
 
-    if (isStandalone || isApp || (isAndroid && immersiveViewport)) {
+    // Only reserve status-bar space in installed app / PWA — not regular mobile browser.
+    if (isStandalone || isApp) {
         applyTopInset(28);
     }
 

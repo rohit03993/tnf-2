@@ -146,26 +146,12 @@
         }
     }
 
-    /* PWA / Capacitor / home-screen: env() is often 0 on Android — reserve status-bar space */
-    @media (max-width: 1023px) {
-        body.tnf-app-mode .tnf-header,
-        body.tnf-has-top-inset .tnf-header {
-            padding-top: max(28px, env(safe-area-inset-top, 0px));
-        }
-    }
-
-    @media (max-width: 1023px) and (display-mode: standalone) {
-        .tnf-header {
-            padding-top: max(28px, env(safe-area-inset-top, 0px));
-        }
-    }
-
     .tnf-header-top {
         @apply flex min-h-header items-center gap-2 py-2 lg:gap-3;
     }
 
     .tnf-header:has(.tnf-header-logo--brand) .tnf-header-top {
-        @apply min-h-[4rem] py-2 lg:min-h-[4.5rem];
+        @apply lg:min-h-[4.5rem] lg:py-2;
     }
 
     @media (max-width: 1023px) {
@@ -1259,18 +1245,32 @@
         }
     }
 
-    /* Mobile web: keep header usable with wide brand logo */
+    /* Mobile web: compact header — logo row only as tall as needed */
     @media (max-width: 1023px) {
-        .tnf-header-top {
-            @apply gap-1.5;
+        .tnf-header-top,
+        .tnf-header:has(.tnf-header-logo--brand) .tnf-header-top {
+            @apply min-h-0 gap-1.5 py-1;
         }
 
         .tnf-header-logo--brand {
             @apply flex-1 max-w-[min(68vw,18rem)] mobile-sm:max-w-[min(64vw,16.5rem)];
         }
 
+        .tnf-brand-logo-image--header {
+            @apply h-[2.35rem] mobile-sm:h-[2.2rem];
+        }
+
         .tnf-header-actions {
             @apply gap-1;
+        }
+
+        .tnf-header-icon-btn {
+            @apply min-h-9 min-w-9;
+        }
+
+        .tnf-header-btn-signin,
+        .tnf-header-btn-epaper {
+            @apply min-h-9 min-w-0 px-2.5 text-tnf-sm;
         }
     }
 }
