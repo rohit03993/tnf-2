@@ -163,7 +163,7 @@
     }
 
     .tnf-header:has(.tnf-header-logo--brand) .tnf-header-top {
-        @apply min-h-[4.25rem] py-2.5 lg:min-h-[4.75rem];
+        @apply min-h-[4rem] py-2 lg:min-h-[4.5rem];
     }
 
     @media (max-width: 1023px) {
@@ -189,7 +189,7 @@
     }
 
     .tnf-header-logo--brand {
-        @apply max-w-[min(82vw,22rem)] flex-1 lg:max-w-[28rem] lg:flex-initial;
+        @apply max-w-[min(78vw,21rem)] shrink lg:max-w-[26.5rem];
     }
 
     .tnf-brand-logo-image {
@@ -197,7 +197,7 @@
     }
 
     .tnf-brand-logo-image--header {
-        @apply h-12 w-auto max-w-full bg-transparent shadow-none ring-0 mobile-sm:h-11 sm:h-14 lg:h-16;
+        @apply h-[2.85rem] w-auto max-w-full bg-transparent shadow-none ring-0 mobile-sm:h-[2.6rem] sm:h-[3.3rem] lg:h-[3.8rem];
     }
 
     .tnf-brand-logo-image--footer {
@@ -209,7 +209,7 @@
     }
 
     .tnf-brand-logo-image--xs {
-        @apply h-8 w-auto max-w-[9rem] rounded-lg bg-white ring-1 ring-black/5;
+        @apply h-[1.9rem] w-auto max-w-[8.5rem] rounded-lg bg-white ring-1 ring-black/5;
     }
 
     .tnf-brand-logo-image--sm {
