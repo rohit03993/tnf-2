@@ -4,12 +4,15 @@ namespace App\Filament\Pages\Settings;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Settings\Concerns\ManagesSettings;
+use App\Services\BrandLogoService;
 use App\Support\TnfImageUpload;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use App\Models\Setting;
 
 class ManageHeaderSettings extends SettingsPage
 {
@@ -33,6 +36,7 @@ class ManageHeaderSettings extends SettingsPage
     protected function settingKeys(): array
     {
         return [
+            'site_logo' => '',
             'banner_image' => '',
             'banner_link_url' => '',
             'whatsapp_url' => '',
@@ -42,7 +46,19 @@ class ManageHeaderSettings extends SettingsPage
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-                Section::make()->schema([
+                Section::make('Brand logo')
+                    ->description('Your square logo appears in the site header, mobile menu, footer, and sign-in page.')
+                    ->schema([
+                        TnfImageUpload::logoField(
+                            FileUpload::make('site_logo')
+                                ->label('Site logo')
+                                ->disk('public')
+                                ->directory('settings/brand/uploads')
+                                ->visibility('public')
+                                ->imagePreviewHeight('120')
+                        ),
+                    ]),
+                Section::make('Header promo')->schema([
                     TnfImageUpload::applyTo(
                         FileUpload::make('banner_image')
                             ->image()
@@ -53,5 +69,42 @@ class ManageHeaderSettings extends SettingsPage
                     TextInput::make('whatsapp_url')->label('WhatsApp promo URL')->url(),
                 ]),
             ]);
+    }
+
+    public function save(): void
+    {
+        $data = $this->form->getState();
+
+        if (array_key_exists('site_logo', $data)) {
+            $incoming = $data['site_logo'];
+            $path = is_array($incoming) ? ($incoming[0] ?? null) : $incoming;
+
+            if (filled($path)) {
+                try {
+                    $data['site_logo'] = BrandLogoService::process('public', (string) $path);
+                } catch (\Throwable $exception) {
+                    Notification::make()
+                        ->title('Logo upload failed')
+                        ->body($exception->getMessage())
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+            } else {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete(BrandLogoService::CANONICAL_PATH);
+                $data['site_logo'] = '';
+            }
+        }
+
+        foreach ($data as $key => $value) {
+            if (in_array($key, $this->secretKeys(), true) && blank($value)) {
+                continue;
+            }
+
+            Setting::set($key, $value);
+        }
+
+        Notification::make()->title('Settings saved')->success()->send();
     }
 }

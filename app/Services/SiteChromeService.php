@@ -31,6 +31,8 @@ class SiteChromeService
                 'bannerImage' => Setting::get('banner_image', ''),
                 'bannerLink' => Setting::get('banner_link_url', ''),
                 'whatsappUrl' => Setting::get('whatsapp_url', ''),
+                'siteLogo' => Setting::get('site_logo', ''),
+                'siteLogoUrl' => BrandLogoService::url(),
                 'disclaimerText' => Setting::get('disclaimer_text', ''),
                 'disclaimerEmail' => Setting::get('disclaimer_email', 'contact@tnftoday.com'),
                 'creditsLine' => Setting::get('credits_line', ''),

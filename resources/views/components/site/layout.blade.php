@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#FFFFFF">
-    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ filled($chrome['siteLogo'] ?? null) ? asset('storage/'.$chrome['siteLogo']) : asset('favicon.svg') }}" type="{{ filled($chrome['siteLogo'] ?? null) ? 'image/png' : 'image/svg+xml' }}">
 
     @php
         $tnfBuildStamp = is_file(public_path('build/manifest.json'))
@@ -21,17 +21,7 @@
 
     <x-site.seo-meta :seo="$seo" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-        media="print"
-        onload="this.media='all'"
-    >
-    <noscript>
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    </noscript>
+    <x-site.fonts />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @if(request()->routeIs('home'))
@@ -64,7 +54,7 @@
             <x-site.masthead-banner :image="$chrome['bannerImage']" :url="$chrome['bannerLink']" />
         @endunless
         <x-site.topic-pills :tags="$chrome['hotTags'] ?? collect()" />
-        <x-site.drawer :groups="$chrome['drawerGroups']" />
+        <x-site.drawer :groups="$chrome['drawerGroups']" :logo="$chrome['siteLogo'] ?? null" />
     @endunless
 
     <main id="tnf-main">
@@ -76,6 +66,7 @@
             :disclaimer="$chrome['disclaimerText']"
             :email="$chrome['disclaimerEmail']"
             :credits="$chrome['creditsLine']"
+            :logo="$chrome['siteLogo'] ?? null"
         />
 
         <button type="button" onclick="window.scrollTo({top:0,behavior:'smooth'})"

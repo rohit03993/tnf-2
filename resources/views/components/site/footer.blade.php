@@ -1,4 +1,4 @@
-@props(['disclaimer', 'email', 'credits'])
+@props(['disclaimer', 'email', 'credits', 'logo' => null])
 
 <footer class="tnf-footer">
     <div class="tnf-footer-accent" aria-hidden="true"></div>
@@ -7,7 +7,19 @@
         <div class="tnf-footer-grid">
             <div class="tnf-footer-brand">
                 <a href="{{ route('home') }}" class="tnf-footer-logo">
-                    <span class="tnf-footer-logo-mark">TNF</span>
+                    @if(filled($logo))
+                        <img
+                            src="{{ asset('storage/'.$logo) }}"
+                            alt="{{ config('app.name') }}"
+                            class="tnf-brand-logo-image tnf-brand-logo-image--lg"
+                            width="40"
+                            height="40"
+                            loading="lazy"
+                            decoding="async"
+                        >
+                    @else
+                        <span class="tnf-footer-logo-mark">TNF</span>
+                    @endif
                     <span class="tnf-footer-logo-text">{{ config('app.name') }}</span>
                 </a>
                 <p class="tnf-footer-tagline">

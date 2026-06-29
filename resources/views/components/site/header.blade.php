@@ -2,7 +2,7 @@
 
 <header class="tnf-header">
     <div class="tnf-container tnf-header-top">
-        <x-site.logo />
+        <x-site.logo :logo="$chrome['siteLogo'] ?? null" />
 
         <nav class="tnf-header-nav" aria-label="Primary">
             @foreach($chrome['primaryNav'] as $item)

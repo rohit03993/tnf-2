@@ -49,6 +49,18 @@ class TnfImageUpload
             ->helperText(self::helperText($extraHelp));
     }
 
+    public static function logoField(FileUpload $field): FileUpload
+    {
+        return $field
+            ->image()
+            ->maxSize(2048)
+            ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
+            ->helperText(
+                'Upload your square brand logo (PNG, JPG, or WebP, max 2 MB). '
+                .'No cropping step — we resize and center it automatically for header, footer, and sign-in.',
+            );
+    }
+
     public static function storedFileWithinLimit(string $disk, string $path): bool
     {
         if (! Storage::disk($disk)->exists($path)) {

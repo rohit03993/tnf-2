@@ -20,6 +20,7 @@ class SettingsSeeder extends Seeder
             'show_crime' => true,
             'banner_image' => '',
             'banner_link_url' => '',
+            'site_logo' => '',
             'disclaimer_text' => 'TNF Today provides news and information for general awareness. Verify important facts independently.',
             'disclaimer_email' => 'contact@tnftoday.com',
             'credits_line' => 'Designed & Developed with Love by Pal Digital',

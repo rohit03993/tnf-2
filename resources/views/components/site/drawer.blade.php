@@ -1,4 +1,4 @@
-@props(['groups'])
+@props(['groups', 'logo' => null])
 
 @php
     $isActive = fn (string $url): bool => url()->current() === $url;
@@ -26,7 +26,7 @@
 <aside id="tnf-drawer" class="tnf-drawer" role="dialog" aria-label="Site menu" aria-modal="true">
     <div class="tnf-drawer-top">
         <div class="tnf-drawer-top-bar">
-            <x-site.logo size="sm" data-tnf-drawer-close />
+            <x-site.logo size="sm" :logo="$logo" data-tnf-drawer-close />
             <button type="button" class="tnf-drawer-close-btn" data-tnf-drawer-close aria-label="Close menu">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

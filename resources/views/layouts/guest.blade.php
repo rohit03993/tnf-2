@@ -8,9 +8,7 @@
 
     <title>{{ config('app.name', 'TNF Today') }}</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <x-site.fonts />
 
     @vite(['resources/css/auth.css', 'resources/js/app.js'])
 </head>
@@ -18,7 +16,19 @@
     <div class="tnf-auth-wrap">
         <div class="tnf-auth-card">
             <div class="tnf-auth-logo">
-                <div class="tnf-auth-logo-mark">TNF</div>
+                @php($siteLogo = \App\Models\Setting::get('site_logo'))
+                @if(filled($siteLogo))
+                    <img
+                        src="{{ asset('storage/'.$siteLogo) }}"
+                        alt="{{ config('app.name', 'TNF Today') }}"
+                        class="tnf-brand-logo-image tnf-brand-logo-image--xl mx-auto"
+                        width="72"
+                        height="72"
+                        decoding="async"
+                    >
+                @else
+                    <div class="tnf-auth-logo-mark">TNF</div>
+                @endif
                 <h1 class="tnf-auth-title">{{ config('app.name', 'TNF Today') }}</h1>
                 <p class="tnf-auth-subtitle">Sign in to your account</p>
             </div>
