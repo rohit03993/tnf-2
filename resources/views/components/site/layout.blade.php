@@ -53,7 +53,6 @@
         @unless($compactChrome ?? false)
             <x-site.masthead-banner :image="$chrome['bannerImage']" :url="$chrome['bannerLink']" />
         @endunless
-        <x-site.topic-pills :tags="$chrome['hotTags'] ?? collect()" />
         <x-site.drawer :groups="$chrome['drawerGroups']" :logo="$chrome['siteLogo'] ?? null" />
     @endunless
 

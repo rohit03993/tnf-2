@@ -237,23 +237,25 @@
     }
 
     .tnf-header-nav {
-        @apply hidden items-center gap-1 lg:flex;
+        @apply hidden items-center gap-0.5 lg:flex;
+        font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
     }
 
     .tnf-header-nav-link {
-        @apply rounded-tnf px-3 py-2 text-tnf-sm font-medium text-tnf-navy/90 hover:bg-tnf-gray hover:text-tnf-navy;
+        @apply rounded-tnf px-3 py-2 text-[0.9375rem] font-semibold tracking-[0.01em] text-tnf-navy/90 hover:bg-tnf-gray hover:text-tnf-navy lg:px-3.5 lg:text-base;
     }
 
     .tnf-header-nav-link--active {
-        @apply bg-tnf-red text-white;
+        @apply bg-tnf-red font-bold text-white;
     }
 
     .tnf-header-actions {
         @apply ml-auto flex items-center gap-2;
+        font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
     }
 
     .tnf-header-btn {
-        @apply inline-flex min-h-touch min-w-touch items-center justify-center gap-1.5 rounded-tnf px-3 text-tnf-sm font-semibold transition-colors;
+        @apply inline-flex min-h-touch min-w-touch items-center justify-center gap-1.5 rounded-tnf px-3 text-[0.9375rem] font-semibold transition-colors lg:text-base;
     }
 
     .tnf-header-btn-epaper {
@@ -866,9 +868,14 @@
     }
 
     .tnf-more-dropdown {
-        @apply pointer-events-none invisible absolute left-0 top-full z-[80] max-h-[70vh] w-64 overflow-y-auto rounded-tnf-lg border border-tnf-gray-dark bg-white py-2 opacity-0 shadow-card transition-opacity duration-150;
+        @apply pointer-events-none invisible absolute left-0 top-full z-[80] max-h-[70vh] w-64 overflow-y-auto rounded-tnf-lg border border-tnf-gray-dark bg-white py-2 text-[0.9375rem] opacity-0 shadow-card transition-opacity duration-150;
+        font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
         padding-top: 0.25rem;
         margin-top: 0;
+    }
+
+    .tnf-more-dropdown .tnf-drawer-link {
+        @apply font-semibold;
     }
 
     @media (min-width: 1024px) {

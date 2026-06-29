@@ -79,8 +79,6 @@
             </button>
         </div>
     </div>
-
-    <x-site.breaking-ticker :headlines="$chrome['breakingHeadlines']" />
 </header>
 
 @if(filled($chrome['whatsappUrl']))
