@@ -37,7 +37,7 @@
 
     body {
         @apply bg-tnf-gray text-tnf-navy antialiased;
-        font-family: 'Halant', 'Noto Sans Devanagari', 'Noto Sans', Georgia, 'Times New Roman', serif;
+        font-family: 'Noto Sans', 'Noto Sans Devanagari', system-ui, sans-serif;
         padding-bottom: calc(var(--tnf-bottom-nav) + var(--tnf-safe-bottom));
     }
 
@@ -965,7 +965,7 @@
 
     /* Hindi news content — titles & story body only (UI stays English) */
     .tnf-news-content {
-        font-family: 'Halant', 'Noto Sans Devanagari', 'Noto Sans', Georgia, 'Times New Roman', serif;
+        font-family: 'Noto Sans Devanagari', 'Noto Sans', system-ui, sans-serif;
         word-break: break-word;
         overflow-wrap: break-word;
     }

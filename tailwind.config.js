@@ -28,8 +28,8 @@ export default {
                 },
             },
             fontFamily: {
-                sans: ['Halant', '"Noto Sans Devanagari"', '"Noto Sans"', ...defaultTheme.fontFamily.serif],
-                devanagari: ['Halant', '"Noto Sans Devanagari"', '"Noto Sans"', ...defaultTheme.fontFamily.serif],
+                sans: ['"Noto Sans"', '"Noto Sans Devanagari"', ...defaultTheme.fontFamily.sans],
+                devanagari: ['"Noto Sans Devanagari"', '"Noto Sans"', ...defaultTheme.fontFamily.sans],
             },
             fontSize: {
                 'tnf-xs': ['0.75rem', { lineHeight: '1.25' }],
