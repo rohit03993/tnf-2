@@ -197,6 +197,7 @@ function initMobileSafeArea() {
 
     if (envTop > 0) {
         applyTopInset(envTop);
+        initHeaderMetrics();
 
         return;
     }
@@ -209,6 +210,37 @@ function initMobileSafeArea() {
 
     if (isStandalone || isApp || (isAndroid && immersiveViewport)) {
         applyTopInset(28);
+    }
+
+    initHeaderMetrics();
+}
+
+function initHeaderMetrics() {
+    const header = document.querySelector('.tnf-header');
+
+    if (! header || ! window.matchMedia('(max-width: 1023px)').matches) {
+        return;
+    }
+
+    const apply = () => {
+        const rect = header.getBoundingClientRect();
+        const safeTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tnf-safe-top')) || 0;
+        const chrome = Math.max(Math.round(rect.height - safeTop), 52);
+
+        document.documentElement.style.setProperty('--tnf-header-chrome', `${chrome}px`);
+        document.documentElement.style.setProperty('--tnf-header-total', `${Math.round(rect.height)}px`);
+    };
+
+    apply();
+
+    if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(apply).observe(header);
+    }
+
+    window.addEventListener('resize', apply, { passive: true });
+
+    if (document.fonts?.ready) {
+        document.fonts.ready.then(apply).catch(() => {});
     }
 }
 

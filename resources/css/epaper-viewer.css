@@ -4,7 +4,7 @@
 
 @layer components {
     body.tnf-epaper-viewer-page {
-        padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(var(--tnf-ep-mobile-bar) + var(--tnf-safe-bottom));
     }
 
     body.tnf-epaper-viewer-page .tnf-ticker-wrap,
@@ -217,7 +217,7 @@
         .tnf-ep-stage {
             overflow-x: auto;
             overflow-y: scroll;
-            height: calc(100dvh - 8.25rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+            height: calc(100dvh - var(--tnf-header-total, 3.25rem) - var(--tnf-ep-mobile-bar, 3.5rem) - var(--tnf-safe-bottom, 0px));
             max-height: none;
             min-height: 0;
             touch-action: pan-x pan-y;
@@ -240,7 +240,7 @@
         }
 
         .tnf-epaper-viewer.is-clip-mode .tnf-ep-stage {
-            height: calc(100dvh - 9.5rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+            height: calc(100dvh - var(--tnf-header-total, 3.25rem) - var(--tnf-ep-mobile-bar, 3.5rem) - var(--tnf-ep-clip-chrome, 1.5rem) - var(--tnf-safe-bottom, 0px));
         }
     }
 
@@ -529,7 +529,7 @@
 
     .tnf-ep-mobile-bar {
         @apply fixed bottom-0 left-0 right-0 z-[55] border-t border-tnf-gray-dark bg-white/95 shadow-[0_-4px_20px_rgba(15,19,32,0.08)] backdrop-blur-md lg:hidden;
-        padding-bottom: env(safe-area-inset-bottom, 0px);
+        padding-bottom: var(--tnf-safe-bottom, env(safe-area-inset-bottom, 0px));
     }
 
     .tnf-ep-mobile-bar-inner {

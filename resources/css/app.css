@@ -11,6 +11,8 @@
         --tnf-gray: #F4F5F7;
         --tnf-bottom-nav: 4.5rem;
         --tnf-header-chrome: 3.25rem;
+        --tnf-ep-mobile-bar: 3.5rem;
+        --tnf-ep-clip-chrome: 1.5rem;
         --tnf-safe-top: env(safe-area-inset-top, 0px);
         --tnf-safe-bottom: env(safe-area-inset-bottom, 0px);
         --tnf-header-total: calc(var(--tnf-header-chrome) + var(--tnf-safe-top));
@@ -1163,7 +1165,7 @@
     /* Reading progress */
     .tnf-reading-progress {
         @apply pointer-events-none fixed left-0 z-[100] h-[3px] w-full origin-left bg-tnf-red;
-        top: var(--tnf-safe-top);
+        top: var(--tnf-header-total);
         transform: scaleX(0);
     }
 
@@ -1203,8 +1205,73 @@
 
     body.tnf-ptr-ready::before {
         content: '';
-        @apply pointer-events-none fixed left-1/2 top-3 z-[100] h-8 w-8 -translate-x-1/2 rounded-full border-4 border-tnf-gray-dark border-t-tnf-red;
+        @apply pointer-events-none fixed left-1/2 z-[100] h-8 w-8 -translate-x-1/2 rounded-full border-4 border-tnf-gray-dark border-t-tnf-red;
+        top: calc(var(--tnf-header-total) + 0.75rem);
         animation: spin 0.8s linear infinite;
+    }
+
+    /* Capacitor / app-mode mobile shell */
+    @media (max-width: 1023px) {
+        body.tnf-app-mode {
+            padding-bottom: calc(var(--tnf-bottom-nav) + var(--tnf-safe-bottom));
+        }
+
+        body.tnf-app-mode .tnf-header-top,
+        body.tnf-app-mode .tnf-header:has(.tnf-header-logo--brand) .tnf-header-top {
+            @apply min-h-[3.25rem] gap-2 py-1.5;
+        }
+
+        body.tnf-app-mode .tnf-header-logo--brand {
+            @apply max-w-[min(72vw,15.5rem)];
+        }
+
+        body.tnf-app-mode .tnf-brand-logo-image--header {
+            @apply h-[2.35rem] mobile-sm:h-[2.15rem];
+        }
+
+        body.tnf-app-mode .tnf-header-actions {
+            @apply hidden lg:flex;
+        }
+
+        body.tnf-app-mode .tnf-app-tab-bar .tnf-bottom-nav-inner {
+            @apply px-0.5;
+        }
+
+        body.tnf-app-mode .tnf-app-tab-bar .tnf-bottom-nav-item-inner {
+            @apply min-w-0 gap-0.5 px-1 py-0.5;
+            font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
+        }
+
+        body.tnf-app-mode .tnf-app-tab-bar .tnf-bottom-nav-label {
+            @apply text-[0.5625rem] mobile-sm:text-[0.6rem];
+        }
+
+        body.tnf-app-mode .tnf-drawer-top {
+            padding-top: max(28px, env(safe-area-inset-top, 0px));
+        }
+
+        body.tnf-app-mode .tnf-page-content {
+            @apply pb-2;
+        }
+
+        body.tnf-app-mode.tnf-no-bottom-nav {
+            padding-bottom: var(--tnf-safe-bottom);
+        }
+    }
+
+    /* Mobile web: keep header usable with wide brand logo */
+    @media (max-width: 1023px) {
+        .tnf-header-top {
+            @apply gap-1.5;
+        }
+
+        .tnf-header-logo--brand {
+            @apply flex-1 max-w-[min(68vw,18rem)] mobile-sm:max-w-[min(64vw,16.5rem)];
+        }
+
+        .tnf-header-actions {
+            @apply gap-1;
+        }
     }
 }
 

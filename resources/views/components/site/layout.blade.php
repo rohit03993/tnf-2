@@ -50,7 +50,7 @@
 
     @unless($chrome['authLite'])
         <x-site.header :chrome="$chrome" />
-        @unless($compactChrome ?? false)
+        @unless(($compactChrome ?? false) || ($isApp ?? false))
             <x-site.masthead-banner :image="$chrome['bannerImage']" :url="$chrome['bannerLink']" />
         @endunless
         <x-site.drawer :groups="$chrome['drawerGroups']" :logo="$chrome['siteLogo'] ?? null" />
@@ -61,19 +61,23 @@
     </main>
 
     @unless($chrome['authLite'])
-        <x-site.footer
-            :disclaimer="$chrome['disclaimerText']"
-            :email="$chrome['disclaimerEmail']"
-            :credits="$chrome['creditsLine']"
-            :logo="$chrome['siteLogo'] ?? null"
-        />
+        @unless($isApp ?? false)
+            <x-site.footer
+                :disclaimer="$chrome['disclaimerText']"
+                :email="$chrome['disclaimerEmail']"
+                :credits="$chrome['creditsLine']"
+                :logo="$chrome['siteLogo'] ?? null"
+            />
+        @endunless
 
-        <button type="button" onclick="window.scrollTo({top:0,behavior:'smooth'})"
-            class="tnf-back-to-top" aria-label="Back to top">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-width="2" d="M5 15l7-7 7 7"/>
-            </svg>
-        </button>
+        @unless($isApp ?? false)
+            <button type="button" onclick="window.scrollTo({top:0,behavior:'smooth'})"
+                class="tnf-back-to-top" aria-label="Back to top">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                </svg>
+            </button>
+        @endunless
 
         @if($isApp ?? false)
             <x-site.app-bottom-nav />
