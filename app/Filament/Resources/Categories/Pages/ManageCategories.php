@@ -12,6 +12,11 @@ class ManageCategories extends ManageRecords
 
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()];
+        return [
+            CreateAction::make()
+                ->label('New category')
+                ->modalHeading('Create category')
+                ->successNotificationTitle('Category created'),
+        ];
     }
 }
