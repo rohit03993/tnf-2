@@ -18,7 +18,7 @@
         <div class="tnf-news-card-body">
             <h{{ $featured ? '2' : '3' }} class="tnf-news-card-title tnf-line-clamp-3">{{ $article->title }}</h{{ $featured ? '2' : '3' }}>
             <p class="tnf-news-card-meta">
-                {{ $article->published_at?->format('M d, Y') }}
+                {{ \App\Support\NewsDate::formatDate($article->published_at) }}
             </p>
         </div>
     </a>

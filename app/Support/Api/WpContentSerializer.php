@@ -7,6 +7,7 @@ use App\Models\EpaperEdition;
 use App\Models\Submission;
 use App\Models\Video;
 use App\Services\StorageUrl;
+use App\Support\NewsDate;
 
 class WpContentSerializer
 {
@@ -20,7 +21,7 @@ class WpContentSerializer
             'title' => $article->title,
             'excerpt' => $article->excerpt ?? '',
             'content' => $article->content,
-            'date' => $article->published_at?->format('Y-m-d H:i:s'),
+            'date' => NewsDate::at($article->published_at)?->format('Y-m-d H:i:s'),
             'slug' => $article->slug,
             'author_id' => $article->author_id,
             'featured' => $article->featuredMedia?->url(),
@@ -37,7 +38,7 @@ class WpContentSerializer
             'title' => $video->title,
             'excerpt' => $video->excerpt ?? '',
             'content' => $video->content ?? '',
-            'date' => $video->published_at?->format('Y-m-d H:i:s'),
+            'date' => NewsDate::at($video->published_at)?->format('Y-m-d H:i:s'),
             'slug' => $video->slug,
             'author_id' => $video->author_id,
             'featured' => $video->featuredMedia?->url(),
@@ -55,7 +56,7 @@ class WpContentSerializer
             'title' => $edition->title,
             'excerpt' => $edition->excerpt ?? '',
             'content' => $edition->content ?? '',
-            'date' => $edition->published_at?->format('Y-m-d H:i:s'),
+            'date' => NewsDate::at($edition->published_at)?->format('Y-m-d H:i:s'),
             'slug' => $edition->slug,
             'author_id' => $edition->author_id,
             'featured' => $edition->featuredMedia?->url(),

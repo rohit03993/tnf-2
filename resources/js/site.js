@@ -222,12 +222,13 @@ function initHeaderMetrics() {
     }
 
     const apply = () => {
-        const rect = header.getBoundingClientRect();
         const safeTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tnf-safe-top')) || 0;
-        const chrome = Math.max(Math.round(rect.height - safeTop), 52);
+        const measured = header.offsetHeight;
+        const total = measured > 120 ? 72 : Math.max(measured, 48);
+        const chrome = Math.max(total - safeTop, 44);
 
         document.documentElement.style.setProperty('--tnf-header-chrome', `${chrome}px`);
-        document.documentElement.style.setProperty('--tnf-header-total', `${Math.round(rect.height)}px`);
+        document.documentElement.style.setProperty('--tnf-header-total', `${total}px`);
     };
 
     apply();

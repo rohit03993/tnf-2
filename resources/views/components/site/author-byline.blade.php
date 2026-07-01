@@ -18,10 +18,8 @@
         <div class="tnf-article-byline-text">
             <p class="tnf-article-byline-name">{{ $user->name }}</p>
             @if($publishedAt)
-                <time class="tnf-article-byline-date" datetime="{{ $publishedAt->toIso8601String() }}">
-                    {{ $publishedAt->format('M j, Y') }}
-                    <span class="tnf-article-byline-sep" aria-hidden="true">·</span>
-                    {{ $publishedAt->format('g:i A') }}
+                <time class="tnf-article-byline-date" datetime="{{ \App\Support\NewsDate::iso($publishedAt) }}">
+                    {{ \App\Support\NewsDate::formatDateTime($publishedAt) }}
                 </time>
             @endif
         </div>

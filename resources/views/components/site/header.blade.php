@@ -81,6 +81,10 @@
             @endunless
         </div>
     </div>
+
+    @if(request()->routeIs('article.show', 'videos.show'))
+        <div class="tnf-reading-progress" id="tnf-reading-progress" aria-hidden="true"></div>
+    @endif
 </header>
 
 @if(filled($chrome['whatsappUrl']) && !($isApp ?? false))

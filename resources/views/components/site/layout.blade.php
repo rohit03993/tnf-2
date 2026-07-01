@@ -39,15 +39,12 @@
         'tnf-no-bottom-nav' => $chrome['authLite'] || ($epaperViewer ?? false),
         'tnf-epaper-viewer-page' => $epaperViewer ?? false,
         'tnf-app-mode' => $isApp ?? false,
+        'tnf-reader-page' => request()->routeIs('article.show', 'videos.show'),
     ])
     x-data="tnfSite()"
     @if($isApp ?? false) data-tnf-app="1" @endif
     @if(request()->routeIs('home')) data-tnf-home="1" @endif
 >
-    @if(request()->routeIs('article.show', 'videos.show'))
-        <div class="tnf-reading-progress" id="tnf-reading-progress" aria-hidden="true"></div>
-    @endif
-
     @unless($chrome['authLite'])
         <x-site.header :chrome="$chrome" />
         @unless(($compactChrome ?? false) || ($isApp ?? false))

@@ -25,7 +25,7 @@
         </div>
         <div class="tnf-news-card-body">
             <h3 class="tnf-news-card-title tnf-line-clamp-2">{{ $edition->title }}</h3>
-            <p class="tnf-news-card-meta">{{ $edition->published_at?->format('M d, Y') }}</p>
+            <p class="tnf-news-card-meta">{{ \App\Support\NewsDate::formatDate($edition->published_at) }}</p>
         </div>
     </a>
 </article>
