@@ -702,26 +702,23 @@
     }
 
     .tnf-bottom-nav-inner {
-        @apply mx-auto flex h-bottom-nav max-w-site items-stretch justify-around px-1;
+        @apply mx-auto grid h-bottom-nav max-w-site grid-cols-4 items-stretch px-2;
+        font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
     }
 
     .tnf-bottom-nav-item {
-        @apply relative flex flex-1 items-center justify-center p-0.5;
+        @apply relative flex items-center justify-center;
         touch-action: manipulation;
         cursor: pointer;
     }
 
     .tnf-bottom-nav-item-inner {
-        @apply relative flex min-h-touch min-w-[3rem] flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1 text-tnf-xs font-semibold text-tnf-muted transition-all duration-200;
+        @apply relative flex w-full max-w-[4.75rem] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[0.6875rem] font-semibold leading-none text-tnf-muted transition-all duration-200;
+        min-height: 2.75rem;
     }
 
     .tnf-bottom-nav-item--active .tnf-bottom-nav-item-inner {
         @apply bg-tnf-red/10 text-tnf-red;
-    }
-
-    .tnf-bottom-nav-item--active .tnf-bottom-nav-item-inner::after {
-        content: '';
-        @apply absolute -bottom-0.5 h-0.5 w-4 rounded-full bg-tnf-red;
     }
 
     body.tnf-drawer-open [data-tnf-drawer-toggle] .tnf-bottom-nav-item-inner {
@@ -733,11 +730,11 @@
     }
 
     .tnf-bottom-nav-icon {
-        @apply h-5 w-5 mobile-sm:h-[1.125rem] mobile-sm:w-[1.125rem];
+        @apply h-[1.375rem] w-[1.375rem] shrink-0;
     }
 
     .tnf-bottom-nav-label {
-        @apply max-w-full truncate text-[0.625rem] leading-tight mobile-sm:text-tnf-xs;
+        @apply max-w-full truncate;
     }
 
     .tnf-app-tab-bar {
@@ -1175,9 +1172,9 @@
         @apply px-2 text-tnf-sm text-tnf-muted;
     }
 
-    /* Reading progress — pinned to bottom of sticky header (never floats mid-page) */
+    /* Reading progress — desktop only (mobile uses bottom nav + share bar) */
     .tnf-reading-progress {
-        @apply pointer-events-none absolute bottom-0 left-0 z-[2] h-[3px] w-full origin-left bg-tnf-red;
+        @apply pointer-events-none absolute bottom-0 left-0 z-[2] hidden h-[3px] w-full origin-left bg-tnf-red lg:block;
         transform: scaleX(0);
         will-change: transform;
     }
@@ -1249,16 +1246,11 @@
         }
 
         body.tnf-app-mode .tnf-app-tab-bar .tnf-bottom-nav-inner {
-            @apply px-0.5;
+            @apply grid-cols-5 px-0.5;
         }
 
         body.tnf-app-mode .tnf-app-tab-bar .tnf-bottom-nav-item-inner {
-            @apply min-w-0 gap-0.5 px-1 py-0.5;
-            font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
-        }
-
-        body.tnf-app-mode .tnf-app-tab-bar .tnf-bottom-nav-label {
-            @apply text-[0.5625rem] mobile-sm:text-[0.6rem];
+            @apply max-w-none min-w-0 gap-0.5 px-0.5 py-1 text-[0.625rem];
         }
 
         body.tnf-app-mode .tnf-drawer-top {
@@ -1274,32 +1266,36 @@
         }
     }
 
-    /* Mobile web: compact header — logo row only as tall as needed */
+    /* Mobile web: unified header + bottom nav on every page */
     @media (max-width: 1023px) {
         .tnf-header-top,
         .tnf-header:has(.tnf-header-logo--brand) .tnf-header-top {
-            @apply min-h-0 gap-1.5 py-1;
+            @apply min-h-0 items-center gap-2 py-1.5;
         }
 
         .tnf-header-logo--brand {
-            @apply flex-1 max-w-[min(68vw,18rem)] mobile-sm:max-w-[min(64vw,16.5rem)];
+            @apply min-w-0 flex-1 max-w-[min(58vw,15rem)] mobile-sm:max-w-[min(54vw,14rem)];
         }
 
         .tnf-brand-logo-image--header {
-            @apply h-[2.35rem] mobile-sm:h-[2.2rem];
+            @apply h-[2.25rem] mobile-sm:h-[2.1rem];
         }
 
         .tnf-header-actions {
-            @apply gap-1;
+            @apply shrink-0 items-center gap-1;
         }
 
-        .tnf-header-icon-btn {
+        .tnf-header-icon-btn,
+        .tnf-header-menu-btn {
             @apply min-h-9 min-w-9;
         }
 
-        .tnf-header-btn-signin,
         .tnf-header-btn-epaper {
-            @apply min-h-9 min-w-0 px-2.5 text-tnf-sm;
+            @apply min-h-9 min-w-9 px-0;
+        }
+
+        .tnf-header-btn-signin {
+            @apply min-h-9 whitespace-nowrap px-2.5 text-tnf-xs font-semibold;
         }
 
         .tnf-home-sidebar .rounded-tnf-lg {
@@ -1307,27 +1303,13 @@
         }
 
         .tnf-bottom-nav {
-            border-top: none;
-            box-shadow: 0 -1px 0 0 rgb(232 234 237 / 0.9), 0 -12px 40px rgba(15, 19, 32, 0.12);
+            @apply border-t border-tnf-gray-dark/50 bg-white/95;
+            border-top: 1px solid rgb(232 234 237);
+            box-shadow: 0 -8px 32px rgba(15, 19, 32, 0.08);
         }
 
-        /* Article / video reader — compact header, menu via bottom nav */
-        body.tnf-reader-page .tnf-header-top,
-        body.tnf-reader-page .tnf-header:has(.tnf-header-logo--brand) .tnf-header-top {
-            @apply min-h-0 py-1;
-        }
-
-        body.tnf-reader-page .tnf-header-logo--brand {
-            @apply max-w-[min(62vw,14.5rem)];
-        }
-
-        body.tnf-reader-page .tnf-brand-logo-image--header {
-            @apply h-[2.1rem] mobile-sm:h-[2rem];
-        }
-
-        body.tnf-reader-page .tnf-header-btn-epaper,
-        body.tnf-reader-page .tnf-header-btn-signin {
-            @apply hidden;
+        .tnf-bottom-nav-inner {
+            @apply px-1;
         }
     }
 }

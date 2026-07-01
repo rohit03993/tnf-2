@@ -39,7 +39,6 @@
         'tnf-no-bottom-nav' => $chrome['authLite'] || ($epaperViewer ?? false),
         'tnf-epaper-viewer-page' => $epaperViewer ?? false,
         'tnf-app-mode' => $isApp ?? false,
-        'tnf-reader-page' => request()->routeIs('article.show', 'videos.show'),
     ])
     x-data="tnfSite()"
     @if($isApp ?? false) data-tnf-app="1" @endif
