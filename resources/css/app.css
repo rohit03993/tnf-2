@@ -153,11 +153,11 @@
     }
 
     .tnf-header-top {
-        @apply flex min-h-header items-center gap-2 py-2 lg:gap-3;
+        @apply flex min-h-header items-center gap-2 py-2 lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-4 lg:py-2.5;
     }
 
     .tnf-header:has(.tnf-header-logo--brand) .tnf-header-top {
-        @apply lg:min-h-[4.5rem] lg:py-2;
+        @apply lg:min-h-[4.25rem];
     }
 
     @media (max-width: 1023px) {
@@ -183,7 +183,7 @@
     }
 
     .tnf-header-logo--brand {
-        @apply max-w-[min(78vw,21rem)] shrink lg:max-w-[26.5rem];
+        @apply max-w-[min(78vw,21rem)] shrink lg:max-w-[17rem] xl:max-w-[19rem];
     }
 
     .tnf-brand-logo-image {
@@ -191,7 +191,7 @@
     }
 
     .tnf-brand-logo-image--header {
-        @apply h-[2.85rem] w-auto max-w-full bg-transparent shadow-none ring-0 mobile-sm:h-[2.6rem] sm:h-[3.3rem] lg:h-[3.8rem];
+        @apply h-[2.85rem] w-auto max-w-full bg-transparent shadow-none ring-0 mobile-sm:h-[2.6rem] sm:h-[3.3rem] lg:h-[3.25rem] xl:h-[3.5rem];
     }
 
     .tnf-brand-logo-image--footer {
@@ -231,33 +231,66 @@
     }
 
     .tnf-header-nav {
-        @apply hidden items-center gap-0.5 lg:flex;
+        @apply hidden min-w-0 items-center justify-center gap-0.5 lg:flex;
         font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
     }
 
     .tnf-header-nav-link {
-        @apply rounded-tnf px-3 py-2 text-[0.9375rem] font-semibold tracking-[0.01em] text-tnf-navy/90 hover:bg-tnf-gray hover:text-tnf-navy lg:px-3.5 lg:text-base;
+        @apply inline-flex items-center whitespace-nowrap rounded-lg px-2.5 py-2 text-[0.875rem] font-semibold tracking-[0.01em] text-tnf-navy/90 transition-colors hover:bg-tnf-gray hover:text-tnf-navy xl:px-3 xl:text-[0.9375rem];
     }
 
     .tnf-header-nav-link--active {
-        @apply bg-tnf-red font-bold text-white;
+        @apply bg-tnf-red font-bold text-white hover:bg-tnf-red-dark hover:text-white;
+    }
+
+    .tnf-header-nav-link--more {
+        @apply gap-1;
+    }
+
+    .tnf-header-nav-chevron {
+        @apply h-4 w-4 shrink-0 opacity-70 transition-transform duration-150;
+    }
+
+    .tnf-more-menu:hover .tnf-header-nav-chevron,
+    .tnf-more-menu:focus-within .tnf-header-nav-chevron {
+        @apply rotate-180;
     }
 
     .tnf-header-actions {
-        @apply ml-auto flex items-center gap-2;
+        @apply ml-auto flex shrink-0 items-center gap-1.5 lg:ml-0 lg:gap-2;
         font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
     }
 
     .tnf-header-btn {
-        @apply inline-flex min-h-touch min-w-touch items-center justify-center gap-1.5 rounded-tnf px-3 text-[0.9375rem] font-semibold transition-colors lg:text-base;
+        @apply inline-flex h-10 min-h-10 items-center justify-center gap-2 rounded-lg px-3.5 text-[0.875rem] font-semibold leading-none transition-colors;
+    }
+
+    .tnf-header-btn-icon {
+        @apply h-[1.125rem] w-[1.125rem] shrink-0;
+    }
+
+    .tnf-header-btn-label {
+        @apply hidden lg:inline;
     }
 
     .tnf-header-btn-epaper {
-        @apply tnf-header-btn border border-tnf-gray-dark px-2.5 text-tnf-navy hover:bg-tnf-gray lg:px-3;
+        @apply tnf-header-btn border border-tnf-gray-dark bg-white text-tnf-navy hover:border-tnf-navy/30 hover:bg-tnf-gray;
+    }
+
+    .tnf-header-btn-epaper--active {
+        @apply border-tnf-red bg-tnf-red/10 text-tnf-red hover:border-tnf-red hover:bg-tnf-red/15 hover:text-tnf-red;
     }
 
     .tnf-header-btn-signin {
-        @apply tnf-header-btn bg-tnf-red text-white hover:bg-tnf-red-dark;
+        @apply tnf-header-btn bg-tnf-red px-4 text-white hover:bg-tnf-red-dark;
+    }
+
+    .tnf-header-search-btn {
+        @apply hidden lg:inline-flex;
+    }
+
+    .tnf-header-menu-btn {
+        @apply lg:hidden;
     }
 
     .tnf-hamburger {
@@ -344,7 +377,7 @@
     }
 
     .tnf-drawer-top {
-        @apply shrink-0 bg-tnf-navy text-white;
+        @apply shrink-0 border-b border-tnf-gray-dark/80 bg-white text-tnf-navy;
         padding-top: env(safe-area-inset-top, 0px);
     }
 
@@ -353,15 +386,15 @@
     }
 
     .tnf-drawer-top-bar .tnf-header-logo {
-        @apply text-white;
+        @apply text-tnf-navy;
     }
 
     .tnf-drawer-top-accent {
-        @apply h-1 bg-tnf-red;
+        @apply h-0.5 bg-tnf-red;
     }
 
     .tnf-drawer-close-btn {
-        @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 active:scale-95;
+        @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-tnf-navy/80 transition hover:bg-tnf-gray active:scale-95;
         touch-action: manipulation;
     }
 
@@ -874,20 +907,26 @@
     }
 
     .tnf-more-dropdown {
-        @apply pointer-events-none invisible absolute left-0 top-full z-[80] max-h-[70vh] w-64 overflow-y-auto rounded-tnf-lg border border-tnf-gray-dark bg-white py-2 text-[0.9375rem] opacity-0 shadow-card transition-opacity duration-150;
+        @apply pointer-events-none invisible absolute right-0 top-[calc(100%+0.35rem)] z-[80] max-h-[70vh] w-72 overflow-y-auto rounded-xl border border-tnf-gray-dark/80 bg-white py-2 text-[0.9375rem] opacity-0 shadow-[0_12px_40px_rgba(15,19,32,0.12)] transition-opacity duration-150;
         font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
-        padding-top: 0.25rem;
-        margin-top: 0;
+    }
+
+    .tnf-more-dropdown .tnf-drawer-group-title {
+        @apply px-4;
     }
 
     .tnf-more-dropdown .tnf-drawer-link {
-        @apply font-semibold;
+        @apply px-4 font-medium;
     }
 
     @media (min-width: 1024px) {
         .tnf-more-menu:hover .tnf-more-dropdown,
         .tnf-more-menu:focus-within .tnf-more-dropdown {
             @apply pointer-events-auto visible opacity-100;
+        }
+
+        .tnf-header-icon-btn {
+            @apply h-10 min-h-10 min-w-10 rounded-lg;
         }
     }
 
@@ -1274,11 +1313,11 @@
         }
 
         .tnf-header-logo--brand {
-            @apply min-w-0 flex-1 max-w-[min(58vw,15rem)] mobile-sm:max-w-[min(54vw,14rem)];
+            @apply min-w-0 flex-1 max-w-[min(52vw,13.5rem)] mobile-sm:max-w-[min(48vw,12.5rem)];
         }
 
         .tnf-brand-logo-image--header {
-            @apply h-[2.25rem] mobile-sm:h-[2.1rem];
+            @apply h-[2.15rem] mobile-sm:h-[2rem];
         }
 
         .tnf-header-actions {
@@ -1287,15 +1326,15 @@
 
         .tnf-header-icon-btn,
         .tnf-header-menu-btn {
-            @apply min-h-9 min-w-9;
+            @apply h-9 min-h-9 min-w-9 rounded-lg;
         }
 
         .tnf-header-btn-epaper {
-            @apply min-h-9 min-w-9 px-0;
+            @apply h-9 min-h-9 min-w-9 rounded-lg border border-tnf-gray-dark bg-white px-0 hover:bg-tnf-gray;
         }
 
         .tnf-header-btn-signin {
-            @apply min-h-9 whitespace-nowrap px-2.5 text-tnf-xs font-semibold;
+            @apply h-9 min-h-9 rounded-lg px-2.5 text-tnf-xs font-semibold;
         }
 
         .tnf-home-sidebar .rounded-tnf-lg {

@@ -84,8 +84,7 @@ class SiteChromeService
     protected static function primaryNav(Collection $categories): array
     {
         $items = [
-            ['label' => 'Home', 'url' => route('home')],
-            ['label' => 'ePaper', 'url' => route('epaper.index')],
+            ['label' => 'Home', 'url' => route('home'), 'slug' => 'home'],
             ['label' => 'Videos', 'url' => route('videos.index'), 'slug' => 'videos'],
         ];
 
