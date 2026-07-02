@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-    appId: 'com.tnftoday.app',
+    appId: 'com.tnftoday.news',
     appName: 'TNF Today',
     webDir: 'www',
     server: {

@@ -54,4 +54,4 @@ Browser QA without Android Studio: `https://tnftoday.com?tnf_app=1`
 
 ## App ID
 
-`com.tnftoday.app` — change in `capacitor.config.ts` only before first Play Store upload.
+`com.tnftoday.news` — must match the package name in Google Play Console.

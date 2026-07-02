@@ -1,4 +1,4 @@
-package com.tnftoday.app;
+package com.tnftoday.news;
 
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
