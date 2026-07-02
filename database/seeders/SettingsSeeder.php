@@ -23,6 +23,10 @@ class SettingsSeeder extends Seeder
             'site_logo' => '',
             'disclaimer_text' => 'TNF Today provides news and information for general awareness. Verify important facts independently.',
             'disclaimer_email' => 'contact@tnftoday.com',
+            'contact_email' => 'contact@tnftoday.com',
+            'contact_phone' => '+19412359817',
+            'contact_company' => 'TNF Today Media Network Pvt Ltd',
+            'contact_address' => '',
             'credits_line' => 'Designed & Developed with Love by Pal Digital',
             'whatsapp_url' => '',
         ];

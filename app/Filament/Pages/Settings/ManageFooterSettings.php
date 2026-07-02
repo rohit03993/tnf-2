@@ -34,6 +34,10 @@ class ManageFooterSettings extends SettingsPage
             'disclaimer_text' => '',
             'disclaimer_email' => 'contact@tnftoday.com',
             'credits_line' => 'Designed & Developed with Love by Pal Digital',
+            'contact_email' => 'contact@tnftoday.com',
+            'contact_phone' => '+19412359817',
+            'contact_company' => 'TNF Today Media Network Pvt Ltd',
+            'contact_address' => '',
         ];
     }
 
@@ -43,6 +47,10 @@ class ManageFooterSettings extends SettingsPage
                 RichEditor::make('disclaimer_text'),
                 TextInput::make('disclaimer_email')->email(),
                 TextInput::make('credits_line'),
+                TextInput::make('contact_email')->email()->label('Contact page email'),
+                TextInput::make('contact_phone')->label('Contact page phone'),
+                TextInput::make('contact_company')->label('Legal entity / company name'),
+                TextInput::make('contact_address')->label('Office address (optional)'),
             ]);
     }
 }

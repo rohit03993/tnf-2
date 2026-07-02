@@ -3,6 +3,12 @@
 return [
     'allow_public_registration' => env('ALLOW_PUBLIC_REGISTRATION', true),
 
+    // Public contact details (Contact Us page + Play Console)
+    'contact_email' => env('TNF_CONTACT_EMAIL', 'contact@tnftoday.com'),
+    'contact_phone' => env('TNF_CONTACT_PHONE', '+19412359817'),
+    'contact_company' => env('TNF_CONTACT_COMPANY', 'TNF Today Media Network Pvt Ltd'),
+    'contact_address' => env('TNF_CONTACT_ADDRESS', ''),
+
     'pdf_service_url' => env('PDF_SERVICE_URL'),
     'pdf_service_secret' => env('PDF_SERVICE_SECRET'),
     'pdf_callback_secret' => env('PDF_CALLBACK_SECRET'),

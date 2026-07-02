@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="theme-color" content="#FFFFFF">
-    <link rel="icon" href="{{ filled($chrome['siteLogo'] ?? null) ? asset('storage/'.$chrome['siteLogo']) : asset('favicon.svg') }}" type="{{ filled($chrome['siteLogo'] ?? null) ? 'image/png' : 'image/svg+xml' }}">
+    <meta name="theme-color" content="#BC1E38">
+    <x-site.favicons :logo="$chrome['siteLogo'] ?? null" />
 
     @php
         $tnfBuildStamp = is_file(public_path('build/manifest.json'))

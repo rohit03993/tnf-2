@@ -114,7 +114,6 @@ class SeoService
             image: $this->defaultShareImage(),
             url: match ($page->slug) {
                 'about-us' => FrontendUrl::route('page.about'),
-                'contact-us' => FrontendUrl::route('page.contact'),
                 'privacy-policy' => FrontendUrl::route('page.privacy'),
                 'terms-of-use' => FrontendUrl::route('page.terms'),
                 default => FrontendUrl::to('/'.$page->slug),
@@ -122,6 +121,19 @@ class SeoService
             imageWidth: self::OG_IMAGE_WIDTH,
             imageHeight: self::OG_IMAGE_HEIGHT,
             imageAlt: $page->title,
+        );
+    }
+
+    public function forContact(): SeoMeta
+    {
+        return new SeoMeta(
+            title: 'Contact Us',
+            description: 'Contact TNF Today for editorial, business, and reader support. Email, phone, and contact form.',
+            image: $this->defaultShareImage(),
+            url: FrontendUrl::route('page.contact'),
+            imageWidth: self::OG_IMAGE_WIDTH,
+            imageHeight: self::OG_IMAGE_HEIGHT,
+            imageAlt: 'Contact TNF Today',
         );
     }
 

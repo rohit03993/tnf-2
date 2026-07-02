@@ -19,7 +19,7 @@ class PageSeeder extends Seeder
             [
                 'title' => 'Contact Us',
                 'slug' => 'contact-us',
-                'content' => '<p>Reach us at contact@tnftoday.com</p>',
+                'content' => '<p>Visit our <a href="/contact-us">Contact Us</a> page for email, phone, and the contact form.</p>',
             ],
             ...LegalPageContent::pages(),
         ];

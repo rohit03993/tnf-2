@@ -7,6 +7,7 @@ use App\Http\Controllers\Web\EpaperClipSignController;
 use App\Http\Controllers\Web\OgImageController;
 use App\Http\Controllers\Web\SubmissionController;
 use App\Http\Controllers\Web\ArticleSingleController;
+use App\Http\Controllers\Web\ContactController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\EpaperArchiveController;
 use App\Http\Controllers\Web\EpaperSingleController;
@@ -45,7 +46,7 @@ Route::middleware(['cache.public', 'cache.headers'])->group(function () {
     Route::get('/tag/{tag:slug}', TagController::class)->name('tag.show');
 
     Route::get('/about-us', fn () => app()->call(PageController::class, ['slug' => 'about-us']))->name('page.about');
-    Route::get('/contact-us', fn () => app()->call(PageController::class, ['slug' => 'contact-us']))->name('page.contact');
+    Route::get('/contact-us', [ContactController::class, 'show'])->name('page.contact');
     Route::get('/privacy-policy', fn () => app()->call(PageController::class, ['slug' => 'privacy-policy']))->name('page.privacy');
     Route::get('/terms-of-use', fn () => app()->call(PageController::class, ['slug' => 'terms-of-use']))->name('page.terms');
 });
@@ -53,6 +54,10 @@ Route::middleware(['cache.public', 'cache.headers'])->group(function () {
 Route::get('/design-preview', function () {
     return view('pages.design-preview');
 })->name('design.preview');
+
+Route::post('/contact-us', [ContactController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('page.contact.submit');
 
 Route::post('/epaper/{edition:slug}/sign-clip', EpaperClipSignController::class)
     ->middleware('throttle:30,1')

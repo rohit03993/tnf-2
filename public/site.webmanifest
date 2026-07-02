@@ -1,0 +1,23 @@
+{
+    "name": "TNF Today",
+    "short_name": "TNF Today",
+    "description": "Hindi news, videos, and digital ePaper from TNF Today.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#FFFFFF",
+    "theme_color": "#BC1E38",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/apple-touch-icon.svg",
+            "sizes": "180x180",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

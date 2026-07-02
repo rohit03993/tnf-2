@@ -123,6 +123,30 @@
         @apply tnf-container py-3 mobile-sm:py-2 lg:py-4;
     }
 
+    .tnf-contact-form .tnf-field {
+        @apply space-y-1.5;
+    }
+
+    .tnf-contact-form .tnf-label {
+        @apply block text-tnf-sm font-semibold text-tnf-navy;
+    }
+
+    .tnf-contact-form .tnf-input {
+        @apply block w-full rounded-lg border border-tnf-gray-dark bg-white px-3.5 py-2.5 text-tnf-sm text-tnf-navy shadow-sm outline-none transition placeholder:text-tnf-muted focus:border-tnf-red focus:ring-2 focus:ring-tnf-red/15;
+    }
+
+    .tnf-contact-form .tnf-input--textarea {
+        @apply min-h-[8.5rem] resize-y;
+    }
+
+    .tnf-contact-form .tnf-input--error {
+        @apply border-red-400 focus:border-red-500 focus:ring-red-200;
+    }
+
+    .tnf-contact-form .tnf-field-error {
+        @apply text-tnf-xs font-medium text-red-600;
+    }
+
     @media (max-width: 1023px) {
         .tnf-page-content {
             overflow-x: hidden;
