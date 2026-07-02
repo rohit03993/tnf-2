@@ -7,6 +7,7 @@ use App\Http\Controllers\Web\EpaperClipSignController;
 use App\Http\Controllers\Web\OgImageController;
 use App\Http\Controllers\Web\SubmissionController;
 use App\Http\Controllers\Web\ArticleSingleController;
+use App\Http\Controllers\Web\AssetLinksController;
 use App\Http\Controllers\Web\ContactController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\EpaperArchiveController;
@@ -28,6 +29,8 @@ Route::redirect('/admin/login', '/login');
 Route::permanentRedirect('/admin/login/', '/login');
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+
+Route::get('/.well-known/assetlinks.json', AssetLinksController::class)->name('assetlinks');
 
 Route::get('/tnf_news/{slug}', function (string $slug) {
     return redirect()->route('article.show', $slug, 301);

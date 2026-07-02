@@ -73,3 +73,41 @@ Output file: `android/app/release/app-release.aab`
 Play Console → **Test and release** → **Internal testing** (recommended first) → Create release → Upload `.aab` → Submit.
 
 After internal testing on a real device, promote to **Production**.
+
+## 7. Deep links (App Links)
+
+Google must verify that `tnftoday.com` belongs to your Android app.
+
+### Step A — Get SHA-256 from Play Console
+
+1. Play Console → **TNF Today** → **Setup** → **App integrity**
+2. Under **App signing key certificate**, copy **SHA-256 certificate fingerprint**
+   (looks like `AB:12:34:...` with colons)
+
+### Step B — Deploy (file is already in the repo)
+
+The verified JSON is at `public/.well-known/assetlinks.json`.
+
+After `git pull` on VPS:
+
+```bash
+php artisan optimize:clear
+```
+
+Verify in browser: `https://tnftoday.com/.well-known/assetlinks.json`
+
+Optional `.env` override is not required when using the committed file.
+
+### Step C — Play Console → Deep links → Add domain
+
+| Field | Value |
+|-------|--------|
+| Domain | `tnftoday.com` (no `https://`, no trailing `/`) |
+| JSON URL | `https://tnftoday.com/.well-known/assetlinks.json` |
+
+Click **Create website association** after the JSON URL returns the file.
+
+### Step D — Rebuild Android app
+
+After `AndroidManifest.xml` app-link intent filters change, build a **new `.aab`** and upload to Play Console.
+

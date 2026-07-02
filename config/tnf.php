@@ -9,6 +9,13 @@ return [
     'contact_company' => env('TNF_CONTACT_COMPANY', 'TNF Today Media Network Pvt Ltd'),
     'contact_address' => env('TNF_CONTACT_ADDRESS', ''),
 
+    // Android App Links — Play Console → App integrity → App signing (SHA-256)
+    'android_package_name' => env('ANDROID_PACKAGE_NAME', 'com.tnftoday.news'),
+    'android_sha256_fingerprints' => array_values(array_filter(array_map(
+        static fn (string $fp) => trim($fp),
+        explode(',', (string) env('ANDROID_SHA256_FINGERPRINTS', '')),
+    ))),
+
     'pdf_service_url' => env('PDF_SERVICE_URL'),
     'pdf_service_secret' => env('PDF_SERVICE_SECRET'),
     'pdf_callback_secret' => env('PDF_CALLBACK_SECRET'),
