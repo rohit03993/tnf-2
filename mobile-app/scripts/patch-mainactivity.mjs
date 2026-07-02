@@ -3,7 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const androidJavaDir = path.join(__dirname, '..', 'android', 'app', 'src', 'main', 'java');
+const androidDir = path.join(__dirname, '..', 'android');
+const androidJavaDir = path.join(androidDir, 'app', 'src', 'main', 'java');
 
 function findMainActivityFile(dir) {
     if (!fs.existsSync(dir)) {
@@ -26,31 +27,32 @@ function findMainActivityFile(dir) {
     return null;
 }
 
-const mainActivityPath = findMainActivityFile(androidJavaDir);
+function patchMainActivity() {
+    const mainActivityPath = findMainActivityFile(androidJavaDir);
 
-if (!mainActivityPath) {
-    console.error('MainActivity.java not found. Run: npm install && npx cap add android');
-    process.exit(1);
-}
+    if (!mainActivityPath) {
+        console.error('MainActivity.java not found. Run: npm install && npx cap add android');
+        process.exit(1);
+    }
 
-let source = fs.readFileSync(mainActivityPath, 'utf8');
+    let source = fs.readFileSync(mainActivityPath, 'utf8');
 
-if (source.includes('TNFTodayCapacitor/1.0')) {
-    console.log('MainActivity already patched.');
-    process.exit(0);
-}
+    if (source.includes('TNFTodayCapacitor/1.0')) {
+        console.log('MainActivity already patched.');
+        return;
+    }
 
-const imports = `import android.webkit.WebView;
+    const imports = `import android.webkit.WebView;
 `;
 
-if (!source.includes('import android.webkit.WebView;')) {
-    source = source.replace(
-        /(package [^;]+;\s*\n)/,
-        `$1\n${imports}`,
-    );
-}
+    if (!source.includes('import android.webkit.WebView;')) {
+        source = source.replace(
+            /(package [^;]+;\s*\n)/,
+            `$1\n${imports}`,
+        );
+    }
 
-const patch = `
+    const patch = `
     @Override
     public void onStart() {
         super.onStart();
@@ -64,12 +66,62 @@ const patch = `
     }
 `;
 
-if (!source.includes('public void onStart()')) {
-    source = source.replace(
-        /public class MainActivity extends BridgeActivity(?:\s*\{\s*\})?/,
-        `public class MainActivity extends BridgeActivity {${patch}`,
+    if (!source.includes('public void onStart()')) {
+        source = source.replace(
+            /public class MainActivity extends BridgeActivity(?:\s*\{\s*\})?/,
+            `public class MainActivity extends BridgeActivity {${patch}`,
+        );
+    }
+
+    fs.writeFileSync(mainActivityPath, source);
+    console.log('Patched MainActivity user-agent:', mainActivityPath);
+}
+
+function removeFlatDirBlock(source) {
+    return source.replace(
+        /\n\s*flatDir\s*\{[^}]*\}/gs,
+        '',
     );
 }
 
-fs.writeFileSync(mainActivityPath, source);
-console.log('Patched MainActivity user-agent:', mainActivityPath);
+function patchGradleFile(relativePath) {
+    const filePath = path.join(androidDir, relativePath);
+
+    if (!fs.existsSync(filePath)) {
+        return;
+    }
+
+    const original = fs.readFileSync(filePath, 'utf8');
+    const updated = removeFlatDirBlock(original);
+
+    if (updated !== original) {
+        fs.writeFileSync(filePath, updated);
+        console.log('Removed flatDir from:', relativePath);
+    }
+}
+
+function patchGradleFiles() {
+    patchGradleFile(path.join('app', 'build.gradle'));
+    patchGradleFile(path.join('capacitor-cordova-android-plugins', 'build.gradle'));
+
+    const rootGradle = path.join(androidDir, 'build.gradle');
+    const lintBlock = `subprojects { project ->
+    project.tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << '-Xlint:-unchecked'
+    }
+}
+`;
+
+    if (fs.existsSync(rootGradle)) {
+        let source = fs.readFileSync(rootGradle, 'utf8');
+
+        if (!source.includes('-Xlint:-unchecked')) {
+            source = `${source.trimEnd()}\n\n${lintBlock}\n`;
+            fs.writeFileSync(rootGradle, source);
+            console.log('Added Java compile lint suppression to android/build.gradle');
+        }
+    }
+}
+
+patchMainActivity();
+patchGradleFiles();
