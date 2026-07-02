@@ -27,6 +27,15 @@
                 </p>
             @endunless
 
+            <div class="mt-5 flex flex-wrap gap-3">
+                <a href="{{ route('profile.edit') }}" class="tnf-btn-outline text-tnf-sm">
+                    Profile &amp; delete account
+                </a>
+                <a href="{{ route('page.privacy') }}" class="tnf-btn-outline text-tnf-sm">
+                    Privacy Policy
+                </a>
+            </div>
+
             <form method="POST" action="{{ route('logout') }}" class="mt-4">
                 @csrf
                 <button type="submit" class="tnf-btn-outline text-tnf-sm">Log out</button>

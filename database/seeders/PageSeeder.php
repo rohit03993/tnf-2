@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Page;
+use App\Support\LegalPageContent;
 use Illuminate\Database\Seeder;
 
 class PageSeeder extends Seeder
@@ -20,16 +21,7 @@ class PageSeeder extends Seeder
                 'slug' => 'contact-us',
                 'content' => '<p>Reach us at contact@tnftoday.com</p>',
             ],
-            [
-                'title' => 'Privacy Policy',
-                'slug' => 'privacy-policy',
-                'content' => '<p>Your privacy matters to us.</p>',
-            ],
-            [
-                'title' => 'Terms of Use',
-                'slug' => 'terms-of-use',
-                'content' => '<p>Please read these terms carefully before using TNF Today.</p>',
-            ],
+            ...LegalPageContent::pages(),
         ];
 
         foreach ($pages as $page) {
