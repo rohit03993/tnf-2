@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\Pages\Settings\Concerns\ManagesSettings;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 
@@ -44,13 +45,20 @@ class ManageFooterSettings extends SettingsPage
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-                RichEditor::make('disclaimer_text'),
-                TextInput::make('disclaimer_email')->email(),
-                TextInput::make('credits_line'),
-                TextInput::make('contact_email')->email()->label('Contact page email'),
-                TextInput::make('contact_phone')->label('Contact page phone'),
-                TextInput::make('contact_company')->label('Legal entity / company name'),
-                TextInput::make('contact_address')->label('Office address (optional)'),
+                Section::make('Footer disclaimer')
+                    ->schema([
+                        RichEditor::make('disclaimer_text'),
+                        TextInput::make('disclaimer_email')->email(),
+                        TextInput::make('credits_line'),
+                    ]),
+                Section::make('Contact Us page')
+                    ->description('Shown on the public Contact Us page: email, phone, company name, and optional address.')
+                    ->schema([
+                        TextInput::make('contact_email')->email()->label('Contact page email'),
+                        TextInput::make('contact_phone')->label('Contact page phone'),
+                        TextInput::make('contact_company')->label('Legal entity / company name'),
+                        TextInput::make('contact_address')->label('Office address (optional)'),
+                    ]),
             ]);
     }
 }

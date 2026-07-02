@@ -37,6 +37,7 @@ class ManageHeaderSettings extends SettingsPage
     {
         return [
             'site_logo' => '',
+            'site_favicon' => '',
             'banner_image' => '',
             'banner_link_url' => '',
             'whatsapp_url' => '',
@@ -57,6 +58,19 @@ class ManageHeaderSettings extends SettingsPage
                                 ->visibility('public')
                                 ->imagePreviewHeight('120')
                         ),
+                    ]),
+                Section::make('Browser favicon')
+                    ->description('Small icon shown in the browser tab and when users bookmark the site. Use a square PNG, SVG, or ICO (recommended 32×32 or larger).')
+                    ->schema([
+                        FileUpload::make('site_favicon')
+                            ->label('Site favicon')
+                            ->disk('public')
+                            ->directory('settings/favicon')
+                            ->visibility('public')
+                            ->imagePreviewHeight('64')
+                            ->acceptedFileTypes(['image/png', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'])
+                            ->maxSize(512)
+                            ->helperText('PNG, SVG, or ICO — max 512 KB. Leave empty to use the default TNF favicon.'),
                     ]),
                 Section::make('Header promo')->schema([
                     TnfImageUpload::applyTo(
@@ -95,6 +109,12 @@ class ManageHeaderSettings extends SettingsPage
                 \Illuminate\Support\Facades\Storage::disk('public')->delete(BrandLogoService::CANONICAL_PATH);
                 $data['site_logo'] = '';
             }
+        }
+
+        if (array_key_exists('site_favicon', $data)) {
+            $incoming = $data['site_favicon'];
+            $path = is_array($incoming) ? ($incoming[0] ?? null) : $incoming;
+            $data['site_favicon'] = filled($path) ? (string) $path : '';
         }
 
         foreach ($data as $key => $value) {

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\ContactInquiry;
+use App\Models\ContactMessage;
 use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -47,6 +48,12 @@ class ContactPageTest extends TestCase
         $response
             ->assertRedirect(route('page.contact'))
             ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('contact_messages', [
+            'email' => 'reader@example.com',
+            'name' => 'Test Reader',
+            'subject' => 'General enquiry',
+        ]);
 
         Mail::assertSent(ContactInquiry::class, function (ContactInquiry $mail) {
             return $mail->inquiry['email'] === 'reader@example.com'

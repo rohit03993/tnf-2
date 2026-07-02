@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreContactRequest;
 use App\Mail\ContactInquiry;
+use App\Models\ContactMessage;
 use App\Services\SeoService;
 use App\Support\SiteContact;
 use Illuminate\Http\RedirectResponse;
@@ -30,6 +31,8 @@ class ContactController extends Controller
     public function store(StoreContactRequest $request): RedirectResponse
     {
         $inquiry = $request->validated();
+
+        ContactMessage::query()->create($inquiry);
 
         try {
             Mail::to(SiteContact::email())->send(new ContactInquiry($inquiry));
