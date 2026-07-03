@@ -147,6 +147,79 @@
         @apply text-tnf-xs font-medium text-red-600;
     }
 
+    .tnf-pwa-install-banner {
+        @apply fixed inset-x-0 z-50 px-3 lg:hidden;
+        bottom: calc(var(--tnf-bottom-nav) + var(--tnf-safe-bottom) + 0.5rem);
+    }
+
+    .tnf-pwa-install-banner--hidden {
+        @apply hidden;
+    }
+
+    .tnf-pwa-install-banner-inner {
+        @apply mx-auto flex max-w-site items-center justify-between gap-3 rounded-tnf-lg border border-tnf-gray-dark bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.12)];
+    }
+
+    .tnf-pwa-install-banner-title {
+        @apply text-tnf-sm font-bold text-tnf-navy;
+    }
+
+    .tnf-pwa-install-banner-text {
+        @apply mt-0.5 text-tnf-xs text-tnf-muted;
+    }
+
+    .tnf-pwa-install-banner-actions {
+        @apply flex shrink-0 flex-col gap-1.5;
+    }
+
+    .tnf-pwa-install-banner-install {
+        @apply rounded-lg bg-tnf-red px-3 py-1.5 text-tnf-xs font-semibold text-white hover:bg-tnf-red-dark;
+    }
+
+    .tnf-pwa-install-banner-dismiss {
+        @apply rounded-lg px-2 py-1 text-tnf-xs font-medium text-tnf-muted hover:text-tnf-navy;
+    }
+
+    .tnf-pwa-ios-guide {
+        @apply fixed inset-0 z-[70] hidden items-end justify-center bg-black/45 p-4 sm:items-center;
+    }
+
+    .tnf-pwa-ios-guide--open {
+        @apply flex;
+    }
+
+    body.tnf-pwa-ios-guide-open {
+        @apply overflow-hidden;
+    }
+
+    .tnf-pwa-ios-guide-card {
+        @apply relative w-full max-w-md rounded-tnf-lg bg-white p-5 shadow-card;
+    }
+
+    .tnf-pwa-ios-guide-close {
+        @apply absolute right-3 top-3 rounded-lg p-1 text-tnf-muted hover:bg-tnf-gray hover:text-tnf-navy;
+    }
+
+    .tnf-pwa-ios-guide-title {
+        @apply pr-8 text-tnf-lg font-bold text-tnf-navy;
+    }
+
+    .tnf-pwa-ios-guide-steps {
+        @apply my-4 list-decimal space-y-2 pl-5 text-tnf-sm text-tnf-navy;
+    }
+
+    .tnf-drawer-install {
+        @apply mb-2 flex w-full items-center justify-center gap-2 rounded-lg border border-tnf-red/20 bg-tnf-red/5 px-4 py-2.5 text-tnf-sm font-semibold text-tnf-red hover:bg-tnf-red/10;
+    }
+
+    .tnf-footer-install-link {
+        @apply text-left text-tnf-sm text-tnf-muted transition hover:text-tnf-red;
+    }
+
+    .tnf-drawer-link--button {
+        @apply w-full border-0 bg-transparent text-left;
+    }
+
     @media (max-width: 1023px) {
         .tnf-page-content {
             overflow-x: hidden;

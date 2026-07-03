@@ -42,6 +42,11 @@
                     <ul class="tnf-footer-links">
                         <li><a href="{{ route('page.about') }}">About Us</a></li>
                         <li><a href="{{ route('page.contact') }}">Contact Us</a></li>
+                        <li class="hidden lg:list-item">
+                            <button type="button" class="tnf-footer-install-link" data-tnf-pwa-install hidden>
+                                Install App
+                            </button>
+                        </li>
                     </ul>
                 </div>
 

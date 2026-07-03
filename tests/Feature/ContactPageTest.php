@@ -67,6 +67,6 @@ class ContactPageTest extends TestCase
             ->assertOk()
             ->assertSee('favicon.svg', false)
             ->assertSee('apple-touch-icon.svg', false)
-            ->assertSee('site.webmanifest', false);
+            ->assertSee('manifest.json', false);
     }
 }

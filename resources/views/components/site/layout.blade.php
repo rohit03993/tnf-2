@@ -79,6 +79,7 @@
             <x-site.app-bottom-nav />
         @else
             <x-site.web-bottom-nav />
+            <x-site.pwa-install />
         @endif
     @endunless
 

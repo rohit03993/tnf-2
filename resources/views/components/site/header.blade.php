@@ -38,6 +38,9 @@
                             <p class="tnf-drawer-group-title">More</p>
                             <a href="{{ route('epaper.index') }}" class="tnf-drawer-link" role="menuitem">ePaper</a>
                             <a href="{{ route('videos.index') }}" class="tnf-drawer-link" role="menuitem">Videos</a>
+                            <button type="button" class="tnf-drawer-link tnf-drawer-link--button hidden lg:block" data-tnf-pwa-install hidden role="menuitem">
+                                Install App
+                            </button>
                             @auth
                                 <a href="{{ route('account') }}" class="tnf-drawer-link" role="menuitem">My Account</a>
                             @else

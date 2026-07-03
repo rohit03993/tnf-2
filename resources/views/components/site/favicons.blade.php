@@ -22,4 +22,4 @@
     <link rel="alternate icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
 @endif
 <link rel="apple-touch-icon" href="{{ $touchIconUrl }}">
-<link rel="manifest" href="{{ asset('site.webmanifest') }}">
+<link rel="manifest" href="{{ route('manifest') }}">

@@ -13,7 +13,9 @@ use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\EpaperArchiveController;
 use App\Http\Controllers\Web\EpaperSingleController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\ManifestController;
 use App\Http\Controllers\Web\PageController;
+use App\Http\Controllers\Web\PwaIconController;
 use App\Http\Controllers\Web\SearchController;
 use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\TagController;
@@ -31,6 +33,9 @@ Route::permanentRedirect('/admin/login/', '/login');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 Route::get('/.well-known/assetlinks.json', AssetLinksController::class)->name('assetlinks');
+
+Route::get('/manifest.json', ManifestController::class)->name('manifest');
+Route::get('/pwa/icon/{size}', PwaIconController::class)->whereNumber('size')->name('pwa.icon');
 
 Route::get('/tnf_news/{slug}', function (string $slug) {
     return redirect()->route('article.show', $slug, 301);

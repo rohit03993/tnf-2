@@ -77,6 +77,12 @@
     </div>
 
     <div class="tnf-drawer-foot">
+        <button type="button" class="tnf-drawer-install" data-tnf-pwa-install hidden>
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+            Install App
+        </button>
         @auth
             <a href="{{ route('account') }}" class="tnf-drawer-signin" data-tnf-drawer-close>My Account</a>
         @else
