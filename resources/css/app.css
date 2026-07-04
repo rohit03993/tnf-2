@@ -674,17 +674,9 @@
             order: 3;
         }
 
-        /* Latest Headlines duplicates Top News on mobile */
-        .tnf-hero-section-headlines {
+        /* Top News overlaps Latest Headlines on mobile — desktop keeps both in sidebar */
+        .tnf-home-top-news {
             display: none;
-        }
-
-        .tnf-hero-media {
-            height: 11.25rem;
-        }
-
-        .tnf-hero-media > div:first-child {
-            display: none !important;
         }
 
         .tnf-epaper-teaser {

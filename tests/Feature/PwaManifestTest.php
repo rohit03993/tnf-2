@@ -42,6 +42,6 @@ class PwaManifestTest extends TestCase
     public function test_service_worker_file_exists_on_disk(): void
     {
         $this->assertFileExists(public_path('sw.js'));
-        $this->assertStringContainsString('tnf-pwa-v3', (string) file_get_contents(public_path('sw.js')));
+        $this->assertStringContainsString('tnf-pwa-v4', (string) file_get_contents(public_path('sw.js')));
     }
 }

@@ -34,7 +34,7 @@
                 @endif
 
                 @if($sidebarTopNews->isNotEmpty())
-                    <div class="rounded-tnf-lg bg-white p-4 shadow-card">
+                    <div class="tnf-home-top-news rounded-tnf-lg bg-white p-4 shadow-card">
                         <h2 class="tnf-section-title mb-3">Top News</h2>
                         @foreach($sidebarTopNews as $index => $article)
                             <x-cards.headline-item :article="$article" :number="$index + 1" />
