@@ -1256,7 +1256,7 @@
     }
 
     .tnf-article-readers {
-        @apply mt-4 flex items-center gap-2 rounded-tnf-lg border border-tnf-border bg-white px-4 py-3 text-tnf-sm text-tnf-muted shadow-card;
+        @apply mt-4 flex items-center gap-2 rounded-tnf-lg border border-tnf-gray-dark bg-white px-4 py-3 text-tnf-sm text-tnf-muted shadow-card;
     }
 
     .tnf-article-readers__icon {
