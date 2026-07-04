@@ -11,7 +11,7 @@ class PwaIconController extends Controller
 {
     public function __invoke(int $size): Response
     {
-        if (! in_array($size, [192, 512], true)) {
+        if (! in_array($size, [32, 192, 512], true)) {
             abort(404);
         }
 

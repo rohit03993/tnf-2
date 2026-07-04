@@ -61,24 +61,11 @@ class ManageHeaderSettings extends SettingsPage
                                 ->imagePreviewHeight('120')
                         ),
                     ]),
-                Section::make('Browser favicon')
-                    ->description('Small icon shown in the browser tab and when users bookmark the site. Use a square PNG, SVG, or ICO (recommended 32×32 or larger).')
-                    ->schema([
-                        FileUpload::make('site_favicon')
-                            ->label('Site favicon')
-                            ->disk('public')
-                            ->directory('settings/favicon')
-                            ->visibility('public')
-                            ->imagePreviewHeight('64')
-                            ->acceptedFileTypes(['image/png', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'])
-                            ->maxSize(512)
-                            ->helperText('PNG, SVG, or ICO — max 512 KB. Leave empty to use the default TNF favicon.'),
-                    ]),
-                Section::make('PWA install icon')
-                    ->description('Square logo shown when users install the app on their phone home screen (Add to Home Screen / Install app). Use your square TNF mark — not the wide header logo. Recommended 512×512 PNG.')
+                Section::make('Site icon (PWA & favicon)')
+                    ->description('Square TNF logo used for the browser tab favicon, bookmarks, and when users install the app on their phone home screen. Use your square mark — not the wide header logo. Recommended 512×512 PNG.')
                     ->schema([
                         FileUpload::make('pwa_icon')
-                            ->label('PWA home screen icon')
+                            ->label('Square site icon')
                             ->disk('public')
                             ->directory('settings/pwa/uploads')
                             ->visibility('public')
@@ -86,7 +73,20 @@ class ManageHeaderSettings extends SettingsPage
                             ->imagePreviewHeight('120')
                             ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
                             ->maxSize(2048)
-                            ->helperText('Square PNG recommended (512×512). Saved as the install icon for Android and iOS.'),
+                            ->helperText('Square PNG recommended (512×512). Powers favicon, PWA install icon, and iOS home screen.'),
+                    ]),
+                Section::make('Browser favicon override')
+                    ->description('Optional. Leave empty to use the square site icon above for the browser tab. Upload only if you need a different small favicon.')
+                    ->schema([
+                        FileUpload::make('site_favicon')
+                            ->label('Custom favicon (optional)')
+                            ->disk('public')
+                            ->directory('settings/favicon')
+                            ->visibility('public')
+                            ->imagePreviewHeight('64')
+                            ->acceptedFileTypes(['image/png', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'])
+                            ->maxSize(512)
+                            ->helperText('Used only when no square site icon is uploaded.'),
                     ]),
                 Section::make('Header promo')->schema([
                     TnfImageUpload::applyTo(

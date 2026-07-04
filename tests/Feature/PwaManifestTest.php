@@ -27,6 +27,10 @@ class PwaManifestTest extends TestCase
 
     public function test_pwa_icons_are_available(): void
     {
+        $this->get(route('pwa.icon', ['size' => 32]))
+            ->assertOk()
+            ->assertHeader('content-type', 'image/png');
+
         $this->get(route('pwa.icon', ['size' => 192]))
             ->assertOk()
             ->assertHeader('content-type', 'image/png');
@@ -34,6 +38,23 @@ class PwaManifestTest extends TestCase
         $this->get(route('pwa.icon', ['size' => 512]))
             ->assertOk()
             ->assertHeader('content-type', 'image/png');
+    }
+
+    public function test_homepage_uses_pwa_icon_for_favicon_when_configured(): void
+    {
+        Storage::fake('public');
+
+        $png = base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+            true,
+        );
+
+        Storage::disk('public')->put(PwaIconService::CANONICAL_PATH, $png);
+        Setting::set('pwa_icon', PwaIconService::CANONICAL_PATH);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee(route('pwa.icon', ['size' => 32]), false);
     }
 
     public function test_homepage_links_to_dynamic_manifest(): void
