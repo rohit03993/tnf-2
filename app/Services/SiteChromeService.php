@@ -6,6 +6,7 @@ use App\Models\Article;
 use App\Models\Category;
 use App\Models\Setting;
 use App\Models\Tag;
+use App\Services\EpaperPromoService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -29,6 +30,7 @@ class SiteChromeService
                         ->get(['id', 'title', 'slug']),
                 'navCategories' => $navCategories,
                 'primaryNav' => static::primaryNav($navCategories),
+                'latestEpaper' => EpaperPromoService::latest(),
                 'bannerImage' => Setting::get('banner_image', ''),
                 'bannerLink' => Setting::get('banner_link_url', ''),
                 'whatsappUrl' => Setting::get('whatsapp_url', ''),

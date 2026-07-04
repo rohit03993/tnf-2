@@ -1,4 +1,9 @@
 <x-site.layout title="TNF Today — News, Videos & ePaper" :seo="$seo">
+    @php
+        $epaperPromo = $latestEpaper ? \App\Services\EpaperPromoService::promoFor($latestEpaper) : null;
+        $epaperBg = asset('images/epaper-section-bg.jpg');
+    @endphp
+
     <div class="tnf-page-content tnf-home">
         <div class="tnf-home-layout">
             {{-- Hero + Latest Headlines --}}
@@ -63,21 +68,29 @@
                 @endif
 
                 {{-- ePaper teaser --}}
-                <section class="tnf-epaper-teaser rounded-tnf-lg bg-gradient-to-r from-tnf-navy to-tnf-navy-light p-6 text-white shadow-card">
-                    <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                        <div>
-                            <h2 class="text-tnf-xl font-bold">Today's ePaper</h2>
-                            <p class="mt-1 text-tnf-sm text-white/80">
+                <section class="tnf-epaper-teaser">
+                    <div class="tnf-epaper-teaser-bg" style="background-image: url('{{ $epaperBg }}');" aria-hidden="true"></div>
+                    <div class="tnf-epaper-teaser-overlay" aria-hidden="true"></div>
+                    <div class="tnf-epaper-teaser-inner">
+                        @if($epaperPromo)
+                            <a href="{{ $epaperPromo['url'] }}" class="tnf-epaper-teaser-cover-link" aria-label="Open {{ $epaperPromo['title'] }}">
+                                <x-site.epaper-thumb :promo="$epaperPromo" variant="teaser" />
+                            </a>
+                        @endif
+                        <div class="tnf-epaper-teaser-copy">
+                            <p class="tnf-epaper-teaser-kicker">Digital newspaper</p>
+                            <h2 class="tnf-epaper-teaser-title">Today's ePaper</h2>
+                            <p class="tnf-epaper-teaser-desc">
                                 @if($latestEpaper)
                                     {{ $latestEpaper->title }}
                                 @else
-                                    Read the latest digital edition
+                                    Read the latest digital edition from TNF Today.
                                 @endif
                             </p>
+                            <a href="{{ $epaperPromo['url'] ?? route('epaper.index') }}" class="tnf-epaper-teaser-btn">
+                                Read ePaper
+                            </a>
                         </div>
-                        <a href="{{ route('epaper.index') }}" class="tnf-btn-primary shrink-0">
-                            Read ePaper
-                        </a>
                     </div>
                 </section>
 
@@ -105,4 +118,11 @@
             </div>
         </div>
     </div>
+
+    @if($epaperPromo && ! $epaperPromo['coverUrl'] && $epaperPromo['pdfUrl'])
+        @push('scripts')
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+            @vite(['resources/js/epaper-covers.js'])
+        @endpush
+    @endif
 </x-site.layout>
