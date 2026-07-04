@@ -1077,6 +1077,14 @@
         @apply h-[1.375rem] w-[1.375rem] shrink-0;
     }
 
+    .tnf-epaper-thumb--nav {
+        @apply h-[1.625rem] w-[1.25rem] shrink-0 rounded-[0.2rem] border border-tnf-gray-dark/60 object-cover object-top shadow-[0_1px_3px_rgba(15,19,32,0.12)];
+    }
+
+    .tnf-bottom-nav-item--active .tnf-epaper-thumb--nav {
+        @apply border-tnf-red ring-1 ring-tnf-red/25;
+    }
+
     .tnf-bottom-nav-label {
         @apply max-w-full truncate;
     }

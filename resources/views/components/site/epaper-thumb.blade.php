@@ -29,6 +29,20 @@
             </div>
         </div>
     </div>
+@elseif($variant === 'nav')
+    @if($thumbUrl)
+        <img
+            src="{{ $thumbUrl }}"
+            alt=""
+            class="tnf-epaper-thumb tnf-epaper-thumb--nav"
+            loading="lazy"
+            decoding="async"
+            width="20"
+            height="26"
+        >
+    @else
+        <x-site.bottom-nav-icon name="epaper" />
+    @endif
 @elseif($variant === 'teaser')
     <div class="tnf-epaper-thumb-frame tnf-epaper-thumb-frame--teaser">
         @if($thumbUrl)

@@ -77,9 +77,9 @@
         @endunless
 
         @if($isApp ?? false)
-            <x-site.app-bottom-nav />
+            <x-site.app-bottom-nav :latest-epaper="$chrome['latestEpaper'] ?? null" />
         @else
-            <x-site.web-bottom-nav />
+            <x-site.web-bottom-nav :latest-epaper="$chrome['latestEpaper'] ?? null" />
             <x-site.pwa-install />
         @endif
     @endunless
