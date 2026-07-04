@@ -32,11 +32,13 @@ class QuickActionsWidget extends Widget
                 'label' => 'Create news',
                 'url' => ArticleResource::getUrl('create'),
                 'color' => 'primary',
+                'icon' => 'plus',
             ],
             [
                 'label' => 'Create video',
                 'url' => VideoResource::getUrl('create'),
                 'color' => 'gray',
+                'icon' => 'video',
             ],
         ];
 
@@ -47,11 +49,13 @@ class QuickActionsWidget extends Widget
                 'label' => $pending > 0 ? "Review submissions ({$pending})" : 'Review submissions',
                 'url' => SubmissionResource::getUrl('index'),
                 'color' => $pending > 0 ? 'warning' : 'gray',
+                'icon' => 'inbox',
             ];
             $actions[] = [
                 'label' => 'All news',
                 'url' => ArticleResource::getUrl('index'),
                 'color' => 'gray',
+                'icon' => 'list',
             ];
         }
 

@@ -5,35 +5,27 @@ namespace App\Filament\Widgets;
 use App\Enums\ContentStatus;
 use App\Enums\UserRole;
 use App\Models\User;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
-use Filament\Widgets\TableWidget;
+use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class TeamPerformanceWidget extends TableWidget
+class TeamPerformanceWidget extends Widget
 {
     protected static ?int $sort = 4;
 
     protected int|string|array $columnSpan = 'full';
+
+    protected string $view = 'filament.widgets.team-performance-widget';
 
     public static function canView(): bool
     {
         return in_array(auth()->user()?->role, [UserRole::Editor, UserRole::Admin], true);
     }
 
-    public function table(Table $table): Table
+    /** @return Collection<int, User> */
+    public function getReporters(): Collection
     {
-        return $table
-            ->heading('Reporter performance')
-            ->query($this->reporterQuery())
-            ->columns([
-                TextColumn::make('name')->searchable(),
-                TextColumn::make('published_articles_count')->label('Published news')->sortable(),
-                TextColumn::make('pending_articles_count')->label('Pending news')->sortable(),
-                TextColumn::make('published_videos_count')->label('Published videos')->sortable(),
-            ])
-            ->defaultSort('published_articles_count', 'desc')
-            ->paginated([10]);
+        return $this->reporterQuery()->limit(10)->get();
     }
 
     /** @return Builder<User> */
@@ -45,6 +37,7 @@ class TeamPerformanceWidget extends TableWidget
                 'articles as published_articles_count' => fn (Builder $query) => $query->where('status', ContentStatus::Published),
                 'articles as pending_articles_count' => fn (Builder $query) => $query->where('status', ContentStatus::Pending),
                 'videos as published_videos_count' => fn (Builder $query) => $query->where('status', ContentStatus::Published),
-            ]);
+            ])
+            ->orderByDesc('published_articles_count');
     }
 }
