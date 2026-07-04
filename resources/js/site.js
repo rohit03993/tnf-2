@@ -48,10 +48,16 @@ export function openDrawer() {
 }
 
 export function closeDrawer({ suppressGhostClick = false } = {}) {
-    document.body.classList.remove('tnf-drawer-open');
+    document.body.classList.remove('tnf-drawer-open', 'tnf-drawer-navigating');
     document.body.style.overflow = '';
     setDrawerInert(false);
     syncDrawerAria(false);
+    drawerNavPending = false;
+
+    document.querySelectorAll('.tnf-drawer-link--pending').forEach((link) => {
+        link.classList.remove('tnf-drawer-link--pending');
+        link.removeAttribute('aria-busy');
+    });
 
     if (suppressGhostClick) {
         suppressGhostClickUntil = Date.now() + 500;
@@ -76,6 +82,68 @@ let drawerListenersBound = false;
 let drawerLastTouchAt = 0;
 let drawerTouchConsumed = false;
 let suppressGhostClickUntil = 0;
+let drawerNavPending = false;
+let drawerTouchStartX = 0;
+let drawerTouchStartY = 0;
+
+function normalizeDrawerUrl(url) {
+    try {
+        const parsed = new URL(url, window.location.origin);
+
+        return parsed.origin + parsed.pathname.replace(/\/$/, '') + parsed.search;
+    } catch {
+        return url;
+    }
+}
+
+function drawerTouchMoved(event) {
+    const touch = event.changedTouches?.[0];
+
+    if (! touch) {
+        return false;
+    }
+
+    return Math.abs(touch.clientX - drawerTouchStartX) > 12
+        || Math.abs(touch.clientY - drawerTouchStartY) > 12;
+}
+
+function markDrawerNavPending(link) {
+    drawerNavPending = true;
+    link.classList.add('tnf-drawer-link--pending');
+    link.setAttribute('aria-busy', 'true');
+    document.body.classList.add('tnf-drawer-navigating');
+}
+
+function handleDrawerNavLink(event, link) {
+    if (drawerNavPending || link.classList.contains('tnf-drawer-link--pending')) {
+        consumeEvent(event);
+
+        return;
+    }
+
+    if (event.type === 'touchend' && drawerTouchMoved(event)) {
+        return;
+    }
+
+    const targetUrl = normalizeDrawerUrl(link.href);
+    const currentUrl = normalizeDrawerUrl(window.location.href);
+
+    if (targetUrl === currentUrl) {
+        closeDrawer({ suppressGhostClick: true });
+        consumeEvent(event);
+
+        return;
+    }
+
+    markDrawerNavPending(link);
+    consumeEvent(event);
+    drawerLastTouchAt = Date.now();
+    drawerTouchConsumed = true;
+
+    window.setTimeout(() => {
+        window.location.assign(link.href);
+    }, 140);
+}
 
 function isNavigableCloser(element) {
     return element instanceof HTMLAnchorElement && element.href !== '' && element.getAttribute('href') !== '#';
@@ -102,25 +170,15 @@ function consumeEvent(event) {
 }
 
 function handleDrawerClose(event, closer) {
-    const navigable = isNavigableCloser(closer);
+    if (isNavigableCloser(closer)) {
+        handleDrawerNavLink(event, closer);
 
-    closeDrawer({ suppressGhostClick: ! navigable });
-
-    if (! navigable) {
-        consumeEvent(event);
-        drawerTouchConsumed = true;
+        return;
     }
-}
 
-function handleDrawerNavLink(event, link) {
-    closeDrawer({ suppressGhostClick: false });
-
-    if (event.type === 'touchend') {
-        event.preventDefault();
-        drawerLastTouchAt = Date.now();
-        drawerTouchConsumed = false;
-        window.location.assign(link.href);
-    }
+    closeDrawer({ suppressGhostClick: true });
+    consumeEvent(event);
+    drawerTouchConsumed = true;
 }
 
 function handleDrawerClick(event) {
@@ -148,7 +206,7 @@ function handleDrawerClick(event) {
     const navLink = event.target.closest('#tnf-drawer a[data-tnf-drawer-close][href]');
 
     if (navLink && isNavigableCloser(navLink) && document.body.classList.contains('tnf-drawer-open')) {
-        handleDrawerClose(event, navLink);
+        handleDrawerNavLink(event, navLink);
 
         return;
     }
@@ -202,6 +260,21 @@ function initDrawer() {
     }
 
     drawerListenersBound = true;
+
+    document.addEventListener('touchstart', (event) => {
+        if (! event.target.closest('#tnf-drawer .tnf-drawer-body')) {
+            return;
+        }
+
+        const touch = event.touches?.[0];
+
+        if (! touch) {
+            return;
+        }
+
+        drawerTouchStartX = touch.clientX;
+        drawerTouchStartY = touch.clientY;
+    }, { capture: true, passive: true });
 
     document.addEventListener('click', handleDrawerClick, true);
     document.addEventListener('touchend', handleDrawerTouchEnd, { capture: true, passive: false });
@@ -379,9 +452,10 @@ function initReadingProgress() {
 }
 
 export function initSiteUi() {
-    document.body.classList.remove('tnf-drawer-open');
+    document.body.classList.remove('tnf-drawer-open', 'tnf-drawer-navigating');
     document.body.style.overflow = '';
     setDrawerInert(false);
+    drawerNavPending = false;
 
     initDrawer();
     initBackToTop();
