@@ -885,16 +885,12 @@
             order: 1;
         }
 
-        .tnf-hero-section-headlines {
+        .tnf-home-sidebar {
             order: 2;
         }
 
-        .tnf-home-sidebar {
-            order: 3;
-        }
-
         .tnf-home-feed {
-            order: 4;
+            order: 3;
         }
 
         /* Top News overlaps Latest Headlines on mobile — desktop keeps both in sidebar */
@@ -1101,11 +1097,11 @@
             display: grid;
             width: 100%;
             max-width: 100%;
-            grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 16rem);
+            grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
             grid-template-rows: auto auto;
             grid-template-areas:
-                'featured headlines sidebar'
-                'feed feed sidebar';
+                'featured sidebar'
+                'feed sidebar';
             align-items: start;
             gap: 1rem 1.25rem;
         }
@@ -1115,17 +1111,16 @@
             min-width: 0;
         }
 
-        .tnf-home .tnf-hero-section-headlines {
-            grid-area: headlines;
-            min-width: 0;
-        }
-
         .tnf-home .tnf-home-sidebar {
             grid-area: sidebar;
             min-width: 0;
             position: sticky;
             top: calc(var(--tnf-header-chrome) + 0.75rem);
             z-index: 1;
+        }
+
+        .tnf-home .tnf-hero-section-headlines {
+            min-width: 0;
         }
 
         .tnf-home .tnf-home-feed {

@@ -17,22 +17,21 @@
                 @endif
             </div>
 
-            {{-- Latest Headlines (desktop col 2) --}}
-            <div class="tnf-home-panel tnf-hero-section-headlines">
-                <div class="tnf-home-panel__head">
-                    <h2 class="tnf-section-title">Latest Headlines</h2>
-                </div>
-                <div class="tnf-home-panel__body">
-                    @forelse($heroHeadlines as $index => $article)
-                        <x-cards.headline-item :article="$article" :number="$index + 1" />
-                    @empty
-                        <p class="px-2 py-3 text-tnf-sm text-tnf-muted">No headlines yet.</p>
-                    @endforelse
-                </div>
-            </div>
-
-            {{-- Sidebar: trending + top news (right on desktop, after hero on mobile) --}}
+            {{-- Right rail: Latest Headlines + Trending (desktop sidebar) --}}
             <aside class="tnf-home-sidebar space-y-4 lg:space-y-5">
+                <div class="tnf-home-panel tnf-hero-section-headlines">
+                    <div class="tnf-home-panel__head">
+                        <h2 class="tnf-section-title">Latest Headlines</h2>
+                    </div>
+                    <div class="tnf-home-panel__body">
+                        @forelse($heroHeadlines as $index => $article)
+                            <x-cards.headline-item :article="$article" :number="$index + 1" />
+                        @empty
+                            <p class="px-2 py-3 text-tnf-sm text-tnf-muted">No headlines yet.</p>
+                        @endforelse
+                    </div>
+                </div>
+
                 @if($settings['show_trending'] && $trendingNews->isNotEmpty())
                     <div class="tnf-home-panel">
                         <div class="tnf-home-panel__head">
