@@ -7,6 +7,8 @@ use App\Filament\Resources\Users\Pages\ManageUsers;
 use App\Models\User;
 use App\Services\AdminService;
 use App\Support\TnfImageUpload;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -15,9 +17,9 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Hash;
 
 class UserResource extends Resource
 {
@@ -48,8 +50,12 @@ class UserResource extends Resource
                     ->directory('users/avatars')
             ),
             TextInput::make('password')->password()->dehydrateStateUsing(
-                fn (?string $state) => filled($state) ? Hash::make($state) : null
-            )->dehydrated(fn (?string $state) => filled($state))->required(fn (string $operation) => $operation === 'create'),
+                fn (?string $state) => filled($state) ? $state : null
+            )->dehydrated(fn (?string $state) => filled($state))
+                ->required(fn (string $operation) => $operation === 'create')
+                ->helperText(fn (string $operation) => $operation === 'edit'
+                    ? 'Leave blank to keep the current password.'
+                    : null),
             Select::make('role')
                 ->options(fn (?User $record) => static::roleOptions($record))
                 ->required()
@@ -95,12 +101,42 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->searchable()->sortable(),
-                TextColumn::make('email')->searchable(),
+                ImageColumn::make('avatar_path')
+                    ->label('')
+                    ->disk('public')
+                    ->circular()
+                    ->height(40)
+                    ->width(40)
+                    ->defaultImageUrl(asset('images/admin-news-placeholder.svg')),
+                TextColumn::make('name')
+                    ->searchable()
+                    ->sortable()
+                    ->description(fn (User $record): string => $record->email),
+                TextColumn::make('email')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('role')->badge()->formatStateUsing(fn (UserRole $state) => $state->label()),
                 IconColumn::make('is_active')->boolean()->label('Active'),
                 IconColumn::make('requires_approval')->boolean()->label('Approval lock'),
                 IconColumn::make('subscription_active')->boolean()->label('Premium'),
+            ])
+            ->recordActions([
+                EditAction::make()
+                    ->label('Edit')
+                    ->icon(Heroicon::OutlinedPencilSquare)
+                    ->modalHeading('Edit user')
+                    ->successNotificationTitle('User updated'),
+                DeleteAction::make()
+                    ->label('Delete')
+                    ->icon(Heroicon::OutlinedTrash)
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete user')
+                    ->disabled(fn (User $record): bool => $record->id === auth()->id())
+                    ->tooltip(fn (User $record): ?string => $record->id === auth()->id()
+                        ? 'You cannot delete your own account here.'
+                        : null)
+                    ->successNotificationTitle('User deleted'),
             ])
             ->defaultSort('name');
     }

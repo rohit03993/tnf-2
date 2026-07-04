@@ -5,13 +5,14 @@ namespace App\Models;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -95,6 +96,13 @@ class User extends Authenticatable implements FilamentUser
         }
 
         return '/storage/'.$this->avatar_path;
+    }
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        $url = $this->avatarUrl();
+
+        return $url ? url($url) : null;
     }
 
     public function initials(): string

@@ -2,16 +2,19 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\MyProfile;
 use App\Http\Middleware\FilamentAuthenticate;
 use App\Http\Middleware\RedirectSubscriberFromAdmin;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\MenuItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use App\Filament\Widgets\StatsOverviewWidget;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
@@ -46,6 +49,12 @@ class RohitPanelProvider extends PanelProvider
                 PanelsRenderHook::STYLES_AFTER,
                 fn (): string => view('filament.hooks.admin-mobile-table')->render(),
             )
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label('My Profile')
+                    ->icon(Heroicon::OutlinedUserCircle)
+                    ->url(fn (): string => MyProfile::getUrl()),
+            ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
