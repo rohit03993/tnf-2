@@ -33,9 +33,6 @@ class Setting extends Model
         );
 
         Cache::forget("setting.{$key}");
-        Cache::forget('homepage.data');
-        Cache::forget('site.chrome.full');
-        Cache::forget('site.chrome.auth');
-        \App\Services\PageCacheService::bump();
+        \App\Services\ContentCacheService::bust();
     }
 }

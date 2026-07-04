@@ -10,6 +10,7 @@ class ContentCacheService
     public static function bust(): void
     {
         Cache::forget('homepage.data');
+        Cache::forget('homepage.data.v2');
         Cache::forget('site.chrome.full');
         Cache::forget('site.chrome.auth');
         PageCacheService::bump();

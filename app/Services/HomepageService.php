@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Cache;
 
 class HomepageService
 {
+    private const CACHE_KEY = 'homepage.data.v2';
+
     /** @var array<int, string> */
     protected array $categoryRailOrder = [
         'national',
@@ -33,11 +35,20 @@ class HomepageService
     {
         $ttl = (int) config('tnf.homepage_cache_ttl', 300);
 
-        return Cache::remember('homepage.data', $ttl, fn () => $this->build());
+        try {
+            return Cache::remember(self::CACHE_KEY, $ttl, fn () => $this->build());
+        } catch (\Throwable $exception) {
+            Cache::forget(self::CACHE_KEY);
+            report($exception);
+
+            return $this->build();
+        }
     }
 
     public function clearCache(): void
     {
+        Cache::forget(self::CACHE_KEY);
+        Cache::forget('homepage.data');
         ContentCacheService::bust();
     }
 

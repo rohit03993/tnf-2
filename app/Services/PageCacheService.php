@@ -57,12 +57,18 @@ class PageCacheService
     {
         $latest = 0;
 
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory)) as $file) {
+        foreach (new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)
+        ) as $file) {
             if (! $file->isFile()) {
                 continue;
             }
 
-            $extension = strtolower($file->getExtension());
+            try {
+                $extension = strtolower($file->getExtension());
+            } catch (\Throwable) {
+                continue;
+            }
 
             if (! in_array($extension, $extensions, true)) {
                 continue;
