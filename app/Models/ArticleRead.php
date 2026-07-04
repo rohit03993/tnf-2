@@ -13,6 +13,7 @@ class ArticleRead extends Model
         'reader_key',
         'first_read_at',
         'last_read_at',
+        'liked_at',
     ];
 
     protected function casts(): array
@@ -20,6 +21,7 @@ class ArticleRead extends Model
         return [
             'first_read_at' => 'datetime',
             'last_read_at' => 'datetime',
+            'liked_at' => 'datetime',
         ];
     }
 

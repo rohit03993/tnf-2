@@ -6,6 +6,7 @@ use App\Http\Controllers\Web\AccountController;
 use App\Http\Controllers\Web\EpaperClipSignController;
 use App\Http\Controllers\Web\OgImageController;
 use App\Http\Controllers\Web\SubmissionController;
+use App\Http\Controllers\Web\ArticleLikeController;
 use App\Http\Controllers\Web\ArticleReadController;
 use App\Http\Controllers\Web\ArticleSingleController;
 use App\Http\Controllers\Web\ArticleSlugRedirectController;
@@ -71,6 +72,11 @@ Route::post('/n/{article}/read', ArticleReadController::class)
     ->whereNumber('article')
     ->middleware('throttle:120,1')
     ->name('article.read');
+
+Route::post('/n/{article}/like', ArticleLikeController::class)
+    ->whereNumber('article')
+    ->middleware('throttle:60,1')
+    ->name('article.like');
 
 Route::post('/epaper/{edition:slug}/sign-clip', EpaperClipSignController::class)
     ->middleware('throttle:30,1')

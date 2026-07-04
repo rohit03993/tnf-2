@@ -24,6 +24,7 @@ class Article extends Model
         'featured_media_id',
         'comment_count',
         'readers_count',
+        'likes_count',
         'views_count',
         'published_at',
     ];
@@ -35,6 +36,7 @@ class Article extends Model
             'published_at' => 'datetime',
             'comment_count' => 'integer',
             'readers_count' => 'integer',
+            'likes_count' => 'integer',
             'views_count' => 'integer',
         ];
     }

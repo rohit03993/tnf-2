@@ -44,4 +44,35 @@ class ArticleReadServiceTest extends TestCase
         $this->assertSame(1, $second['readers_count']);
         $this->assertSame(2, $second['views_count']);
     }
+
+    public function test_toggle_like_adds_and_removes_like_for_same_reader(): void
+    {
+        $author = User::factory()->create();
+        $article = Article::query()->create([
+            'title' => 'Like test',
+            'slug' => 'like-test',
+            'content' => 'Body',
+            'author_id' => $author->id,
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+        ]);
+
+        $service = app(ArticleReadService::class);
+        $request = Request::create('/n/'.$article->id.'/like', 'POST');
+        $request->cookies->set(ArticleReadService::READER_COOKIE, 'reader-like');
+
+        $liked = $service->toggleLike($article, $request);
+        $article->refresh();
+
+        $this->assertTrue($liked['liked']);
+        $this->assertSame(1, $liked['likes_count']);
+        $this->assertSame(1, $article->likes_count);
+
+        $unliked = $service->toggleLike($article, $request);
+        $article->refresh();
+
+        $this->assertFalse($unliked['liked']);
+        $this->assertSame(0, $unliked['likes_count']);
+        $this->assertSame(0, $article->likes_count);
+    }
 }

@@ -181,6 +181,11 @@ class ArticleResource extends Resource
                     ->sortable()
                     ->numeric()
                     ->alignCenter(),
+                TextColumn::make('likes_count')
+                    ->label('Likes')
+                    ->sortable()
+                    ->numeric()
+                    ->alignCenter(),
                 TextColumn::make('status')->badge(),
                 TextColumn::make('published_at')
                     ->label('Published')

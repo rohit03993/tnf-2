@@ -9,7 +9,7 @@ use App\Services\ArticleReadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class ArticleReadController extends Controller
+class ArticleLikeController extends Controller
 {
     public function __invoke(Article $article, Request $request, ArticleReadService $reads): JsonResponse
     {
@@ -20,15 +20,14 @@ class ArticleReadController extends Controller
             404,
         );
 
-        $result = $reads->record($article, $request);
+        $result = $reads->toggleLike($article, $request);
 
         $response = response()->json([
-            'readers_count' => $result['readers_count'],
-            'views_count' => $result['views_count'],
-            'likes_count' => $result['likes_count'],
             'liked' => $result['liked'],
-            'readers_label' => ArticleReadService::formatCount($result['readers_count']),
+            'likes_count' => $result['likes_count'],
             'likes_label' => ArticleReadService::formatCount($result['likes_count']),
+            'readers_count' => $result['readers_count'],
+            'readers_label' => ArticleReadService::formatCount($result['readers_count']),
         ]);
 
         return $reads->attachReaderCookie($request, $response);
