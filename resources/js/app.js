@@ -1,6 +1,7 @@
 import './bootstrap';
 
 import Alpine from 'alpinejs';
+import { initArticleRead } from './article-read';
 import { registerTnfSite, initSiteUi } from './site';
 import { initPwaInstall } from './pwa-install';
 
@@ -13,6 +14,7 @@ Alpine.start();
 function bootSite() {
     initSiteUi();
     initPwaInstall();
+    initArticleRead();
 }
 
 if (document.readyState === 'loading') {

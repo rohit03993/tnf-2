@@ -63,9 +63,3 @@ export function initArticleRead() {
         window.setTimeout(recordRead, 1200);
     }
 }
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initArticleRead);
-} else {
-    initArticleRead();
-}
