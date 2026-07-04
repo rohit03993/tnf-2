@@ -17,6 +17,25 @@ function isMobileNav() {
     return window.matchMedia('(max-width: 1023px)').matches;
 }
 
+function setDrawerInert(open) {
+    const main = document.getElementById('tnf-main');
+    const bottomNav = document.querySelector('.tnf-bottom-nav');
+    const backToTop = document.querySelector('.tnf-back-to-top');
+    const pwaBanner = document.getElementById('tnf-pwa-install-banner');
+
+    [main, bottomNav, backToTop, pwaBanner].forEach((element) => {
+        if (! element) {
+            return;
+        }
+
+        if (open) {
+            element.setAttribute('inert', '');
+        } else {
+            element.removeAttribute('inert');
+        }
+    });
+}
+
 export function openDrawer() {
     if (! isMobileNav()) {
         return;
@@ -24,13 +43,19 @@ export function openDrawer() {
 
     document.body.classList.add('tnf-drawer-open');
     document.body.style.overflow = 'hidden';
+    setDrawerInert(true);
     syncDrawerAria(true);
 }
 
-export function closeDrawer() {
+export function closeDrawer({ suppressGhostClick = false } = {}) {
     document.body.classList.remove('tnf-drawer-open');
     document.body.style.overflow = '';
+    setDrawerInert(false);
     syncDrawerAria(false);
+
+    if (suppressGhostClick) {
+        suppressGhostClickUntil = Date.now() + 500;
+    }
 }
 
 function syncDrawerAria(open) {
@@ -49,42 +74,100 @@ export function toggleDrawer() {
 
 let drawerListenersBound = false;
 let drawerLastTouchAt = 0;
+let drawerTouchConsumed = false;
+let suppressGhostClickUntil = 0;
+
+function isNavigableCloser(element) {
+    return element instanceof HTMLAnchorElement && element.href !== '' && element.getAttribute('href') !== '#';
+}
+
+function resolveDrawerCloseTarget(event) {
+    const explicit = event.target.closest('[data-tnf-drawer-close]');
+
+    if (explicit) {
+        return explicit;
+    }
+
+    if (event.target.closest('.tnf-drawer-overlay')) {
+        return event.target.closest('.tnf-drawer-overlay');
+    }
+
+    return null;
+}
+
+function consumeEvent(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+}
+
+function handleDrawerClose(event, closer) {
+    const navigable = isNavigableCloser(closer);
+
+    closeDrawer({ suppressGhostClick: ! navigable });
+
+    if (! navigable) {
+        consumeEvent(event);
+        drawerTouchConsumed = true;
+    }
+}
 
 function handleDrawerClick(event) {
-    // Mobile fires touchend then click — ignore the duplicate click.
+    if (Date.now() < suppressGhostClickUntil) {
+        consumeEvent(event);
+
+        return;
+    }
+
     if (event.type === 'click' && Date.now() - drawerLastTouchAt < 600) {
+        if (drawerTouchConsumed) {
+            consumeEvent(event);
+        }
+
         return;
     }
 
     const toggle = event.target.closest('[data-tnf-drawer-toggle]');
 
     if (toggle) {
-        event.preventDefault();
-        event.stopPropagation();
+        consumeEvent(event);
         toggleDrawer();
 
         return;
     }
 
-    if (event.target.closest('[data-tnf-drawer-close]')) {
-        closeDrawer();
+    const closer = resolveDrawerCloseTarget(event);
+
+    if (closer && document.body.classList.contains('tnf-drawer-open')) {
+        handleDrawerClose(event, closer);
     }
 }
 
 function handleDrawerTouchEnd(event) {
-    drawerLastTouchAt = Date.now();
-
-    const toggle = event.target.closest('[data-tnf-drawer-toggle]');
-
-    if (toggle) {
-        event.preventDefault();
-        toggleDrawer();
+    if (Date.now() < suppressGhostClickUntil) {
+        consumeEvent(event);
 
         return;
     }
 
-    if (event.target.closest('[data-tnf-drawer-close]')) {
-        closeDrawer();
+    drawerTouchConsumed = false;
+
+    const toggle = event.target.closest('[data-tnf-drawer-toggle]');
+
+    if (toggle) {
+        drawerLastTouchAt = Date.now();
+        consumeEvent(event);
+        toggleDrawer();
+        drawerTouchConsumed = true;
+
+        return;
+    }
+
+    const closer = resolveDrawerCloseTarget(event);
+
+    if (closer && document.body.classList.contains('tnf-drawer-open')) {
+        drawerLastTouchAt = Date.now();
+        handleDrawerClose(event, closer);
     }
 }
 
@@ -100,7 +183,7 @@ function initDrawer() {
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
-            closeDrawer();
+            closeDrawer({ suppressGhostClick: true });
         }
     });
 
@@ -110,7 +193,7 @@ function initDrawer() {
         toggleDrawer();
     };
 
-    window.tnfCloseDrawer = () => closeDrawer();
+    window.tnfCloseDrawer = () => closeDrawer({ suppressGhostClick: true });
 }
 
 function initBackToTop() {
@@ -273,6 +356,7 @@ function initReadingProgress() {
 export function initSiteUi() {
     document.body.classList.remove('tnf-drawer-open');
     document.body.style.overflow = '';
+    setDrawerInert(false);
 
     initDrawer();
     initBackToTop();

@@ -446,7 +446,7 @@
     }
 
     .tnf-drawer-overlay {
-        @apply fixed inset-0 z-[80] bg-tnf-navy/70 backdrop-blur-sm lg:hidden;
+        @apply fixed inset-0 z-[95] bg-tnf-navy/70 backdrop-blur-sm lg:hidden;
         pointer-events: none;
         visibility: hidden;
         opacity: 0;
@@ -454,7 +454,7 @@
     }
 
     .tnf-drawer {
-        @apply fixed left-0 top-0 z-[90] flex h-full w-[min(100%,340px)] max-w-[88vw] flex-col bg-white shadow-2xl lg:hidden;
+        @apply fixed left-0 top-0 z-[100] flex h-full w-[min(100%,340px)] max-w-[88vw] flex-col bg-white shadow-2xl lg:hidden;
         pointer-events: none;
         visibility: hidden;
         transform: translateX(-100%);
@@ -491,7 +491,7 @@
     }
 
     .tnf-drawer-close-btn {
-        @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-tnf-navy/80 transition hover:bg-tnf-gray active:scale-95;
+        @apply inline-flex min-h-touch min-w-touch shrink-0 items-center justify-center rounded-lg text-tnf-navy/80 transition hover:bg-tnf-gray active:scale-95;
         touch-action: manipulation;
     }
 
@@ -831,13 +831,18 @@
         @apply z-[60];
     }
 
+    body.tnf-drawer-open .tnf-pwa-install-banner,
+    body.tnf-drawer-open .tnf-back-to-top {
+        @apply hidden;
+    }
+
     .tnf-bottom-nav-inner {
         @apply mx-auto grid h-bottom-nav max-w-site grid-cols-4 items-stretch px-2;
         font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
     }
 
     .tnf-bottom-nav-item {
-        @apply relative flex items-center justify-center;
+        @apply relative flex min-h-touch items-center justify-center;
         touch-action: manipulation;
         cursor: pointer;
     }

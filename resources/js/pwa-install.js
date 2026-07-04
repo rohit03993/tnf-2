@@ -126,9 +126,8 @@ function hideIosGuide() {
 }
 
 async function triggerInstall() {
-    if (document.body.classList.contains('tnf-drawer-open')) {
-        document.body.classList.remove('tnf-drawer-open');
-        document.body.style.overflow = '';
+    if (document.body.classList.contains('tnf-drawer-open') && typeof window.tnfCloseDrawer === 'function') {
+        window.tnfCloseDrawer();
     }
 
     if (canUseNativeInstall()) {
