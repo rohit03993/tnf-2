@@ -36,9 +36,9 @@ class SubmissionResource extends Resource
 
     protected static ?string $navigationLabel = 'Member Submissions';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Content';
+    protected static string|\UnitEnum|null $navigationGroup = 'Library';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
 
     public static function canAccess(): bool
     {

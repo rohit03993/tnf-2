@@ -12,6 +12,8 @@ use App\Filament\Resources\Articles\Pages\ListArticles;
 use App\Models\Article;
 use App\Models\User;
 use App\Support\TnfImageUpload;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
@@ -22,9 +24,11 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 class ArticleResource extends Resource
@@ -42,9 +46,14 @@ class ArticleResource extends Resource
 
     protected static ?string $pluralModelLabel = 'News';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Content';
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 1;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['featuredMedia', 'categories', 'author']);
+    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -139,20 +148,60 @@ class ArticleResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('title')->searchable()->sortable()->limit(50),
+                ImageColumn::make('featuredMedia.path')
+                    ->label('')
+                    ->disk('public')
+                    ->height(56)
+                    ->width(56)
+                    ->square()
+                    ->extraImgAttributes(['class' => 'rounded-lg object-cover'])
+                    ->defaultImageUrl(asset('images/admin-news-placeholder.svg')),
+                TextColumn::make('title')
+                    ->searchable()
+                    ->sortable()
+                    ->wrap()
+                    ->limit(80)
+                    ->description(fn (Article $record): string => collect([
+                        $record->categories->pluck('name')->join(' · '),
+                        $record->author?->name,
+                        $record->published_at?->timezone(config('app.timezone'))->format('M j, Y g:i A'),
+                        ucfirst($record->status?->value ?? ''),
+                    ])->filter()->join(' · ')),
                 TextColumn::make('categories.name')
                     ->label('Category')
                     ->badge()
-                    ->limitList(2),
-                TextColumn::make('author.name')->label('Author')->sortable(),
+                    ->limitList(2)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('author.name')
+                    ->label('Author')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')->badge(),
-                TextColumn::make('published_at')->dateTime()->sortable(),
-                TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('published_at')
+                    ->label('Published')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')->options(ContentStatus::class),
             ])
-            ->defaultSort('published_at', 'desc');
+            ->recordActions([
+                EditAction::make()
+                    ->label('Edit')
+                    ->icon(Heroicon::OutlinedPencilSquare),
+                DeleteAction::make()
+                    ->label('Delete')
+                    ->icon(Heroicon::OutlinedTrash)
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete news article')
+                    ->modalDescription('This permanently removes the article from the website. This action cannot be undone.')
+                    ->successNotificationTitle('Article deleted'),
+            ])
+            ->recordUrl(fn (Article $record): string => static::getUrl('edit', ['record' => $record]))
+            ->defaultSort('published_at', 'desc')
+            ->paginationPageOptions([10, 25, 50]);
     }
 
     public static function getPages(): array
