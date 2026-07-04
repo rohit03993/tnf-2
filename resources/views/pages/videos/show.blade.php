@@ -23,15 +23,7 @@
             </header>
 
             @if($embedSrc)
-                <div class="tnf-article-embed mt-6 aspect-[9/16] max-h-[80vh] overflow-hidden rounded-tnf-lg shadow-card sm:aspect-video sm:max-h-none">
-                    <iframe
-                        src="{{ $embedSrc }}"
-                        title="{{ $video->title }}"
-                        class="h-full w-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen
-                    ></iframe>
-                </div>
+                <x-site.youtube-embed :src="$embedSrc" :title="$video->title" portrait />
             @elseif($video->featuredMedia?->url())
                 <x-site.media-frame
                     variant="article"

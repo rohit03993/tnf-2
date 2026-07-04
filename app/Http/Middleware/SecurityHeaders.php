@@ -56,7 +56,7 @@ class SecurityHeaders
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "script-src {$scriptSrc}",
             "connect-src {$connectSrc}",
-            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://*.youtube.com",
         ];
 
         return implode('; ', $directives).';';

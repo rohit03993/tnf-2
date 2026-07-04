@@ -53,11 +53,34 @@ class Embed
         $videoId = self::youtubeVideoId($url);
 
         if ($videoId) {
-            return 'https://www.youtube.com/embed/'.$videoId;
+            return self::youtubeEmbedUrl($videoId);
         }
 
-        if (str_contains($url, 'youtube.com/embed/')) {
-            return $url;
+        if (str_contains($url, 'youtube.com/embed/') || str_contains($url, 'youtube-nocookie.com/embed/')) {
+            return self::normalizeYoutubeEmbedUrl($url);
+        }
+
+        return null;
+    }
+
+    public static function youtubeEmbedUrl(string $videoId): string
+    {
+        $params = http_build_query([
+            'rel' => '0',
+            'modestbranding' => '1',
+            'playsinline' => '1',
+            'origin' => rtrim((string) config('app.url'), '/'),
+        ]);
+
+        return 'https://www.youtube-nocookie.com/embed/'.$videoId.'?'.$params;
+    }
+
+    protected static function normalizeYoutubeEmbedUrl(string $url): string
+    {
+        $videoId = self::youtubeVideoId($url);
+
+        if ($videoId) {
+            return self::youtubeEmbedUrl($videoId);
         }
 
         return $url;

@@ -32,15 +32,7 @@
             @endif
 
             @if($embedSrc)
-                <div class="tnf-article-embed mt-6 aspect-video overflow-hidden rounded-tnf-lg shadow-card">
-                    <iframe
-                        src="{{ $embedSrc }}"
-                        title="{{ $article->title }}"
-                        class="h-full w-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen
-                    ></iframe>
-                </div>
+                <x-site.youtube-embed :src="$embedSrc" :title="$article->title" />
             @endif
 
             <div class="prose prose-tnf tnf-article-body mt-6" id="tnf-reading-target">
