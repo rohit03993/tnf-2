@@ -34,7 +34,7 @@ export function initArticleRead() {
         }
 
         if (labelEl && typeof payload.readers_count === 'number') {
-            labelEl.textContent = payload.readers_count === 1 ? 'reader' : 'readers';
+            labelEl.textContent = payload.readers_count === 1 ? 'Reader' : 'Readers';
         }
 
         if (typeof payload.likes_count === 'number' && likesEl) {

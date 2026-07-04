@@ -1256,36 +1256,39 @@
     }
 
     .tnf-article-engagement {
-        @apply mt-4 flex flex-wrap items-center justify-between gap-3 border-y border-tnf-gray-dark/70 bg-gradient-to-r from-white via-tnf-gray/30 to-white px-1 py-3 sm:px-2;
+        @apply mt-4;
     }
 
-    .tnf-article-engagement__left,
-    .tnf-article-engagement__right {
-        @apply flex items-center;
+    .tnf-article-engagement__inner {
+        @apply flex items-center gap-4 rounded-2xl border border-tnf-gray-dark/60 bg-white px-4 py-3 shadow-card sm:gap-6 sm:px-5;
+    }
+
+    .tnf-article-engagement__divider {
+        @apply h-10 w-px shrink-0 bg-tnf-gray-dark/70;
     }
 
     .tnf-article-like {
-        @apply inline-flex min-h-[2.75rem] items-center gap-2.5 rounded-full border border-tnf-gray-dark/80 bg-white px-3.5 py-2 text-tnf-sm font-semibold text-tnf-navy shadow-sm transition-all duration-200 hover:border-tnf-red/40 hover:shadow-md active:scale-[0.98];
-    }
-
-    .tnf-article-like--active {
-        @apply border-tnf-red bg-tnf-red text-white hover:border-tnf-red hover:bg-tnf-red;
+        @apply inline-flex min-w-[5.5rem] flex-col items-center gap-1.5 rounded-xl px-2 py-1 text-center transition-transform duration-200 hover:scale-[1.03] active:scale-[0.97];
     }
 
     .tnf-article-like--busy {
-        @apply pointer-events-none opacity-70;
+        @apply pointer-events-none opacity-60;
     }
 
-    .tnf-article-like__icon {
-        @apply relative flex h-8 w-8 items-center justify-center rounded-full bg-tnf-gray/70;
+    .tnf-article-like__bubble {
+        @apply flex h-12 w-12 items-center justify-center rounded-full border border-[#dbeafe] bg-[#eff6ff] text-[#2563eb] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition-all duration-200;
     }
 
-    .tnf-article-like--active .tnf-article-like__icon {
-        @apply bg-white/20;
+    .tnf-article-like:hover .tnf-article-like__bubble {
+        @apply border-[#bfdbfe] bg-[#dbeafe];
+    }
+
+    .tnf-article-like--active .tnf-article-like__bubble {
+        @apply border-tnf-red bg-tnf-red text-white shadow-[0_8px_20px_rgba(188,30,56,0.28)];
     }
 
     .tnf-article-like__svg {
-        @apply h-4 w-4;
+        @apply h-6 w-6;
     }
 
     .tnf-article-like__svg--filled {
@@ -1297,35 +1300,51 @@
     }
 
     .tnf-article-like--active .tnf-article-like__svg--filled {
-        @apply block text-white;
+        @apply block;
     }
 
-    .tnf-article-like__text {
-        @apply inline-flex items-baseline gap-1.5;
+    .tnf-article-like__copy {
+        @apply flex flex-col items-center leading-none;
     }
 
     .tnf-article-like__count {
-        @apply text-tnf-xs font-bold tabular-nums text-tnf-muted;
+        @apply text-tnf-sm font-bold tabular-nums text-tnf-navy;
     }
 
     .tnf-article-like--active .tnf-article-like__count {
-        @apply text-white/90;
+        @apply text-tnf-red;
+    }
+
+    .tnf-article-like__label {
+        @apply mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-tnf-muted;
+    }
+
+    .tnf-article-like--active .tnf-article-like__label {
+        @apply text-tnf-red;
     }
 
     .tnf-article-stat {
-        @apply inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-tnf-sm text-tnf-muted shadow-sm;
+        @apply inline-flex min-w-[5.5rem] flex-col items-center gap-1.5 px-2 py-1 text-center;
+    }
+
+    .tnf-article-stat__bubble {
+        @apply flex h-12 w-12 items-center justify-center rounded-full border border-tnf-gray-dark/50 bg-tnf-gray/50 text-tnf-red;
     }
 
     .tnf-article-stat__icon {
-        @apply h-5 w-5 shrink-0 text-tnf-red;
+        @apply h-6 w-6;
     }
 
-    .tnf-article-stat__text {
-        @apply inline-flex items-baseline gap-1 font-medium text-tnf-navy;
+    .tnf-article-stat__copy {
+        @apply flex flex-col items-center leading-none;
     }
 
-    .tnf-article-stat__text strong {
-        @apply font-bold tabular-nums text-tnf-red;
+    .tnf-article-stat__count {
+        @apply text-tnf-sm font-bold tabular-nums text-tnf-navy;
+    }
+
+    .tnf-article-stat__label {
+        @apply mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-tnf-muted;
     }
 
     .tnf-article-body {
