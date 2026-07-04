@@ -1,8 +1,6 @@
-@props(['groups', 'logo' => null])
+@props(['categories', 'logo' => null])
 
 @php
-    $isActive = fn (string $url): bool => url()->current() === $url;
-
     $primary = [
         ['label' => 'Home', 'url' => route('home'), 'active' => request()->routeIs('home'), 'icon' => 'home'],
         ['label' => 'ePaper', 'url' => route('epaper.index'), 'active' => request()->routeIs('epaper.*'), 'icon' => 'epaper'],
@@ -10,15 +8,8 @@
         ['label' => 'Search', 'url' => route('search'), 'active' => request()->routeIs('search'), 'icon' => 'search'],
     ];
 
-    $skipLabels = ['Home'];
-    $skipUrls = collect($primary)->pluck('url')->all();
-
-    $categories = collect($groups)
-        ->flatMap(fn ($links) => $links)
-        ->reject(fn ($link) => in_array($link['label'] ?? '', $skipLabels, true))
-        ->reject(fn ($link) => in_array($link['url'] ?? '', $skipUrls, true))
-        ->unique('url')
-        ->values();
+    $categoryActive = fn (string $slug): bool => request()->routeIs('category.show')
+        && request()->route('category')?->slug === $slug;
 @endphp
 
 <div class="tnf-drawer-overlay" data-tnf-drawer-close aria-hidden="true"></div>
@@ -61,14 +52,18 @@
         </ul>
 
         @if($categories->isNotEmpty())
-            <p class="tnf-drawer-label">Categories</p>
-            <ul class="tnf-drawer-chips">
-                @foreach($categories as $link)
+            <div class="tnf-drawer-categories-head">
+                <p class="tnf-drawer-label">News categories</p>
+                <span class="tnf-drawer-categories-meta">{{ $categories->count() }} topics</span>
+            </div>
+            <ul class="tnf-drawer-categories">
+                @foreach($categories as $category)
                     <li>
-                        <a href="{{ $link['url'] }}"
-                           class="tnf-drawer-chip {{ $isActive($link['url']) ? 'tnf-drawer-chip--active' : '' }}"
+                        <a href="{{ $category['url'] }}"
+                           class="tnf-drawer-category-link {{ $categoryActive($category['slug']) ? 'tnf-drawer-category-link--active' : '' }}"
                            data-tnf-drawer-close>
-                            {{ $link['label'] }}
+                            <span class="tnf-drawer-category-name">{{ $category['label'] }}</span>
+                            <span class="tnf-drawer-category-count">{{ $category['articles_count'] }}</span>
                         </a>
                     </li>
                 @endforeach

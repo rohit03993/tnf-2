@@ -27,17 +27,21 @@
                             </svg>
                         </button>
                         <div class="tnf-more-dropdown" role="menu">
-                            @foreach($chrome['drawerGroups'] as $groupTitle => $links)
-                                <p class="tnf-drawer-group-title">{{ $groupTitle }}</p>
-                                @foreach($links as $link)
-                                    <a href="{{ $link['url'] }}" class="tnf-drawer-link" role="menuitem">
-                                        {{ $link['label'] }}
+                            @php($overflowCategories = $chrome['navCategories']->slice(5))
+                            @if($overflowCategories->isNotEmpty())
+                                <p class="tnf-drawer-group-title">More categories</p>
+                                @foreach($overflowCategories as $category)
+                                    <a href="{{ $category['url'] }}"
+                                       class="tnf-drawer-link tnf-drawer-link--category {{ request()->routeIs('category.show') && request()->route('category')?->slug === $category['slug'] ? 'tnf-drawer-link--active' : '' }}"
+                                       role="menuitem">
+                                        <span>{{ $category['label'] }}</span>
+                                        <span class="tnf-drawer-category-count">{{ $category['articles_count'] }}</span>
                                     </a>
                                 @endforeach
-                            @endforeach
+                            @endif
                             <p class="tnf-drawer-group-title">More</p>
                             <a href="{{ route('epaper.index') }}" class="tnf-drawer-link" role="menuitem">ePaper</a>
-                            <a href="{{ route('videos.index') }}" class="tnf-drawer-link" role="menuitem">Videos</a>
+                            <a href="{{ route('search') }}" class="tnf-drawer-link" role="menuitem">Search</a>
                             <button type="button" class="tnf-drawer-link tnf-drawer-link--button hidden lg:block" data-tnf-pwa-install hidden role="menuitem">
                                 Install App
                             </button>

@@ -49,7 +49,7 @@
         @unless(($compactChrome ?? false) || ($isApp ?? false))
             <x-site.masthead-banner :image="$chrome['bannerImage']" :url="$chrome['bannerLink']" />
         @endunless
-        <x-site.drawer :groups="$chrome['drawerGroups']" :logo="$chrome['siteLogo'] ?? null" />
+        <x-site.drawer :categories="$chrome['navCategories']" :logo="$chrome['siteLogo'] ?? null" />
     @endunless
 
     <main id="tnf-main">

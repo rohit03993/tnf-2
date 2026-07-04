@@ -6,6 +6,7 @@ use App\Models\Article;
 use App\Models\Category;
 use App\Models\Setting;
 use App\Models\Tag;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -16,7 +17,7 @@ class SiteChromeService
         $ttl = (int) config('tnf.chrome_cache_ttl', 300);
 
         return Cache::remember('site.chrome.'.($authLite ? 'auth' : 'full'), $ttl, function () use ($authLite) {
-            $categories = Category::query()->orderBy('name')->get()->keyBy('slug');
+            $navCategories = static::navCategories();
 
             return [
                 'authLite' => $authLite,
@@ -26,8 +27,8 @@ class SiteChromeService
                         ->latest('published_at')
                         ->limit((int) Setting::get('breaking_count', 12))
                         ->get(['id', 'title', 'slug']),
-                'drawerGroups' => static::drawerGroups($categories),
-                'primaryNav' => static::primaryNav($categories),
+                'navCategories' => $navCategories,
+                'primaryNav' => static::primaryNav($navCategories),
                 'bannerImage' => Setting::get('banner_image', ''),
                 'bannerLink' => Setting::get('banner_link_url', ''),
                 'whatsappUrl' => Setting::get('whatsapp_url', ''),
@@ -49,57 +50,38 @@ class SiteChromeService
         });
     }
 
-    /** @return array<string, array<int, array{label: string, url: string}>> */
-    protected static function drawerGroups(Collection $categories): array
+    /** @return Collection<int, array{label: string, url: string, slug: string, articles_count: int}> */
+    public static function navCategories(): Collection
     {
-        $link = fn (string $slug, string $fallback) => $categories->has($slug)
-            ? ['label' => $categories[$slug]->name, 'url' => route('category.show', $categories[$slug]->slug)]
-            : ['label' => $fallback, 'url' => '#'];
-
-        return [
-            'Start here' => [
-                ['label' => 'Home', 'url' => route('home')],
-            ],
-            'Daily digest' => [
-                $link('national', 'National'),
-                $link('health', 'Health'),
-                $link('religion', 'Religion'),
-                $link('entertainment', 'Entertainment'),
-            ],
-            'Desk & arena' => [
-                $link('tech', 'Tech'),
-                $link('politics', 'Politics'),
-                $link('sports', 'Sports'),
-                $link('business', 'Business'),
-            ],
-            'Magazine' => [
-                $link('exclusive', 'Exclusive'),
-                $link('lifestyle', 'Lifestyle'),
-                $link('cultural', 'Cultural'),
-                $link('crime', 'Crime'),
-            ],
-        ];
+        return Category::query()
+            ->whereHas('articles', fn (Builder $query) => $query->published())
+            ->withCount(['articles as articles_count' => fn (Builder $query) => $query->published()])
+            ->orderByDesc('articles_count')
+            ->orderBy('name')
+            ->get(['id', 'name', 'slug'])
+            ->map(fn (Category $category) => [
+                'label' => $category->name,
+                'url' => route('category.show', $category->slug),
+                'slug' => $category->slug,
+                'articles_count' => (int) $category->articles_count,
+            ]);
     }
 
-    /** @return array<int, array{label: string, url: string, slug?: string}> */
-    protected static function primaryNav(Collection $categories): array
+    /** @return array<int, array{label: string, url: string, slug?: string, articles_count?: int}> */
+    protected static function primaryNav(Collection $navCategories): array
     {
         $items = [
             ['label' => 'Home', 'url' => route('home'), 'slug' => 'home'],
             ['label' => 'Videos', 'url' => route('videos.index'), 'slug' => 'videos'],
         ];
 
-        foreach (['national', 'entertainment', 'religion', 'lifestyle', 'sports'] as $slug) {
-            if ($categories->has($slug)) {
-                $items[] = [
-                    'label' => $categories[$slug]->name,
-                    'url' => route('category.show', $slug),
-                    'slug' => $slug,
-                ];
-            }
+        foreach ($navCategories->take(5) as $category) {
+            $items[] = $category;
         }
 
-        $items[] = ['label' => 'More', 'url' => '#', 'slug' => 'more'];
+        if ($navCategories->count() > 5) {
+            $items[] = ['label' => 'More', 'url' => '#', 'slug' => 'more'];
+        }
 
         return $items;
     }

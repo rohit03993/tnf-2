@@ -522,7 +522,41 @@
     }
 
     .tnf-drawer-label {
-        @apply mb-2.5 mt-5 text-tnf-xs font-bold uppercase tracking-wider text-tnf-muted;
+        @apply mb-0 text-tnf-xs font-bold uppercase tracking-wider text-tnf-muted;
+    }
+
+    .tnf-drawer-categories-head {
+        @apply mb-2.5 mt-5 flex items-end justify-between gap-2;
+    }
+
+    .tnf-drawer-categories-meta {
+        @apply text-tnf-xs font-medium text-tnf-muted;
+    }
+
+    .tnf-drawer-categories {
+        @apply overflow-hidden rounded-xl border border-tnf-gray-dark/80 bg-white;
+    }
+
+    .tnf-drawer-category-link {
+        @apply flex min-h-touch items-center justify-between gap-3 border-b border-tnf-gray-dark/60 px-3.5 py-3 text-tnf-sm font-medium text-tnf-navy transition last:border-b-0 active:bg-tnf-gray/80;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tnf-drawer-category-name {
+        @apply min-w-0 flex-1 leading-snug;
+    }
+
+    .tnf-drawer-category-count {
+        @apply shrink-0 rounded-full bg-tnf-gray px-2 py-0.5 text-tnf-xs font-semibold tabular-nums text-tnf-muted;
+    }
+
+    .tnf-drawer-category-link--active {
+        @apply bg-tnf-red/5 font-semibold text-tnf-red;
+    }
+
+    .tnf-drawer-category-link--active .tnf-drawer-category-count {
+        @apply bg-tnf-red/15 text-tnf-red;
     }
 
     .tnf-drawer-chips {
@@ -555,6 +589,18 @@
 
     .tnf-drawer-link {
         @apply flex min-h-touch items-center px-4 text-tnf-sm font-medium text-tnf-navy hover:bg-tnf-gray;
+    }
+
+    .tnf-drawer-link--category {
+        @apply justify-between gap-3;
+    }
+
+    .tnf-drawer-link--active {
+        @apply bg-tnf-red/5 font-semibold text-tnf-red;
+    }
+
+    .tnf-drawer-link--active .tnf-drawer-category-count {
+        @apply bg-tnf-red/15 text-tnf-red;
     }
 
     .tnf-masthead-banner {
@@ -1002,7 +1048,7 @@
     }
 
     .tnf-more-dropdown {
-        @apply pointer-events-none invisible absolute right-0 top-[calc(100%+0.35rem)] z-[80] max-h-[70vh] w-72 overflow-y-auto rounded-xl border border-tnf-gray-dark/80 bg-white py-2 text-[0.9375rem] opacity-0 shadow-[0_12px_40px_rgba(15,19,32,0.12)] transition-opacity duration-150;
+        @apply pointer-events-none invisible absolute right-0 top-[calc(100%+0.35rem)] z-[80] max-h-[70vh] w-80 overflow-y-auto rounded-xl border border-tnf-gray-dark/80 bg-white py-2 text-[0.9375rem] opacity-0 shadow-[0_12px_40px_rgba(15,19,32,0.12)] transition-opacity duration-150;
         font-family: 'Source Sans 3', 'Noto Sans', system-ui, sans-serif;
     }
 
