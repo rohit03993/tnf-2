@@ -532,6 +532,7 @@
     .tnf-drawer-chip {
         @apply flex min-h-[2.75rem] items-center justify-center rounded-xl border border-tnf-gray-dark/80 bg-tnf-gray/40 px-2 py-2.5 text-center text-tnf-sm font-medium leading-snug text-tnf-navy transition active:scale-[0.98];
         touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .tnf-drawer-chip--active {

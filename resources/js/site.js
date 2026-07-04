@@ -112,6 +112,17 @@ function handleDrawerClose(event, closer) {
     }
 }
 
+function handleDrawerNavLink(event, link) {
+    closeDrawer({ suppressGhostClick: false });
+
+    if (event.type === 'touchend') {
+        event.preventDefault();
+        drawerLastTouchAt = Date.now();
+        drawerTouchConsumed = false;
+        window.location.assign(link.href);
+    }
+}
+
 function handleDrawerClick(event) {
     if (Date.now() < suppressGhostClickUntil) {
         consumeEvent(event);
@@ -119,10 +130,8 @@ function handleDrawerClick(event) {
         return;
     }
 
-    if (event.type === 'click' && Date.now() - drawerLastTouchAt < 600) {
-        if (drawerTouchConsumed) {
-            consumeEvent(event);
-        }
+    if (event.type === 'click' && Date.now() - drawerLastTouchAt < 600 && drawerTouchConsumed) {
+        consumeEvent(event);
 
         return;
     }
@@ -132,6 +141,14 @@ function handleDrawerClick(event) {
     if (toggle) {
         consumeEvent(event);
         toggleDrawer();
+
+        return;
+    }
+
+    const navLink = event.target.closest('#tnf-drawer a[data-tnf-drawer-close][href]');
+
+    if (navLink && isNavigableCloser(navLink) && document.body.classList.contains('tnf-drawer-open')) {
+        handleDrawerClose(event, navLink);
 
         return;
     }
@@ -159,6 +176,14 @@ function handleDrawerTouchEnd(event) {
         consumeEvent(event);
         toggleDrawer();
         drawerTouchConsumed = true;
+
+        return;
+    }
+
+    const navLink = event.target.closest('#tnf-drawer a[data-tnf-drawer-close][href]');
+
+    if (navLink && isNavigableCloser(navLink) && document.body.classList.contains('tnf-drawer-open')) {
+        handleDrawerNavLink(event, navLink);
 
         return;
     }
