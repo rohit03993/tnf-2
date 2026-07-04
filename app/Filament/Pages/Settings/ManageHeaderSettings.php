@@ -14,6 +14,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Storage;
 
 class ManageHeaderSettings extends SettingsPage
 {
@@ -67,7 +68,7 @@ class ManageHeaderSettings extends SettingsPage
                         FileUpload::make('pwa_icon')
                             ->label('Square site icon')
                             ->disk('public')
-                            ->directory('settings/pwa/uploads')
+                            ->directory('settings/pwa')
                             ->visibility('public')
                             ->image()
                             ->imagePreviewHeight('120')
@@ -122,7 +123,7 @@ class ManageHeaderSettings extends SettingsPage
                     return;
                 }
             } else {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete(BrandLogoService::CANONICAL_PATH);
+                Storage::disk('public')->delete(BrandLogoService::CANONICAL_PATH);
                 $data['site_logo'] = '';
             }
         }
@@ -136,21 +137,29 @@ class ManageHeaderSettings extends SettingsPage
         if (array_key_exists('pwa_icon', $data)) {
             $incoming = $data['pwa_icon'];
             $path = is_array($incoming) ? ($incoming[0] ?? null) : $incoming;
+            $existing = (string) Setting::get('pwa_icon', '');
 
             if (filled($path)) {
-                try {
-                    $data['pwa_icon'] = PwaIconService::process('public', (string) $path);
-                } catch (\Throwable $exception) {
-                    Notification::make()
-                        ->title('PWA icon upload failed')
-                        ->body($exception->getMessage())
-                        ->danger()
-                        ->send();
+                if ($path === PwaIconService::CANONICAL_PATH
+                    && Storage::disk('public')->exists(PwaIconService::CANONICAL_PATH)) {
+                    $data['pwa_icon'] = PwaIconService::CANONICAL_PATH;
+                } else {
+                    try {
+                        $data['pwa_icon'] = PwaIconService::process('public', (string) $path);
+                    } catch (\Throwable $exception) {
+                        Notification::make()
+                            ->title('PWA icon upload failed')
+                            ->body($exception->getMessage())
+                            ->danger()
+                            ->send();
 
-                    return;
+                        return;
+                    }
                 }
+            } elseif (filled($existing) && Storage::disk('public')->exists($existing)) {
+                $data['pwa_icon'] = $existing;
             } else {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete(PwaIconService::CANONICAL_PATH);
+                Storage::disk('public')->delete(PwaIconService::CANONICAL_PATH);
                 $data['pwa_icon'] = '';
             }
         }

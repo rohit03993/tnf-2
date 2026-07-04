@@ -1,8 +1,7 @@
-const CACHE_NAME = 'tnf-pwa-v5';
+const CACHE_NAME = 'tnf-pwa-v6';
 
 const PRECACHE_URLS = [
     '/favicon.svg',
-    '/manifest.json',
 ];
 
 function isHtmlRequest(request) {
@@ -17,10 +16,13 @@ function isHtmlRequest(request) {
 
 function isStaticAsset(pathname) {
     return pathname.startsWith('/build/')
-        || pathname.startsWith('/pwa/icon/')
         || pathname === '/favicon.svg'
-        || pathname === '/manifest.json'
         || pathname === '/apple-touch-icon.svg';
+}
+
+function isAlwaysNetwork(pathname) {
+    return pathname === '/manifest.json'
+        || pathname.startsWith('/pwa/icon/');
 }
 
 self.addEventListener('install', (event) => {
@@ -55,6 +57,12 @@ self.addEventListener('fetch', (event) => {
     }
 
     // News pages must always come from the network — never serve stale HTML from cache.
+    if (isAlwaysNetwork(url.pathname)) {
+        event.respondWith(fetch(event.request));
+
+        return;
+    }
+
     if (isHtmlRequest(event.request)) {
         event.respondWith(fetch(event.request));
 

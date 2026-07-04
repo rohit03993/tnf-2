@@ -19,7 +19,7 @@ class PwaIconController extends Controller
 
         return response($png, 200, [
             'Content-Type' => 'image/png',
-            'Cache-Control' => 'public, max-age=86400',
+            'Cache-Control' => 'public, max-age=3600, must-revalidate',
         ]);
     }
 
@@ -75,8 +75,8 @@ class PwaIconController extends Controller
         imagealphablending($canvas, false);
         imagesavealpha($canvas, true);
 
-        $transparent = imagecolorallocatealpha($canvas, 255, 255, 255, 127);
-        imagefill($canvas, 0, 0, $transparent);
+        $white = imagecolorallocate($canvas, 255, 255, 255);
+        imagefilledrectangle($canvas, 0, 0, $size, $size, $white);
         imagealphablending($canvas, true);
 
         $offsetX = (int) floor(($size - $targetWidth) / 2);

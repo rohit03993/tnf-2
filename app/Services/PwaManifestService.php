@@ -22,19 +22,19 @@ class PwaManifestService
             'theme_color' => '#BC1E38',
             'icons' => [
                 [
-                    'src' => url(route('pwa.icon', ['size' => 192], false)),
+                    'src' => self::iconUrl(192),
                     'sizes' => '192x192',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => url(route('pwa.icon', ['size' => 512], false)),
+                    'src' => self::iconUrl(512),
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => url(route('pwa.icon', ['size' => 512], false)),
+                    'src' => self::iconUrl(512),
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'maskable',
@@ -47,6 +47,10 @@ class PwaManifestService
     {
         $pwaIcon = (string) Setting::get('pwa_icon', '');
 
+        if (blank($pwaIcon) && Storage::disk('public')->exists(PwaIconService::CANONICAL_PATH)) {
+            $pwaIcon = PwaIconService::CANONICAL_PATH;
+        }
+
         if (filled($pwaIcon) && Storage::disk('public')->exists($pwaIcon)) {
             return $pwaIcon;
         }
@@ -58,6 +62,22 @@ class PwaManifestService
         }
 
         return null;
+    }
+
+    public static function iconVersion(): string
+    {
+        $path = self::iconSourcePath(512);
+
+        if ($path !== null && Storage::disk('public')->exists($path)) {
+            return (string) Storage::disk('public')->lastModified($path);
+        }
+
+        return 'default';
+    }
+
+    public static function iconUrl(int $size): string
+    {
+        return url(route('pwa.icon', ['size' => $size], false)).'?v='.self::iconVersion();
     }
 
     public static function fallbackIconPath(): string

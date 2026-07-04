@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Setting;
 use App\Services\PwaIconService;
+use App\Services\PwaManifestService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -67,7 +68,26 @@ class PwaManifestTest extends TestCase
     public function test_service_worker_file_exists_on_disk(): void
     {
         $this->assertFileExists(public_path('sw.js'));
-        $this->assertStringContainsString('tnf-pwa-v5', (string) file_get_contents(public_path('sw.js')));
+        $this->assertStringContainsString('tnf-pwa-v6', (string) file_get_contents(public_path('sw.js')));
+    }
+
+    public function test_manifest_icon_urls_include_cache_busting_version(): void
+    {
+        Storage::fake('public');
+
+        $png = base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+            true,
+        );
+
+        Storage::disk('public')->put(PwaIconService::CANONICAL_PATH, $png);
+        Setting::set('pwa_icon', PwaIconService::CANONICAL_PATH);
+
+        $version = PwaManifestService::iconVersion();
+
+        $this->get(route('manifest'))
+            ->assertOk()
+            ->assertJsonPath('icons.0.src', PwaManifestService::iconUrl(192));
     }
 
     public function test_pwa_icon_uses_uploaded_square_logo_from_settings(): void

@@ -1,16 +1,17 @@
 @props(['favicon' => ''])
 
 @php
-    use App\Models\Setting;
+    use App\Services\PwaManifestService;
     use Illuminate\Support\Facades\Storage;
 
-    $pwaIconPath = (string) Setting::get('pwa_icon', '');
-    $hasPwaIcon = filled($pwaIconPath) && Storage::disk('public')->exists($pwaIconPath);
+    $pwaIconPath = PwaManifestService::iconSourcePath(512);
+    $hasPwaIcon = $pwaIconPath !== null && Storage::disk('public')->exists($pwaIconPath);
+    $iconVersion = PwaManifestService::iconVersion();
 
     if ($hasPwaIcon) {
-        $faviconUrl = route('pwa.icon', ['size' => 32]);
+        $faviconUrl = PwaManifestService::iconUrl(32);
         $faviconType = 'image/png';
-        $touchIconUrl = route('pwa.icon', ['size' => 192]);
+        $touchIconUrl = PwaManifestService::iconUrl(192);
     } else {
         $faviconPath = filled($favicon) ? (string) $favicon : '';
         $faviconUrl = filled($faviconPath) ? asset('storage/'.$faviconPath) : asset('favicon.svg');
@@ -29,11 +30,11 @@
 
 <link rel="icon" href="{{ $faviconUrl }}" type="{{ $faviconType }}" sizes="32x32">
 @if($hasPwaIcon)
-    <link rel="icon" href="{{ route('pwa.icon', ['size' => 192]) }}" type="image/png" sizes="192x192">
+    <link rel="icon" href="{{ PwaManifestService::iconUrl(192) }}" type="image/png" sizes="192x192">
 @elseif(filled($favicon ?? ''))
     <link rel="alternate icon" href="{{ $faviconUrl }}" type="{{ $faviconType }}">
 @else
     <link rel="alternate icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
 @endif
 <link rel="apple-touch-icon" href="{{ $touchIconUrl }}">
-<link rel="manifest" href="{{ route('manifest') }}">
+<link rel="manifest" href="{{ route('manifest') }}?v={{ $iconVersion }}">
