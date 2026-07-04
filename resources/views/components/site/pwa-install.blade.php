@@ -20,19 +20,39 @@
     </div>
 </div>
 
-<div id="tnf-pwa-ios-guide" class="tnf-pwa-ios-guide" hidden>
-    <div class="tnf-pwa-ios-guide-card" role="dialog" aria-labelledby="tnf-pwa-ios-guide-title" aria-modal="true">
-        <button type="button" class="tnf-pwa-ios-guide-close" data-tnf-pwa-ios-close aria-label="Close">
+<div id="tnf-pwa-install-toast" class="tnf-pwa-install-toast" hidden role="status" aria-live="polite"></div>
+
+<div id="tnf-pwa-ios-guide" class="tnf-pwa-guide" hidden>
+    <div class="tnf-pwa-guide-card" role="dialog" aria-labelledby="tnf-pwa-ios-guide-title" aria-modal="true">
+        <button type="button" class="tnf-pwa-guide-close" data-tnf-pwa-ios-close aria-label="Close">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
-        <h2 id="tnf-pwa-ios-guide-title" class="tnf-pwa-ios-guide-title">Add TNF Today to Home Screen</h2>
-        <ol class="tnf-pwa-ios-guide-steps">
+        <h2 id="tnf-pwa-ios-guide-title" class="tnf-pwa-guide-title">Add TNF Today to Home Screen</h2>
+        <ol class="tnf-pwa-guide-steps">
             <li>Tap the <strong>Share</strong> button in Safari (square with arrow).</li>
             <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
             <li>Tap <strong>Add</strong> in the top-right corner.</li>
         </ol>
         <button type="button" class="tnf-btn-primary w-full" data-tnf-pwa-ios-close>Got it</button>
+    </div>
+</div>
+
+<div id="tnf-pwa-android-guide" class="tnf-pwa-guide" hidden>
+    <div class="tnf-pwa-guide-card" role="dialog" aria-labelledby="tnf-pwa-android-guide-title" aria-modal="true">
+        <button type="button" class="tnf-pwa-guide-close" data-tnf-pwa-android-close aria-label="Close">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <h2 id="tnf-pwa-android-guide-title" class="tnf-pwa-guide-title">Install TNF Today</h2>
+        <p class="tnf-pwa-guide-lead">If the install popup did not appear, use your browser menu:</p>
+        <ol class="tnf-pwa-guide-steps">
+            <li>Tap the <strong>⋮ menu</strong> (top-right in Chrome).</li>
+            <li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+            <li>Tap <strong>Install</strong> to confirm.</li>
+        </ol>
+        <button type="button" class="tnf-btn-primary w-full" data-tnf-pwa-android-close>Got it</button>
     </div>
 </div>

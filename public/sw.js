@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tnf-pwa-v4';
+const CACHE_NAME = 'tnf-pwa-v5';
 
 const PRECACHE_URLS = [
     '/favicon.svg',

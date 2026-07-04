@@ -180,6 +180,68 @@
         @apply rounded-lg px-2 py-1 text-tnf-xs font-medium text-tnf-muted hover:text-tnf-navy;
     }
 
+    .tnf-pwa-install-toast {
+        @apply pointer-events-none fixed left-1/2 z-[80] max-w-[min(92vw,22rem)] -translate-x-1/2 rounded-full px-4 py-2.5 text-center text-tnf-sm font-semibold text-white shadow-[0_8px_24px_rgba(15,19,32,0.2)] opacity-0 transition-all duration-300;
+        bottom: calc(var(--tnf-bottom-nav) + var(--tnf-safe-bottom) + 4.75rem);
+    }
+
+    .tnf-pwa-install-toast--visible {
+        @apply opacity-100;
+    }
+
+    .tnf-pwa-install-toast[data-variant="success"] {
+        @apply bg-emerald-600;
+    }
+
+    .tnf-pwa-install-toast[data-variant="progress"] {
+        @apply bg-tnf-navy;
+    }
+
+    .tnf-pwa-install-toast[data-variant="info"] {
+        @apply bg-tnf-navy;
+    }
+
+    .tnf-pwa-install-toast[data-variant="error"] {
+        @apply bg-tnf-red;
+    }
+
+    .tnf-pwa-guide {
+        @apply fixed inset-0 z-[70] items-end justify-center bg-black/45 p-4 sm:items-center;
+        display: none;
+    }
+
+    .tnf-pwa-guide--open {
+        display: flex;
+    }
+
+    body.tnf-pwa-guide-open {
+        @apply overflow-hidden;
+    }
+
+    .tnf-pwa-guide-card {
+        @apply relative w-full max-w-md rounded-tnf-lg bg-white p-5 shadow-card;
+    }
+
+    .tnf-pwa-guide-close {
+        @apply absolute right-3 top-3 rounded-lg p-1 text-tnf-muted hover:bg-tnf-gray hover:text-tnf-navy;
+    }
+
+    .tnf-pwa-guide-title {
+        @apply pr-8 text-tnf-lg font-bold text-tnf-navy;
+    }
+
+    .tnf-pwa-guide-lead {
+        @apply mt-2 text-tnf-sm text-tnf-muted;
+    }
+
+    .tnf-pwa-guide-steps {
+        @apply my-4 list-decimal space-y-2 pl-5 text-tnf-sm text-tnf-navy;
+    }
+
+    .tnf-pwa-install--busy {
+        @apply pointer-events-none opacity-70;
+    }
+
     .tnf-pwa-ios-guide {
         @apply fixed inset-0 z-[70] hidden items-end justify-center bg-black/45 p-4 sm:items-center;
     }
