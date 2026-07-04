@@ -1255,6 +1255,22 @@
         @apply mx-1;
     }
 
+    .tnf-article-readers {
+        @apply mt-4 flex items-center gap-2 rounded-tnf-lg border border-tnf-border bg-white px-4 py-3 text-tnf-sm text-tnf-muted shadow-card;
+    }
+
+    .tnf-article-readers__icon {
+        @apply h-5 w-5 shrink-0 text-tnf-red;
+    }
+
+    .tnf-article-readers__text {
+        @apply m-0 font-medium text-tnf-navy;
+    }
+
+    .tnf-article-readers__text [data-article-readers] {
+        @apply font-bold text-tnf-red;
+    }
+
     .tnf-article-body {
         @apply rounded-tnf-lg bg-white p-5 shadow-card sm:p-6;
     }

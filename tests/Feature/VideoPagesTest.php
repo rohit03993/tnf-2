@@ -47,4 +47,23 @@ class VideoPagesTest extends TestCase
             ->assertOk()
             ->assertSee('Homepage video', false);
     }
+
+    public function test_video_show_page_renders_youtube_embed_with_referrer_policy(): void
+    {
+        $author = User::factory()->create();
+
+        $video = Video::query()->create([
+            'title' => 'Shorts video',
+            'slug' => 'shorts-video',
+            'embed_url' => 'https://www.youtube.com/shorts/gcGBasBaOj8',
+            'author_id' => $author->id,
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+        ]);
+
+        $this->get(route('videos.show', $video->slug))
+            ->assertOk()
+            ->assertSee('referrerpolicy="strict-origin-when-cross-origin"', false)
+            ->assertSee('youtube-nocookie.com/embed/gcGBasBaOj8', false);
+    }
 }

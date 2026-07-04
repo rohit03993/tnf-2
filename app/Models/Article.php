@@ -23,6 +23,8 @@ class Article extends Model
         'embed_url',
         'featured_media_id',
         'comment_count',
+        'readers_count',
+        'views_count',
         'published_at',
     ];
 
@@ -32,6 +34,8 @@ class Article extends Model
             'status' => ContentStatus::class,
             'published_at' => 'datetime',
             'comment_count' => 'integer',
+            'readers_count' => 'integer',
+            'views_count' => 'integer',
         ];
     }
 

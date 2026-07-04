@@ -6,6 +6,7 @@ use App\Http\Controllers\Web\AccountController;
 use App\Http\Controllers\Web\EpaperClipSignController;
 use App\Http\Controllers\Web\OgImageController;
 use App\Http\Controllers\Web\SubmissionController;
+use App\Http\Controllers\Web\ArticleReadController;
 use App\Http\Controllers\Web\ArticleSingleController;
 use App\Http\Controllers\Web\ArticleSlugRedirectController;
 use App\Http\Controllers\Web\AssetLinksController;
@@ -65,6 +66,11 @@ Route::get('/design-preview', function () {
 Route::post('/contact-us', [ContactController::class, 'store'])
     ->middleware('throttle:6,1')
     ->name('page.contact.submit');
+
+Route::post('/n/{article}/read', ArticleReadController::class)
+    ->whereNumber('article')
+    ->middleware('throttle:120,1')
+    ->name('article.read');
 
 Route::post('/epaper/{edition:slug}/sign-clip', EpaperClipSignController::class)
     ->middleware('throttle:30,1')

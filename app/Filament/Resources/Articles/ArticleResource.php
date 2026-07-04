@@ -176,6 +176,11 @@ class ArticleResource extends Resource
                     ->label('Author')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('readers_count')
+                    ->label('Readers')
+                    ->sortable()
+                    ->numeric()
+                    ->alignCenter(),
                 TextColumn::make('status')->badge(),
                 TextColumn::make('published_at')
                     ->label('Published')

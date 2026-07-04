@@ -35,6 +35,8 @@
                 <x-site.youtube-embed :src="$embedSrc" :title="$article->title" />
             @endif
 
+            <x-site.article-readers :article="$article" />
+
             <div class="prose prose-tnf tnf-article-body mt-6" id="tnf-reading-target">
                 {!! $article->content !!}
             </div>

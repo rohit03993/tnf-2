@@ -28,6 +28,9 @@
     @if(request()->routeIs('home'))
         @vite(['resources/js/home.js'])
     @endif
+    @if(request()->routeIs('article.show'))
+        @vite(['resources/js/article-read.js'])
+    @endif
     @if($isApp ?? false)
         @vite(['resources/js/mobile-bridge.js'])
     @endif
