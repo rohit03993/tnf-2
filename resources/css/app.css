@@ -917,7 +917,7 @@
     }
 
     .tnf-home-sidebar {
-        @apply lg:col-start-3 lg:row-start-1 lg:row-span-2;
+        @apply lg:col-start-3 lg:row-start-1;
     }
 
     .tnf-home-sidebar .rounded-tnf-lg {
@@ -949,7 +949,7 @@
     }
 
     .tnf-home .tnf-home-feed {
-        @apply space-y-8 lg:col-span-2 lg:space-y-10;
+        @apply space-y-5 lg:space-y-6;
     }
 
     .tnf-home .tnf-home-panel {
@@ -1043,44 +1043,67 @@
     @media (min-width: 1024px) {
         .tnf-home .tnf-home-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr) minmax(17.5rem, 20rem);
-            grid-template-areas:
-                'hero headlines sidebar'
-                'feed feed sidebar';
+            grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(15.5rem, 17.5rem);
             align-items: start;
-            gap: 1.25rem 1.5rem;
+            gap: 1rem 1.25rem;
         }
 
+        /* Hero row only — do NOT span sidebar into feed row (that caused huge empty gap) */
         .tnf-home .tnf-hero-section {
-            display: contents;
-        }
-
-        .tnf-home .tnf-hero-section-main {
-            grid-area: hero;
-        }
-
-        .tnf-home .tnf-hero-section-headlines {
-            grid-area: headlines;
+            grid-column: 1 / 3;
+            grid-row: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+            gap: 1.25rem;
         }
 
         .tnf-home .tnf-home-sidebar {
-            grid-area: sidebar;
+            grid-column: 3;
+            grid-row: 1;
+            align-self: start;
             position: sticky;
             top: calc(var(--tnf-header-chrome) + 0.75rem);
-            align-self: start;
-            grid-column: auto;
-            grid-row: auto;
+            max-height: calc(100vh - var(--tnf-header-total) - 1.5rem);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
+        }
+
+        .tnf-home .tnf-home-sidebar .tnf-home-panel__body {
+            max-height: 20rem;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
+        }
+
+        /* Top News duplicates Latest Headlines — hide on desktop to shorten sidebar */
+        .tnf-home .tnf-home-top-news {
+            display: none;
         }
 
         .tnf-home .tnf-home-feed {
-            grid-area: feed;
-            grid-column: auto;
+            grid-column: 1 / 3;
+            grid-row: 2;
             width: 100%;
             min-width: 0;
         }
 
         .tnf-home .tnf-featured-videos-grid {
-            @apply grid-cols-4;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+            gap: 0.875rem;
+        }
+
+        .tnf-home .tnf-epaper-teaser {
+            min-height: 10rem;
+        }
+
+        .tnf-home .tnf-epaper-teaser-inner {
+            @apply gap-4 p-5;
+        }
+
+        .tnf-home .tnf-cat-block {
+            @apply p-4;
         }
     }
 
