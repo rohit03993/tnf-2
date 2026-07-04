@@ -82,6 +82,8 @@
 
 @tailwind components;
 
+@import './components/home.css';
+
 @layer components {
     .tnf-container {
         @apply mx-auto w-full max-w-site px-4 mobile-sm:px-3;
@@ -225,10 +227,6 @@
             overflow-x: hidden;
             max-width: 100%;
         }
-    }
-
-    .tnf-page-content.tnf-home {
-        @apply py-2 mobile-sm:py-1.5 lg:py-4;
     }
 
     /* Header — see resources/css/components/header.css */

@@ -17,39 +17,51 @@
                         </div>
                     @endif
                 </div>
-                <div class="tnf-hero-section-headlines rounded-tnf-lg bg-white p-4 shadow-card">
-                    <h2 class="tnf-section-title mb-3">Latest Headlines</h2>
-                    @forelse($heroHeadlines as $index => $article)
-                        <x-cards.headline-item :article="$article" :number="$index + 1" />
-                    @empty
-                        <p class="text-tnf-sm text-tnf-muted">No headlines yet.</p>
-                    @endforelse
+                <div class="tnf-home-panel tnf-hero-section-headlines">
+                    <div class="tnf-home-panel__head">
+                        <h2 class="tnf-section-title">Latest Headlines</h2>
+                    </div>
+                    <div class="tnf-home-panel__body">
+                        @forelse($heroHeadlines as $index => $article)
+                            <x-cards.headline-item :article="$article" :number="$index + 1" />
+                        @empty
+                            <p class="px-2 py-3 text-tnf-sm text-tnf-muted">No headlines yet.</p>
+                        @endforelse
+                    </div>
                 </div>
             </section>
 
             {{-- Sidebar: trending + top news (right on desktop, after hero on mobile) --}}
-            <aside class="tnf-home-sidebar space-y-6">
+            <aside class="tnf-home-sidebar space-y-4 lg:space-y-5">
                 @if($settings['show_trending'] && $trendingNews->isNotEmpty())
-                    <div class="rounded-tnf-lg bg-white p-4 shadow-card">
-                        <h2 class="tnf-section-title mb-3">Trending News</h2>
-                        @foreach($trendingNews as $article)
-                            <x-cards.trending-item :article="$article" />
-                        @endforeach
+                    <div class="tnf-home-panel">
+                        <div class="tnf-home-panel__head">
+                            <h2 class="tnf-section-title">Trending News</h2>
+                        </div>
+                        <div class="tnf-home-panel__body">
+                            @foreach($trendingNews as $article)
+                                <x-cards.trending-item :article="$article" />
+                            @endforeach
+                        </div>
                     </div>
                 @endif
 
                 @if($sidebarTopNews->isNotEmpty())
-                    <div class="tnf-home-top-news rounded-tnf-lg bg-white p-4 shadow-card">
-                        <h2 class="tnf-section-title mb-3">Top News</h2>
-                        @foreach($sidebarTopNews as $index => $article)
-                            <x-cards.headline-item :article="$article" :number="$index + 1" />
-                        @endforeach
+                    <div class="tnf-home-panel tnf-home-top-news">
+                        <div class="tnf-home-panel__head">
+                            <h2 class="tnf-section-title">Top News</h2>
+                        </div>
+                        <div class="tnf-home-panel__body">
+                            @foreach($sidebarTopNews as $index => $article)
+                                <x-cards.headline-item :article="$article" :number="$index + 1" />
+                            @endforeach
+                        </div>
                     </div>
                 @endif
             </aside>
 
             {{-- Main feed --}}
-            <div class="tnf-home-feed space-y-6 lg:space-y-8">
+            <div class="tnf-home-feed">
                 {{-- Featured Videos --}}
                 @if($settings['show_featured_videos'] && $featuredVideos->isNotEmpty())
                     <section class="tnf-featured-videos tnf-cat-block">
