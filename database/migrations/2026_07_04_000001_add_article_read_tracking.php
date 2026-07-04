@@ -18,8 +18,8 @@ return new class extends Migration
             $table->foreignId('article_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('reader_key', 64);
-            $table->timestamp('first_read_at');
-            $table->timestamp('last_read_at');
+            $table->dateTime('first_read_at');
+            $table->dateTime('last_read_at');
             $table->timestamps();
 
             $table->unique(['article_id', 'reader_key']);
