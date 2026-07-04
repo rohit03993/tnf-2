@@ -27,6 +27,11 @@ return [
     'onesignal_rest_key' => env('ONESIGNAL_REST_KEY'),
     'frontend_url' => env('FRONTEND_URL', env('APP_URL')),
 
+    'developer_credit' => [
+        'name' => 'Pal Digital',
+        'url' => 'https://paldigital.in/',
+    ],
+
     'epaper_clip_og_secret' => env('EPAPER_CLIP_OG_SECRET'),
 
     // Local dev: any logged-in user can open restricted ePaper (off in production)

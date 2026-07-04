@@ -4,6 +4,7 @@ namespace App\Filament\Pages\Settings;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Settings\Concerns\ManagesSettings;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -34,7 +35,6 @@ class ManageFooterSettings extends SettingsPage
         return [
             'disclaimer_text' => '',
             'disclaimer_email' => 'contact@tnftoday.com',
-            'credits_line' => 'Designed & Developed with Love by Pal Digital',
             'contact_email' => 'contact@tnftoday.com',
             'contact_phone' => '+19412359817',
             'contact_company' => 'TNF Today Media Network Pvt Ltd',
@@ -49,7 +49,9 @@ class ManageFooterSettings extends SettingsPage
                     ->schema([
                         RichEditor::make('disclaimer_text'),
                         TextInput::make('disclaimer_email')->email(),
-                        TextInput::make('credits_line'),
+                        Placeholder::make('developer_credit')
+                            ->label('Developer credit')
+                            ->content('The footer always shows: “Designed and Developed by Pal Digital” (links to paldigital.in). This line is fixed and cannot be edited here.'),
                     ]),
                 Section::make('Contact Us page')
                     ->description('Shown on the public Contact Us page: email, phone, company name, and optional address.')

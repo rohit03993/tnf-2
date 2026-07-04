@@ -39,7 +39,6 @@ class SiteChromeService
                 'siteFavicon' => Setting::get('site_favicon', ''),
                 'disclaimerText' => Setting::get('disclaimer_text', ''),
                 'disclaimerEmail' => Setting::get('disclaimer_email', 'contact@tnftoday.com'),
-                'creditsLine' => Setting::get('credits_line', ''),
                 'hotTags' => $authLite
                     ? collect()
                     : Tag::query()

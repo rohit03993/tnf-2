@@ -1467,7 +1467,11 @@
     }
 
     .tnf-footer-credits {
-        @apply mt-1 block sm:mt-0 sm:inline;
+        @apply mt-1 block sm:mt-0 sm:ml-1 sm:inline;
+    }
+
+    .tnf-footer-credit-link {
+        @apply font-semibold text-tnf-navy/90 underline decoration-tnf-red/35 underline-offset-[0.2em] transition hover:text-tnf-red hover:decoration-tnf-red;
     }
 
     .tnf-footer-link {

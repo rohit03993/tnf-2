@@ -62,7 +62,6 @@
             <x-site.footer
                 :disclaimer="$chrome['disclaimerText']"
                 :email="$chrome['disclaimerEmail']"
-                :credits="$chrome['creditsLine']"
                 :logo="$chrome['siteLogo'] ?? null"
             />
         @endunless

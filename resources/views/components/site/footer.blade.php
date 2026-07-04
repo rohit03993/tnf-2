@@ -1,4 +1,11 @@
-@props(['disclaimer', 'email', 'credits', 'logo' => null])
+@props(['disclaimer', 'email', 'logo' => null])
+
+@php
+    $developerCredit = config('tnf.developer_credit', [
+        'name' => 'Pal Digital',
+        'url' => 'https://paldigital.in/',
+    ]);
+@endphp
 
 <footer class="tnf-footer">
     <div class="tnf-footer-accent" aria-hidden="true"></div>
@@ -69,9 +76,15 @@
         <div class="tnf-footer-bottom">
             <p class="tnf-footer-copyright">
                 &copy; {{ date('Y') }} {{ config('app.name') }}.
-                @if(filled($credits))
-                    <span class="tnf-footer-credits">{{ $credits }}</span>
-                @endif
+                <span class="tnf-footer-credits">
+                    Designed and Developed by
+                    <a
+                        href="{{ $developerCredit['url'] }}"
+                        class="tnf-footer-credit-link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >{{ $developerCredit['name'] }}</a>
+                </span>
             </p>
         </div>
     </div>

@@ -27,7 +27,6 @@ class SettingsSeeder extends Seeder
             'contact_phone' => '+19412359817',
             'contact_company' => 'TNF Today Media Network Pvt Ltd',
             'contact_address' => '',
-            'credits_line' => 'Designed & Developed with Love by Pal Digital',
             'whatsapp_url' => '',
         ];
 
