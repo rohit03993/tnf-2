@@ -82,8 +82,6 @@
 
 @tailwind components;
 
-@import './components/home.css';
-
 @layer components {
     .tnf-container {
         @apply mx-auto w-full max-w-site px-4 mobile-sm:px-3;
@@ -928,6 +926,200 @@
 
     .tnf-home-feed {
         @apply lg:col-span-2;
+    }
+
+    /* Homepage-only UI — rules live here so Vite/Tailwind always bundle them */
+    .tnf-page-content.tnf-home {
+        @apply relative isolate py-3 mobile-sm:py-2.5 lg:py-6;
+    }
+
+    .tnf-page-content.tnf-home::before {
+        content: '';
+        @apply pointer-events-none absolute -z-10;
+        top: -0.25rem;
+        bottom: 0;
+        left: 50%;
+        width: 100vw;
+        transform: translateX(-50%);
+        background: linear-gradient(180deg, #ffffff 0%, #eef0f4 10rem, #eef0f4 100%);
+    }
+
+    .tnf-home .tnf-home-layout {
+        @apply gap-4 lg:gap-6;
+    }
+
+    .tnf-home .tnf-home-feed {
+        @apply space-y-8 lg:col-span-2 lg:space-y-10;
+    }
+
+    .tnf-home .tnf-home-panel {
+        @apply overflow-hidden rounded-tnf-lg border border-tnf-gray-dark/60 bg-white shadow-[0_4px_24px_rgba(15,19,32,0.08)];
+        border-top: 3px solid var(--tnf-red);
+    }
+
+    .tnf-home .tnf-home-panel__head {
+        @apply border-b border-tnf-gray-dark/45 bg-gradient-to-r from-tnf-red/[0.08] via-tnf-gray/50 to-white px-3 py-3 sm:px-4;
+    }
+
+    .tnf-home .tnf-home-panel__head .tnf-section-title {
+        @apply mb-0 border-l-0 pl-0 text-tnf-base font-bold leading-tight text-tnf-navy lg:text-tnf-lg;
+    }
+
+    .tnf-home .tnf-home-panel__body {
+        @apply px-2 py-1.5 sm:px-3 sm:py-2 lg:px-3.5;
+    }
+
+    .tnf-home .tnf-hero-section-main .tnf-hero-lead {
+        @apply overflow-hidden rounded-tnf-lg border border-tnf-gray-dark/50 bg-white shadow-[0_8px_32px_rgba(15,19,32,0.12)];
+        border-top: 4px solid var(--tnf-red);
+    }
+
+    .tnf-home .tnf-hero-lead .tnf-news-card-body {
+        @apply px-4 py-3.5 sm:px-5 sm:py-4;
+    }
+
+    .tnf-home .tnf-hero-lead .tnf-news-card-title {
+        @apply text-tnf-lg leading-snug sm:text-tnf-xl lg:text-[1.65rem];
+    }
+
+    .tnf-home .tnf-hero-lead .tnf-news-card-meta {
+        @apply mt-2.5 inline-flex rounded-full bg-tnf-red/10 px-2.5 py-0.5 text-[0.6875rem] font-bold normal-case tracking-normal text-tnf-red;
+    }
+
+    .tnf-home .tnf-home-panel__body .tnf-headline-list-item {
+        @apply gap-3 rounded-lg px-1.5 py-3 transition-colors duration-150 hover:bg-tnf-gray/80 mobile-sm:gap-2 mobile-sm:py-2.5;
+    }
+
+    .tnf-home .tnf-home-panel__body .tnf-headline-list-item + .tnf-headline-list-item {
+        @apply border-t border-tnf-gray-dark/40;
+    }
+
+    .tnf-home .tnf-headline-list-num {
+        @apply h-7 w-7 rounded-md text-[0.6875rem] font-bold shadow-sm;
+    }
+
+    .tnf-home .tnf-headline-list-title {
+        @apply text-tnf-sm font-semibold leading-snug mobile-sm:text-[0.8125rem];
+    }
+
+    .tnf-home .tnf-trending-item {
+        @apply gap-3 rounded-lg px-1.5 py-3 transition-colors duration-150 hover:bg-tnf-gray/70;
+    }
+
+    .tnf-home .tnf-trending-item + .tnf-trending-item {
+        @apply border-t border-tnf-gray-dark/40;
+    }
+
+    .tnf-home .tnf-trending-title {
+        @apply text-tnf-sm font-semibold leading-snug;
+    }
+
+    .tnf-home .tnf-cat-block {
+        @apply mb-0 rounded-tnf-lg border border-tnf-gray-dark/50 bg-white p-4 shadow-[0_2px_16px_rgba(15,19,32,0.06)] sm:p-5;
+        border-top: 3px solid var(--tnf-red);
+    }
+
+    .tnf-home .tnf-cat-block-header {
+        @apply mb-4 gap-4 border-b border-tnf-gray-dark/40 pb-3;
+    }
+
+    .tnf-home .tnf-cat-block-header .tnf-section-title {
+        @apply mb-0 border-l-0 pl-0 text-tnf-base lg:text-tnf-lg;
+    }
+
+    .tnf-home .tnf-see-more-btn {
+        @apply border-tnf-red bg-tnf-red/5 px-4 py-1.5 text-tnf-xs font-bold uppercase tracking-wide shadow-sm hover:bg-tnf-red hover:text-white;
+    }
+
+    .tnf-home .tnf-cat-block-grid .tnf-news-card,
+    .tnf-home .tnf-recent-news .tnf-news-card {
+        @apply ring-1 ring-black/[0.05];
+    }
+
+    .tnf-home .tnf-epaper-teaser {
+        @apply ring-1 ring-white/10 shadow-[0_10px_40px_rgba(15,19,32,0.18)];
+    }
+
+    @media (min-width: 1024px) {
+        .tnf-home .tnf-home-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr) minmax(17.5rem, 20rem);
+            grid-template-areas:
+                'hero headlines sidebar'
+                'feed feed sidebar';
+            align-items: start;
+            gap: 1.25rem 1.5rem;
+        }
+
+        .tnf-home .tnf-hero-section {
+            display: contents;
+        }
+
+        .tnf-home .tnf-hero-section-main {
+            grid-area: hero;
+        }
+
+        .tnf-home .tnf-hero-section-headlines {
+            grid-area: headlines;
+        }
+
+        .tnf-home .tnf-home-sidebar {
+            grid-area: sidebar;
+            position: sticky;
+            top: calc(var(--tnf-header-chrome) + 0.75rem);
+            align-self: start;
+            grid-column: auto;
+            grid-row: auto;
+        }
+
+        .tnf-home .tnf-home-feed {
+            grid-area: feed;
+            grid-column: auto;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .tnf-home .tnf-featured-videos-grid {
+            @apply grid-cols-4;
+        }
+    }
+
+    @media (max-width: 1023px) {
+        .tnf-home .tnf-hero-section-main {
+            @apply -mx-1;
+        }
+
+        .tnf-home .tnf-featured-videos-grid {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 0.75rem;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.35rem;
+            margin-inline: -0.25rem;
+            padding-inline: 0.25rem;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .tnf-home .tnf-featured-videos-grid::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tnf-home .tnf-featured-videos-grid > * {
+            flex: 0 0 min(44vw, 11rem);
+            max-width: 11rem;
+            scroll-snap-align: start;
+        }
+
+        .tnf-home .tnf-cat-block {
+            @apply mx-0 p-3.5;
+        }
+
+        .tnf-home .tnf-cat-block-grid {
+            @apply gap-2.5;
+        }
     }
 
     .tnf-headline-list-item {
