@@ -28,7 +28,7 @@ class ContentPublishService
         SendPushNotificationJob::dispatchSync(
             $article->title,
             $article->excerpt ?: 'New story on TNF Today',
-            FrontendUrl::route('article.show', $article->slug),
+            FrontendUrl::route('article.show', $article),
         );
     }
 

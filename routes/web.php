@@ -7,6 +7,7 @@ use App\Http\Controllers\Web\EpaperClipSignController;
 use App\Http\Controllers\Web\OgImageController;
 use App\Http\Controllers\Web\SubmissionController;
 use App\Http\Controllers\Web\ArticleSingleController;
+use App\Http\Controllers\Web\ArticleSlugRedirectController;
 use App\Http\Controllers\Web\AssetLinksController;
 use App\Http\Controllers\Web\ContactController;
 use App\Http\Controllers\Web\CategoryController;
@@ -37,9 +38,7 @@ Route::get('/.well-known/assetlinks.json', AssetLinksController::class)->name('a
 Route::get('/manifest.json', ManifestController::class)->name('manifest');
 Route::get('/pwa/icon/{size}', PwaIconController::class)->whereNumber('size')->name('pwa.icon');
 
-Route::get('/tnf_news/{slug}', function (string $slug) {
-    return redirect()->route('article.show', $slug, 301);
-})->where('slug', '.*');
+Route::get('/tnf_news/{slug}', ArticleSlugRedirectController::class)->where('slug', '.*');
 
 Route::middleware(['cache.public', 'cache.headers'])->group(function () {
     Route::get('/', HomeController::class)->name('home');
@@ -106,5 +105,12 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/auth.php';
 
 Route::middleware(['cache.public', 'cache.headers'])->group(function () {
-    Route::get('/{article:slug}', ArticleSingleController::class)->name('article.show');
+    Route::get('/n/{article}', ArticleSingleController::class)
+        ->whereNumber('article')
+        ->name('article.show');
+});
+
+Route::middleware(['cache.public', 'cache.headers'])->group(function () {
+    Route::get('/{slug}', ArticleSlugRedirectController::class)
+        ->where('slug', '[a-z0-9\-]+');
 });

@@ -43,7 +43,7 @@ class SitemapController extends Controller
 
         Article::query()->published()->latest('published_at')->get()->each(function (Article $article) use ($urls): void {
             $urls->push([
-                'loc' => route('article.show', $article->slug),
+                'loc' => route('article.show', $article),
                 'lastmod' => $article->updated_at?->toAtomString() ?? $article->published_at?->toAtomString(),
                 'priority' => '0.9',
             ]);

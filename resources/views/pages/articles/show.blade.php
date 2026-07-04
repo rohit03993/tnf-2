@@ -48,7 +48,7 @@
             </div>
 
             <div class="mt-8 hidden lg:block">
-                <x-site.share-bar :title="$article->title" />
+                <x-site.share-bar :title="$article->title" :url="route('article.show', $article)" />
             </div>
         </div>
 
@@ -65,6 +65,6 @@
     </article>
 
     <div class="tnf-share-sticky-wrap lg:hidden">
-        <x-site.share-bar :title="$article->title" class="tnf-share-bar--compact" />
+        <x-site.share-bar :title="$article->title" :url="route('article.show', $article)" class="tnf-share-bar--compact" />
     </div>
 </x-site.layout>

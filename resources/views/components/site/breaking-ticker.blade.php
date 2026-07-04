@@ -8,13 +8,13 @@
             <div class="tnf-ticker-track">
                 <div class="tnf-ticker-content">
                     @foreach($headlines as $article)
-                        <a href="{{ route('article.show', $article->slug) }}" class="tnf-ticker-item hover:underline">
+                        <a href="{{ route('article.show', $article) }}" class="tnf-ticker-item hover:underline">
                             {{ $article->title }}
                         </a>
                     @endforeach
                     {{-- Duplicate for seamless loop --}}
                     @foreach($headlines as $article)
-                        <a href="{{ route('article.show', $article->slug) }}" class="tnf-ticker-item hover:underline">
+                        <a href="{{ route('article.show', $article) }}" class="tnf-ticker-item hover:underline">
                             {{ $article->title }}
                         </a>
                     @endforeach

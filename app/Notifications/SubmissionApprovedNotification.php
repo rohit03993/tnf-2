@@ -28,6 +28,6 @@ class SubmissionApprovedNotification extends Notification
         return (new MailMessage)
             ->subject('Your story is live — '.$this->article->title)
             ->line('Great news! Your submission has been approved and published on TNF Today.')
-            ->action('Read your article', route('article.show', $this->article->slug));
+            ->action('Read your article', route('article.show', $this->article));
     }
 }

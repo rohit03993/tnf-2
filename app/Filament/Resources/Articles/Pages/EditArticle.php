@@ -58,7 +58,7 @@ class EditArticle extends EditRecord
                     if ($author?->isReporter()) {
                         $author->notify(new ReporterContentPublishedNotification(
                             title: $this->record->title,
-                            url: route('article.show', $this->record->slug),
+                            url: route('article.show', $this->record),
                         ));
                     }
 

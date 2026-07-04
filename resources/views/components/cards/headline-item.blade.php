@@ -1,7 +1,7 @@
 @props(['article', 'number'])
 
 @php
-    $url = route('article.show', $article->slug);
+    $url = route('article.show', $article);
     $imageUrl = $article->featuredMedia?->url();
 @endphp
 

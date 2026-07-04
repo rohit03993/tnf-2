@@ -159,7 +159,7 @@
 
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     @if($submission->isLive() && $submission->promotedArticle)
-                                        <a href="{{ route('article.show', $submission->promotedArticle->slug) }}"
+                                        <a href="{{ route('article.show', $submission->promotedArticle) }}"
                                            class="text-tnf-sm font-semibold text-tnf-red hover:underline">
                                             View live article
                                         </a>

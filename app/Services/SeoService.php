@@ -41,7 +41,7 @@ class SeoService
             title: $article->title,
             description: $description,
             image: $image,
-            url: FrontendUrl::route('article.show', $article->slug),
+            url: FrontendUrl::route('article.show', $article),
             type: 'article',
             imageWidth: self::OG_IMAGE_WIDTH,
             imageHeight: self::OG_IMAGE_HEIGHT,
@@ -61,7 +61,7 @@ class SeoService
                     '@type' => 'Organization',
                     'name' => config('app.name', 'TNF Today'),
                 ],
-                'mainEntityOfPage' => FrontendUrl::route('article.show', $article->slug),
+                'mainEntityOfPage' => FrontendUrl::route('article.show', $article),
                 'image' => $image,
             ],
         );
