@@ -11,15 +11,24 @@
 @endphp
 
 @if($variant === 'header')
-    <img
-        src="{{ $thumbUrl }}"
-        alt="{{ $title }}"
-        class="tnf-epaper-thumb tnf-epaper-thumb--header"
-        loading="eager"
-        decoding="async"
-        width="32"
-        height="42"
-    >
+    <div class="tnf-epaper-flip">
+        <div class="tnf-epaper-flip__inner">
+            <div class="tnf-epaper-flip__face tnf-epaper-flip__face--front">
+                <img
+                    src="{{ $thumbUrl }}"
+                    alt=""
+                    class="tnf-epaper-thumb tnf-epaper-thumb--header"
+                    loading="eager"
+                    decoding="async"
+                    width="32"
+                    height="42"
+                >
+            </div>
+            <div class="tnf-epaper-flip__face tnf-epaper-flip__face--back" aria-hidden="true">
+                <span class="tnf-epaper-flip__back-mark">TNF</span>
+            </div>
+        </div>
+    </div>
 @elseif($variant === 'teaser')
     <div class="tnf-epaper-thumb-frame tnf-epaper-thumb-frame--teaser">
         @if($thumbUrl)

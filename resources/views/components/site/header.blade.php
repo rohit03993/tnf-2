@@ -76,9 +76,20 @@
                 @if($chrome['latestEpaper'] ?? null)
                     <x-site.epaper-thumb :promo="$chrome['latestEpaper']" variant="header" />
                 @else
-                    <svg class="tnf-header-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
+                    <div class="tnf-epaper-flip">
+                        <div class="tnf-epaper-flip__inner">
+                            <div class="tnf-epaper-flip__face tnf-epaper-flip__face--front">
+                                <span class="tnf-epaper-flip__icon-fallback" aria-hidden="true">
+                                    <svg class="tnf-header-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                </span>
+                            </div>
+                            <div class="tnf-epaper-flip__face tnf-epaper-flip__face--back" aria-hidden="true">
+                                <span class="tnf-epaper-flip__back-mark">TNF</span>
+                            </div>
+                        </div>
+                    </div>
                 @endif
                 <span class="tnf-header-btn-label">e-Paper</span>
             </a>
