@@ -2,13 +2,15 @@
  * TNF Today — PWA install prompts (mobile banner, footer, menu).
  */
 
-const DISMISS_KEY = 'tnf_pwa_install_dismissed_until';
-const DISMISS_MS = 14 * 24 * 60 * 60 * 1000;
+const DISMISS_SESSION_KEY = 'tnf_pwa_install_dismissed_session';
+const INSTALLED_KEY = 'tnf_pwa_installed';
 const BANNER_DELAY_MS = 4000;
 const TOAST_MS = 4200;
 
 let deferredPrompt = null;
 let serviceWorkerReady = false;
+let installBusy = false;
+let bannerShown = false;
 
 function isStandalone() {
     return window.matchMedia('(display-mode: standalone)').matches
@@ -32,19 +34,26 @@ function isCapacitorApp() {
         || navigator.userAgent.includes('TNFTodayCapacitor');
 }
 
-function isDismissed() {
-    const until = localStorage.getItem(DISMISS_KEY);
+function isInstalledMark() {
+    return localStorage.getItem(INSTALLED_KEY) === '1';
+}
 
-    return until !== null && Date.now() < Number(until);
+function markInstalled() {
+    localStorage.setItem(INSTALLED_KEY, '1');
+    sessionStorage.removeItem(DISMISS_SESSION_KEY);
+}
+
+function isDismissed() {
+    return sessionStorage.getItem(DISMISS_SESSION_KEY) === '1';
 }
 
 function dismissInstallPrompt() {
-    localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_MS));
+    sessionStorage.setItem(DISMISS_SESSION_KEY, '1');
     hideBanner();
 }
 
 function canOfferInstall() {
-    return ! isStandalone() && ! isCapacitorApp();
+    return ! isStandalone() && ! isCapacitorApp() && ! isInstalledMark();
 }
 
 function canUseNativeInstall() {
@@ -77,7 +86,9 @@ function showInstallTriggers() {
 
 function hideInstallTriggers() {
     document.querySelectorAll('[data-tnf-pwa-install]').forEach((element) => {
-        element.hidden = true;
+        if (! element.closest('#tnf-pwa-install-banner')) {
+            element.hidden = true;
+        }
     });
 }
 
@@ -87,13 +98,14 @@ function hideBanner() {
     if (banner) {
         banner.hidden = true;
         banner.classList.add('tnf-pwa-install-banner--hidden');
+        bannerShown = false;
     }
 }
 
 function showBanner() {
     const banner = document.getElementById('tnf-pwa-install-banner');
 
-    if (! banner || ! shouldShowInstallUi()) {
+    if (! banner || bannerShown || ! shouldShowInstallUi()) {
         return;
     }
 
@@ -110,6 +122,8 @@ function showBanner() {
 
     banner.hidden = false;
     banner.classList.remove('tnf-pwa-install-banner--hidden');
+    banner.removeAttribute('inert');
+    bannerShown = true;
 }
 
 function openGuide(modalId) {
@@ -179,55 +193,68 @@ function setInstallButtonsBusy(busy) {
 }
 
 async function triggerInstall() {
+    if (installBusy) {
+        return;
+    }
+
     if (document.body.classList.contains('tnf-drawer-open') && typeof window.tnfCloseDrawer === 'function') {
         window.tnfCloseDrawer();
     }
 
-    if (canUseNativeInstall()) {
-        setInstallButtonsBusy(true);
-        showInstallToast('progress', 'Opening install prompt…');
+    installBusy = true;
 
-        try {
-            await deferredPrompt.prompt();
-            const choice = await deferredPrompt.userChoice;
-            deferredPrompt = null;
+    try {
+        if (canUseNativeInstall()) {
+            setInstallButtonsBusy(true);
+            showInstallToast('progress', 'Opening install prompt…');
 
-            if (choice.outcome === 'accepted') {
-                showInstallToast('success', 'Installing TNF Today…');
-            } else {
-                showInstallToast('info', 'Install cancelled.');
+            try {
+                await deferredPrompt.prompt();
+                const choice = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+
+                if (choice.outcome === 'accepted') {
+                    showInstallToast('success', 'Installing TNF Today…');
+                    hideBanner();
+                } else {
+                    showInstallToast('info', 'Install cancelled.');
+                }
+            } catch {
+                deferredPrompt = null;
+                showInstallToast('error', 'Install prompt unavailable. See manual steps.');
+                showAndroidGuide();
+            } finally {
+                setInstallButtonsBusy(false);
             }
-        } catch {
-            deferredPrompt = null;
-            showInstallToast('error', 'Install prompt unavailable. See manual steps.');
+
+            return;
+        }
+
+        if (canUseIosGuide()) {
+            showInstallToast('info', 'Follow the steps to add TNF Today.');
+            showIosGuide();
+
+            return;
+        }
+
+        if (canUseAndroidGuide()) {
+            if (! serviceWorkerReady) {
+                showInstallToast('progress', 'Preparing app for install…');
+                await registerServiceWorker();
+            }
+
+            showInstallToast('info', 'Follow the steps to install TNF Today.');
             showAndroidGuide();
-        } finally {
-            setInstallButtonsBusy(false);
+
+            return;
         }
 
-        return;
+        showInstallToast('error', 'Install is not supported in this browser.');
+    } finally {
+        window.setTimeout(() => {
+            installBusy = false;
+        }, 400);
     }
-
-    if (canUseIosGuide()) {
-        showInstallToast('info', 'Follow the steps to add TNF Today.');
-        showIosGuide();
-
-        return;
-    }
-
-    if (canUseAndroidGuide()) {
-        if (! serviceWorkerReady) {
-            showInstallToast('progress', 'Preparing app for install…');
-            await registerServiceWorker();
-        }
-
-        showInstallToast('info', 'Follow the steps to install TNF Today.');
-        showAndroidGuide();
-
-        return;
-    }
-
-    showInstallToast('error', 'Install is not supported in this browser.');
 }
 
 function bindInstallControls() {
@@ -239,10 +266,11 @@ function bindInstallControls() {
 
     document.querySelectorAll('[data-tnf-pwa-install]').forEach((element) => {
         element.addEventListener('click', handler, { capture: true });
-        element.addEventListener('touchend', handler, { capture: true, passive: false });
     });
 
-    document.querySelector('[data-tnf-pwa-dismiss]')?.addEventListener('click', () => {
+    document.querySelector('[data-tnf-pwa-dismiss]')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         dismissInstallPrompt();
     });
 
@@ -267,16 +295,28 @@ function bindInstallControls() {
     });
 }
 
-function scheduleBanner() {
+function scheduleBannerAttempts() {
     if (! shouldShowInstallUi()) {
         return;
     }
 
-    window.setTimeout(() => {
-        if (shouldShowInstallUi()) {
-            showBanner();
-        }
-    }, BANNER_DELAY_MS);
+    [BANNER_DELAY_MS, 10000, 25000].forEach((delay) => {
+        window.setTimeout(() => {
+            if (shouldShowInstallUi()) {
+                showBanner();
+            }
+        }, delay);
+    });
+}
+
+function onInstallReady() {
+    if (! shouldShowInstallUi()) {
+        return;
+    }
+
+    showInstallTriggers();
+    showBanner();
+    scheduleBannerAttempts();
 }
 
 async function registerServiceWorker() {
@@ -304,21 +344,17 @@ function initPwaInstall() {
 
     bindInstallControls();
     registerServiceWorker();
+    onInstallReady();
 
     window.addEventListener('beforeinstallprompt', (event) => {
         event.preventDefault();
         deferredPrompt = event;
-        showInstallTriggers();
-        scheduleBanner();
+        onInstallReady();
     });
-
-    if (shouldShowInstallUi()) {
-        showInstallTriggers();
-        scheduleBanner();
-    }
 
     window.addEventListener('appinstalled', () => {
         deferredPrompt = null;
+        markInstalled();
         hideBanner();
         hideInstallTriggers();
         hideAndroidGuide();
