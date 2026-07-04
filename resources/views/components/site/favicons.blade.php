@@ -1,6 +1,9 @@
 @props(['favicon' => ''])
 
 @php
+    use App\Models\Setting;
+    use App\Services\PwaIconService;
+
     $faviconPath = filled($favicon) ? (string) $favicon : '';
     $faviconUrl = filled($faviconPath) ? asset('storage/'.$faviconPath) : asset('favicon.svg');
     $extension = strtolower(pathinfo($faviconPath, PATHINFO_EXTENSION));
@@ -10,9 +13,13 @@
         'ico' => 'image/x-icon',
         default => 'image/svg+xml',
     };
-    $touchIconUrl = filled($faviconPath) && in_array($extension, ['png', 'svg'], true)
-        ? $faviconUrl
-        : asset('apple-touch-icon.svg');
+    $pwaIconPath = (string) Setting::get('pwa_icon', '');
+    $hasPwaIcon = filled($pwaIconPath) && PwaIconService::url($pwaIconPath);
+    $touchIconUrl = $hasPwaIcon
+        ? route('pwa.icon', ['size' => 192])
+        : (filled($faviconPath) && in_array($extension, ['png', 'svg'], true)
+            ? $faviconUrl
+            : asset('apple-touch-icon.svg'));
 @endphp
 
 <link rel="icon" href="{{ $faviconUrl }}" type="{{ $faviconType }}">

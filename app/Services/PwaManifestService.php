@@ -30,7 +30,13 @@ class PwaManifestService
                     'src' => route('pwa.icon', ['size' => 512]),
                     'sizes' => '512x512',
                     'type' => 'image/png',
-                    'purpose' => 'any maskable',
+                    'purpose' => 'any',
+                ],
+                [
+                    'src' => route('pwa.icon', ['size' => 512]),
+                    'sizes' => '512x512',
+                    'type' => 'image/png',
+                    'purpose' => 'maskable',
                 ],
             ],
         ];
@@ -38,18 +44,10 @@ class PwaManifestService
 
     public static function iconSourcePath(int $size): ?string
     {
-        if ($size <= 192) {
-            $favicon = (string) Setting::get('site_favicon', '');
+        $pwaIcon = (string) Setting::get('pwa_icon', '');
 
-            if (filled($favicon) && Storage::disk('public')->exists($favicon)) {
-                return $favicon;
-            }
-        }
-
-        $logo = (string) Setting::get('site_logo', BrandLogoService::CANONICAL_PATH);
-
-        if (filled($logo) && Storage::disk('public')->exists($logo)) {
-            return $logo;
+        if (filled($pwaIcon) && Storage::disk('public')->exists($pwaIcon)) {
+            return $pwaIcon;
         }
 
         $favicon = (string) Setting::get('site_favicon', '');

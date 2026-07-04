@@ -5,6 +5,7 @@ namespace App\Filament\Pages\Settings;
 use App\Enums\UserRole;
 use App\Filament\Pages\Settings\Concerns\ManagesSettings;
 use App\Services\BrandLogoService;
+use App\Services\PwaIconService;
 use App\Support\TnfImageUpload;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
@@ -38,6 +39,7 @@ class ManageHeaderSettings extends SettingsPage
         return [
             'site_logo' => '',
             'site_favicon' => '',
+            'pwa_icon' => '',
             'banner_image' => '',
             'banner_link_url' => '',
             'whatsapp_url' => '',
@@ -71,6 +73,20 @@ class ManageHeaderSettings extends SettingsPage
                             ->acceptedFileTypes(['image/png', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'])
                             ->maxSize(512)
                             ->helperText('PNG, SVG, or ICO — max 512 KB. Leave empty to use the default TNF favicon.'),
+                    ]),
+                Section::make('PWA install icon')
+                    ->description('Square logo shown when users install the app on their phone home screen (Add to Home Screen / Install app). Use your square TNF mark — not the wide header logo. Recommended 512×512 PNG.')
+                    ->schema([
+                        FileUpload::make('pwa_icon')
+                            ->label('PWA home screen icon')
+                            ->disk('public')
+                            ->directory('settings/pwa/uploads')
+                            ->visibility('public')
+                            ->image()
+                            ->imagePreviewHeight('120')
+                            ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
+                            ->maxSize(2048)
+                            ->helperText('Square PNG recommended (512×512). Saved as the install icon for Android and iOS.'),
                     ]),
                 Section::make('Header promo')->schema([
                     TnfImageUpload::applyTo(
@@ -115,6 +131,28 @@ class ManageHeaderSettings extends SettingsPage
             $incoming = $data['site_favicon'];
             $path = is_array($incoming) ? ($incoming[0] ?? null) : $incoming;
             $data['site_favicon'] = filled($path) ? (string) $path : '';
+        }
+
+        if (array_key_exists('pwa_icon', $data)) {
+            $incoming = $data['pwa_icon'];
+            $path = is_array($incoming) ? ($incoming[0] ?? null) : $incoming;
+
+            if (filled($path)) {
+                try {
+                    $data['pwa_icon'] = PwaIconService::process('public', (string) $path);
+                } catch (\Throwable $exception) {
+                    Notification::make()
+                        ->title('PWA icon upload failed')
+                        ->body($exception->getMessage())
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+            } else {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete(PwaIconService::CANONICAL_PATH);
+                $data['pwa_icon'] = '';
+            }
         }
 
         foreach ($data as $key => $value) {
