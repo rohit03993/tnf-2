@@ -56,6 +56,10 @@
     }
 
     @media (min-width: 1024px) {
+        html {
+            overflow-x: hidden;
+        }
+
         body:not(.tnf-auth-lite):not(.tnf-no-bottom-nav) {
             padding-bottom: var(--tnf-safe-bottom);
         }
@@ -992,22 +996,19 @@
 
     /* Homepage-only UI — rules live here so Vite/Tailwind always bundle them */
     .tnf-page-content.tnf-home {
-        @apply relative isolate py-3 mobile-sm:py-2.5 lg:py-6;
+        @apply relative isolate overflow-x-hidden py-3 mobile-sm:py-2.5 lg:py-6;
     }
 
     .tnf-page-content.tnf-home::before {
         content: '';
-        @apply pointer-events-none absolute -z-10;
+        @apply pointer-events-none absolute -z-10 inset-x-0;
         top: -0.25rem;
         bottom: 0;
-        left: 50%;
-        width: 100vw;
-        transform: translateX(-50%);
         background: linear-gradient(180deg, #ffffff 0%, #eef0f4 10rem, #eef0f4 100%);
     }
 
     .tnf-home .tnf-home-layout {
-        @apply gap-4 lg:gap-6;
+        @apply min-w-0 gap-4 lg:gap-6;
     }
 
     .tnf-home .tnf-home-feed {
@@ -1117,25 +1118,21 @@
             display: grid;
             grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
             gap: 1.25rem;
+            min-width: 0;
+        }
+
+        .tnf-home .tnf-hero-section-main,
+        .tnf-home .tnf-hero-section-headlines {
+            min-width: 0;
         }
 
         .tnf-home .tnf-home-sidebar {
             grid-column: 3;
-            grid-row: 1;
+            grid-row: 1 / -1;
             align-self: start;
+            min-width: 0;
             position: sticky;
             top: calc(var(--tnf-header-chrome) + 0.75rem);
-            max-height: calc(100vh - var(--tnf-header-total) - 1.5rem);
-            overflow-y: auto;
-            overscroll-behavior: contain;
-            scrollbar-width: thin;
-        }
-
-        .tnf-home .tnf-home-sidebar .tnf-home-panel__body {
-            max-height: 20rem;
-            overflow-y: auto;
-            overscroll-behavior: contain;
-            scrollbar-width: thin;
         }
 
         /* Top News duplicates Latest Headlines — hide on desktop to shorten sidebar */
@@ -1154,6 +1151,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
             gap: 0.875rem;
+            overflow-x: visible;
         }
 
         .tnf-home .tnf-epaper-teaser {
