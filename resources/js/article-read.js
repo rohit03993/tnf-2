@@ -1,3 +1,38 @@
+function readCookie(name) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
+function buildJsonHeaders() {
+    const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+    };
+
+    const xsrfToken = readCookie('XSRF-TOKEN');
+
+    if (xsrfToken) {
+        headers['X-XSRF-TOKEN'] = xsrfToken;
+    } else {
+        const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        if (metaToken) {
+            headers['X-CSRF-TOKEN'] = metaToken;
+        }
+    }
+
+    return headers;
+}
+
+function parseCount(value) {
+    const parsed = parseInt(String(value ?? '0').replace(/,/g, ''), 10);
+
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export function initArticleRead() {
     const engagement = document.getElementById('tnf-article-engagement');
 
@@ -7,7 +42,6 @@ export function initArticleRead() {
 
     const readUrl = engagement.dataset.readUrl;
     const likeUrl = engagement.dataset.likeUrl;
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
     const countEl = engagement.querySelector('[data-article-readers]');
     const labelEl = engagement.querySelector('[data-article-readers-label]');
@@ -17,12 +51,6 @@ export function initArticleRead() {
 
     let recorded = false;
     let liking = false;
-
-    const headers = () => ({
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
-    });
 
     const updateEngagement = (payload) => {
         if (! payload) {
@@ -53,6 +81,18 @@ export function initArticleRead() {
         }
     };
 
+    const postEngagement = (url) => fetch(url, {
+        method: 'POST',
+        headers: buildJsonHeaders(),
+        credentials: 'same-origin',
+    }).then(async (response) => {
+        if (! response.ok) {
+            throw new Error(`Request failed (${response.status})`);
+        }
+
+        return response.json();
+    });
+
     const recordRead = () => {
         if (recorded || ! readUrl) {
             return;
@@ -60,14 +100,11 @@ export function initArticleRead() {
 
         recorded = true;
 
-        fetch(readUrl, {
-            method: 'POST',
-            headers: headers(),
-            credentials: 'same-origin',
-        })
-            .then((response) => (response.ok ? response.json() : null))
+        postEngagement(readUrl)
             .then(updateEngagement)
-            .catch(() => {});
+            .catch(() => {
+                recorded = false;
+            });
     };
 
     const toggleLike = () => {
@@ -75,15 +112,22 @@ export function initArticleRead() {
             return;
         }
 
+        const wasLiked = likeBtn.dataset.liked === 'true';
+        const previousCount = parseCount(likesEl?.textContent);
+        const optimisticCount = wasLiked
+            ? Math.max(0, previousCount - 1)
+            : previousCount + 1;
+
         liking = true;
         likeBtn.classList.add('tnf-article-like--busy');
 
-        fetch(likeUrl, {
-            method: 'POST',
-            headers: headers(),
-            credentials: 'same-origin',
-        })
-            .then((response) => (response.ok ? response.json() : null))
+        updateEngagement({
+            liked: ! wasLiked,
+            likes_count: optimisticCount,
+            likes_label: String(optimisticCount),
+        });
+
+        postEngagement(likeUrl)
             .then((payload) => {
                 updateEngagement(payload);
 
@@ -91,7 +135,13 @@ export function initArticleRead() {
                     recorded = true;
                 }
             })
-            .catch(() => {})
+            .catch(() => {
+                updateEngagement({
+                    liked: wasLiked,
+                    likes_count: previousCount,
+                    likes_label: String(previousCount),
+                });
+            })
             .finally(() => {
                 liking = false;
                 likeBtn.classList.remove('tnf-article-like--busy');

@@ -73,9 +73,9 @@ class ArticleReadService
             ],
         );
 
-        $read->refresh();
+        $isNewReader = $read->wasRecentlyCreated;
 
-        if ($read->wasRecentlyCreated) {
+        if ($isNewReader) {
             $article->increment('readers_count');
         } else {
             $read->forceFill([
