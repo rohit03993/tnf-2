@@ -56,7 +56,8 @@
     }
 
     @media (min-width: 1024px) {
-        html {
+        html,
+        body {
             overflow-x: hidden;
         }
 
@@ -870,7 +871,7 @@
     }
 
     .tnf-home-layout {
-        @apply grid gap-4 lg:grid-cols-3 lg:items-start lg:gap-6;
+        @apply grid w-full min-w-0 max-w-full gap-4;
     }
 
     @media (max-width: 1023px) {
@@ -880,16 +881,20 @@
             gap: 1rem;
         }
 
-        .tnf-hero-section {
+        .tnf-hero-section-main {
             order: 1;
         }
 
-        .tnf-home-sidebar {
+        .tnf-hero-section-headlines {
             order: 2;
         }
 
-        .tnf-home-feed {
+        .tnf-home-sidebar {
             order: 3;
+        }
+
+        .tnf-home-feed {
+            order: 4;
         }
 
         /* Top News overlaps Latest Headlines on mobile — desktop keeps both in sidebar */
@@ -966,12 +971,8 @@
         @apply mt-4 inline-flex min-h-touch items-center justify-center rounded-tnf-lg bg-tnf-red px-5 text-tnf-sm font-bold text-white shadow-[0_4px_14px_rgba(188,30,56,0.35)] transition hover:bg-tnf-red-dark active:scale-[0.98];
     }
 
-    .tnf-hero-section {
-        @apply grid gap-3 md:grid-cols-2 md:gap-4 lg:col-span-2;
-    }
-
     .tnf-hero-section-headlines {
-        @apply overflow-hidden;
+        @apply min-w-0 overflow-hidden;
     }
 
     .tnf-hero-section-headlines .tnf-section-title {
@@ -982,16 +983,8 @@
         @apply p-3 mobile-sm:p-2.5;
     }
 
-    .tnf-home-sidebar {
-        @apply lg:col-start-3 lg:row-start-1;
-    }
-
     .tnf-home-sidebar .rounded-tnf-lg {
         @apply p-3 mobile-sm:p-2.5 lg:p-4;
-    }
-
-    .tnf-home-feed {
-        @apply lg:col-span-2;
     }
 
     /* Homepage-only UI — rules live here so Vite/Tailwind always bundle them */
@@ -1106,51 +1099,44 @@
     @media (min-width: 1024px) {
         .tnf-home .tnf-home-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(15.5rem, 17.5rem);
+            width: 100%;
+            max-width: 100%;
+            grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 16rem);
             grid-template-rows: auto auto;
+            grid-template-areas:
+                'featured headlines sidebar'
+                'feed feed sidebar';
             align-items: start;
             gap: 1rem 1.25rem;
         }
 
-        /* Flatten hero wrapper so featured, headlines, and sidebar share one 3-column grid */
-        .tnf-home .tnf-hero-section {
-            display: contents;
-        }
-
         .tnf-home .tnf-hero-section-main {
-            grid-column: 1;
-            grid-row: 1;
-            align-self: start;
+            grid-area: featured;
             min-width: 0;
         }
 
         .tnf-home .tnf-hero-section-headlines {
-            grid-column: 2;
-            grid-row: 1;
-            align-self: start;
+            grid-area: headlines;
             min-width: 0;
         }
 
         .tnf-home .tnf-home-sidebar {
-            grid-column: 3;
-            grid-row: 1;
-            align-self: start;
+            grid-area: sidebar;
             min-width: 0;
             position: sticky;
             top: calc(var(--tnf-header-chrome) + 0.75rem);
             z-index: 1;
         }
 
+        .tnf-home .tnf-home-feed {
+            grid-area: feed;
+            width: 100%;
+            min-width: 0;
+        }
+
         /* Top News duplicates Latest Headlines — hide on desktop to shorten sidebar */
         .tnf-home .tnf-home-top-news {
             display: none;
-        }
-
-        .tnf-home .tnf-home-feed {
-            grid-column: 1 / 3;
-            grid-row: 2;
-            width: 100%;
-            min-width: 0;
         }
 
         .tnf-home .tnf-featured-videos-grid {

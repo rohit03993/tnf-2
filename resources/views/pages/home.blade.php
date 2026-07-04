@@ -6,30 +6,30 @@
 
     <div class="tnf-page-content tnf-home">
         <div class="tnf-home-layout">
-            {{-- Hero + Latest Headlines --}}
-            <section class="tnf-hero-section">
-                <div class="tnf-hero-section-main">
-                    @if($heroLead)
-                        <x-cards.news-card :article="$heroLead" :featured="true" />
-                    @else
-                        <div class="tnf-hero-lead rounded-tnf-lg bg-white p-8 text-center shadow-card">
-                            <p class="text-tnf-muted">Publish news in admin to see the hero story.</p>
-                        </div>
-                    @endif
-                </div>
-                <div class="tnf-home-panel tnf-hero-section-headlines">
-                    <div class="tnf-home-panel__head">
-                        <h2 class="tnf-section-title">Latest Headlines</h2>
+            {{-- Featured story (desktop col 1) --}}
+            <div class="tnf-hero-section-main">
+                @if($heroLead)
+                    <x-cards.news-card :article="$heroLead" :featured="true" />
+                @else
+                    <div class="tnf-hero-lead rounded-tnf-lg bg-white p-8 text-center shadow-card">
+                        <p class="text-tnf-muted">Publish news in admin to see the hero story.</p>
                     </div>
-                    <div class="tnf-home-panel__body">
-                        @forelse($heroHeadlines as $index => $article)
-                            <x-cards.headline-item :article="$article" :number="$index + 1" />
-                        @empty
-                            <p class="px-2 py-3 text-tnf-sm text-tnf-muted">No headlines yet.</p>
-                        @endforelse
-                    </div>
+                @endif
+            </div>
+
+            {{-- Latest Headlines (desktop col 2) --}}
+            <div class="tnf-home-panel tnf-hero-section-headlines">
+                <div class="tnf-home-panel__head">
+                    <h2 class="tnf-section-title">Latest Headlines</h2>
                 </div>
-            </section>
+                <div class="tnf-home-panel__body">
+                    @forelse($heroHeadlines as $index => $article)
+                        <x-cards.headline-item :article="$article" :number="$index + 1" />
+                    @empty
+                        <p class="px-2 py-3 text-tnf-sm text-tnf-muted">No headlines yet.</p>
+                    @endforelse
+                </div>
+            </div>
 
             {{-- Sidebar: trending + top news (right on desktop, after hero on mobile) --}}
             <aside class="tnf-home-sidebar space-y-4 lg:space-y-5">
