@@ -3,9 +3,10 @@
 namespace App\Models;
 
 use App\Enums\ContentStatus;
+use App\Services\ContentCacheService;
+use App\Services\ContentPublishService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -79,13 +80,11 @@ class Article extends Model
     protected static function booted(): void
     {
         static::saved(function (Article $article) {
-            Cache::forget('homepage.data');
-            \App\Services\PageCacheService::bump();
-            \App\Services\ContentPublishService::handlePublishedArticle($article);
+            ContentCacheService::bust();
+            ContentPublishService::handlePublishedArticle($article);
         });
         static::deleted(function () {
-            Cache::forget('homepage.data');
-            \App\Services\PageCacheService::bump();
+            ContentCacheService::bust();
         });
     }
 }

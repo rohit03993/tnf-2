@@ -16,9 +16,12 @@ class SetPublicCacheHeaders
             return $response;
         }
 
-        $maxAge = (int) config('tnf.browser_cache_max_age', 300);
+        $maxAge = (int) config('tnf.browser_cache_max_age', 60);
 
-        $response->headers->set('Cache-Control', "public, max-age={$maxAge}, stale-while-revalidate=60");
+        $response->headers->set(
+            'Cache-Control',
+            "public, max-age={$maxAge}, must-revalidate, stale-while-revalidate=30",
+        );
 
         return $response;
     }

@@ -61,9 +61,7 @@ class ManageSystemTools extends Page
                 ->requiresConfirmation()
                 ->action(function (): void {
                     Artisan::call('cache:clear');
-                    Cache::forget('homepage.data');
-                    Cache::forget('site.chrome.full');
-                    Cache::forget('site.chrome.auth');
+                    \App\Services\ContentCacheService::bust();
 
                     Notification::make()->title('Application cache cleared')->success()->send();
                 }),
@@ -72,9 +70,9 @@ class ManageSystemTools extends Page
                 ->icon(Heroicon::OutlinedArrowPath)
                 ->requiresConfirmation()
                 ->action(function (): void {
-                    PageCacheService::bump();
+                    \App\Services\ContentCacheService::bust();
 
-                    Notification::make()->title('Public page cache version bumped')->success()->send();
+                    Notification::make()->title('Public content cache refreshed')->success()->send();
                 }),
         ];
     }

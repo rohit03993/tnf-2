@@ -37,7 +37,7 @@ return [
     'page_cache_ttl' => (int) env('TNF_PAGE_CACHE_TTL', 300),
     'homepage_cache_ttl' => (int) env('TNF_HOMEPAGE_CACHE_TTL', 300),
     'chrome_cache_ttl' => (int) env('TNF_CHROME_CACHE_TTL', 300),
-    'browser_cache_max_age' => (int) env('TNF_BROWSER_CACHE_MAX_AGE', 300),
+    'browser_cache_max_age' => (int) env('TNF_BROWSER_CACHE_MAX_AGE', 60),
     'clip_url_ttl' => (int) env('TNF_CLIP_URL_TTL', 86400),
 
     // All public-site image uploads (news, videos, banner, submissions, etc.)

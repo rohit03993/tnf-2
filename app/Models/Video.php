@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use App\Enums\ContentStatus;
-use App\Support\Embed;
+use App\Services\ContentCacheService;
+use App\Services\ContentPublishService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -84,13 +84,11 @@ class Video extends Model
         });
 
         static::saved(function (Video $video) {
-            Cache::forget('homepage.data');
-            \App\Services\PageCacheService::bump();
-            \App\Services\ContentPublishService::handlePublishedVideo($video);
+            ContentCacheService::bust();
+            ContentPublishService::handlePublishedVideo($video);
         });
         static::deleted(function () {
-            Cache::forget('homepage.data');
-            \App\Services\PageCacheService::bump();
+            ContentCacheService::bust();
         });
     }
 }

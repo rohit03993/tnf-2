@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\EpaperEdition;
 use App\Models\Setting;
 use App\Models\Video;
+use App\Services\ContentCacheService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -37,8 +38,7 @@ class HomepageService
 
     public function clearCache(): void
     {
-        Cache::forget('homepage.data');
-        PageCacheService::bump();
+        ContentCacheService::bust();
     }
 
     protected function build(): array

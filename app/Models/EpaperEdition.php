@@ -4,10 +4,11 @@ namespace App\Models;
 
 use App\Enums\ContentStatus;
 use App\Enums\PdfStatus;
+use App\Services\ContentCacheService;
+use App\Services\ContentPublishService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Cache;
 
 class EpaperEdition extends Model
 {
@@ -75,13 +76,11 @@ class EpaperEdition extends Model
         });
 
         static::saved(function (EpaperEdition $edition) {
-            Cache::forget('homepage.data');
-            \App\Services\PageCacheService::bump();
-            \App\Services\ContentPublishService::handlePublishedEpaper($edition);
+            ContentCacheService::bust();
+            ContentPublishService::handlePublishedEpaper($edition);
         });
         static::deleted(function () {
-            Cache::forget('homepage.data');
-            \App\Services\PageCacheService::bump();
+            ContentCacheService::bust();
         });
     }
 }
