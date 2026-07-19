@@ -191,40 +191,55 @@
         </div>
 
         @unless($config['clipMode'])
+            <div class="tnf-ep-mobile-zoom-fab lg:hidden" data-ep-mobile-zoom-fab aria-label="Zoom">
+                <button type="button" class="tnf-ep-mobile-zoom-fab__btn" data-ep-action="zoom-out" aria-label="Zoom out">−</button>
+                <button type="button" class="tnf-ep-mobile-zoom-fab__fit" data-ep-action="zoom-reset" aria-label="Fit page">Fit</button>
+                <button type="button" class="tnf-ep-mobile-zoom-fab__btn" data-ep-action="zoom-in" aria-label="Zoom in">+</button>
+            </div>
+
             <div class="tnf-ep-mobile-bar" data-ep-mobile-bar>
                 <div class="tnf-container tnf-ep-mobile-bar-inner">
-                    <button type="button" class="tnf-ep-mobile-icon-btn" data-ep-action="prev" aria-label="Previous page">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                        </svg>
-                    </button>
-                    <span class="tnf-ep-mobile-page-wrap">
-                        <button type="button" class="tnf-ep-mobile-page" data-ep-mobile-page aria-label="Choose page">1/1</button>
-                        <select class="tnf-ep-mobile-page-select" data-ep-mobile-page-select aria-label="Page"></select>
-                    </span>
-                    <button type="button" class="tnf-ep-mobile-icon-btn" data-ep-action="next" aria-label="Next page">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                    <button type="button" class="tnf-ep-mobile-icon-btn tnf-ep-mobile-zoom-btn" data-ep-action="zoom-out" aria-label="Zoom out">−</button>
-                    <button type="button" class="tnf-ep-mobile-icon-btn tnf-ep-mobile-zoom-btn" data-ep-action="zoom-in" aria-label="Zoom in">+</button>
-                    <button type="button" class="tnf-ep-mobile-share-btn" data-ep-action="share" aria-label="Share">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-                        </svg>
-                    </button>
-                    <button type="button" class="tnf-ep-mobile-clip-btn" data-ep-action="clip" aria-label="Clip">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10v10H7zM3 3h4v4M17 3h4v4M3 17h4v4M17 17h4v4"/>
-                        </svg>
-                    </button>
+                    <div class="tnf-ep-mobile-bar-nav" role="group" aria-label="Page">
+                        <button type="button" class="tnf-ep-mobile-icon-btn" data-ep-action="prev" aria-label="Previous page">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <span class="tnf-ep-mobile-page-wrap">
+                            <button type="button" class="tnf-ep-mobile-page" data-ep-mobile-page aria-label="Choose page">1/1</button>
+                            <select class="tnf-ep-mobile-page-select" data-ep-mobile-page-select aria-label="Page"></select>
+                        </span>
+                        <button type="button" class="tnf-ep-mobile-icon-btn" data-ep-action="next" aria-label="Next page">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="tnf-ep-mobile-bar-actions" role="group" aria-label="Share tools">
+                        <button type="button" class="tnf-ep-mobile-share-btn" data-ep-action="share" aria-label="Share">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                            </svg>
+                            <span>Share</span>
+                        </button>
+                        <button type="button" class="tnf-ep-mobile-clip-btn" data-ep-action="clip" aria-label="Clip">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10v10H7zM3 3h4v4M17 3h4v4M3 17h4v4M17 17h4v4"/>
+                            </svg>
+                            <span>Clip</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <p class="tnf-ep-mobile-zoom-hint lg:hidden" data-ep-mobile-zoom-hint hidden>
-                Use − / + to zoom the page
-            </p>
+            <div class="tnf-ep-clip-mobile-dock hidden lg:hidden" data-ep-clip-mobile-dock aria-hidden="true">
+                <button type="button" class="tnf-ep-clip-mobile-dock__cancel" data-ep-clip-float-cancel>
+                    Cancel
+                </button>
+                <button type="button" class="tnf-ep-clip-mobile-dock__share" data-ep-clip-float-share disabled>
+                    Share clip
+                </button>
+            </div>
         @else
             <div class="tnf-container space-y-4 py-4">
                 <div class="tnf-ep-clip-cta">
