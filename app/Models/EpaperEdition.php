@@ -27,6 +27,9 @@ class EpaperEdition extends Model
         'featured_media_id',
         'status',
         'published_at',
+        'readers_count',
+        'likes_count',
+        'views_count',
     ];
 
     protected function casts(): array
@@ -37,6 +40,9 @@ class EpaperEdition extends Model
             'status' => ContentStatus::class,
             'pages_json' => 'array',
             'published_at' => 'datetime',
+            'readers_count' => 'integer',
+            'likes_count' => 'integer',
+            'views_count' => 'integer',
         ];
     }
 

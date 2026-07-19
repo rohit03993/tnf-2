@@ -14,6 +14,8 @@ use App\Http\Controllers\Web\AssetLinksController;
 use App\Http\Controllers\Web\ContactController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\EpaperArchiveController;
+use App\Http\Controllers\Web\EpaperLikeController;
+use App\Http\Controllers\Web\EpaperReadController;
 use App\Http\Controllers\Web\EpaperSingleController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\ManifestController;
@@ -77,6 +79,14 @@ Route::post('/n/{article}/like', ArticleLikeController::class)
     ->whereNumber('article')
     ->middleware('throttle:60,1')
     ->name('article.like');
+
+Route::post('/epaper/{edition:slug}/read', EpaperReadController::class)
+    ->middleware('throttle:120,1')
+    ->name('epaper.read');
+
+Route::post('/epaper/{edition:slug}/like', EpaperLikeController::class)
+    ->middleware('throttle:60,1')
+    ->name('epaper.like');
 
 Route::post('/epaper/{edition:slug}/sign-clip', EpaperClipSignController::class)
     ->middleware('throttle:30,1')

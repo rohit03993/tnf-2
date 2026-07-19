@@ -69,6 +69,108 @@
         @apply truncate text-tnf-sm font-semibold text-tnf-navy;
     }
 
+    .tnf-ep-engagement {
+        @apply sticky z-30 border-b border-tnf-gray-dark/70 bg-gradient-to-r from-white via-tnf-gray/30 to-white;
+        top: var(--tnf-header-total, 3.25rem);
+    }
+
+    @media (min-width: 1024px) {
+        .tnf-ep-engagement {
+            /* Sit just under the sticky viewer toolbar */
+            top: calc(3.25rem + 3rem);
+        }
+    }
+
+    body.tnf-ep-is-clipping .tnf-ep-engagement {
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    .tnf-ep-engagement-inner {
+        @apply flex min-h-12 flex-wrap items-center justify-between gap-3 px-1 py-2.5 sm:px-2;
+    }
+
+    .tnf-ep-engagement__left,
+    .tnf-ep-engagement__right {
+        @apply flex items-center;
+    }
+
+    .tnf-ep-like {
+        @apply inline-flex min-h-[2.5rem] items-center gap-2 rounded-full border border-tnf-gray-dark/80 bg-white px-3 py-1.5 text-tnf-sm font-semibold text-tnf-muted shadow-sm transition-all duration-200 hover:border-tnf-gray-dark hover:bg-tnf-gray/40 active:scale-[0.98];
+    }
+
+    .tnf-ep-like--active {
+        @apply border-tnf-red/30 bg-tnf-red/5 text-tnf-red hover:border-tnf-red/40 hover:bg-tnf-red/10;
+    }
+
+    .tnf-ep-like--busy {
+        @apply pointer-events-none opacity-70;
+    }
+
+    .tnf-ep-like__icon {
+        @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-tnf-gray-dark/70 bg-tnf-gray/60 text-tnf-muted transition-colors duration-200;
+    }
+
+    .tnf-ep-like:hover .tnf-ep-like__icon {
+        @apply border-tnf-gray-dark bg-tnf-gray text-tnf-navy/70;
+    }
+
+    .tnf-ep-like--active .tnf-ep-like__icon {
+        @apply border-tnf-red bg-tnf-red text-white;
+    }
+
+    .tnf-ep-like__svg {
+        @apply h-4 w-4;
+    }
+
+    .tnf-ep-like__svg--filled {
+        @apply hidden;
+    }
+
+    .tnf-ep-like--active .tnf-ep-like__svg--outline {
+        @apply hidden;
+    }
+
+    .tnf-ep-like--active .tnf-ep-like__svg--filled {
+        @apply block;
+    }
+
+    .tnf-ep-like__text {
+        @apply inline-flex items-baseline gap-1.5;
+    }
+
+    .tnf-ep-like__label {
+        @apply font-semibold text-tnf-muted;
+    }
+
+    .tnf-ep-like--active .tnf-ep-like__label {
+        @apply text-tnf-red;
+    }
+
+    .tnf-ep-like__count {
+        @apply text-tnf-xs font-bold tabular-nums text-tnf-muted;
+    }
+
+    .tnf-ep-like--active .tnf-ep-like__count {
+        @apply text-tnf-red;
+    }
+
+    .tnf-ep-readers {
+        @apply inline-flex max-w-full items-center gap-1.5 text-tnf-muted;
+    }
+
+    .tnf-ep-readers__icon {
+        @apply h-4 w-4 shrink-0 text-tnf-red;
+    }
+
+    .tnf-ep-readers__text {
+        @apply truncate text-tnf-sm;
+    }
+
+    .tnf-ep-readers__text strong {
+        @apply font-semibold text-tnf-navy;
+    }
+
     .tnf-ep-btn {
         @apply inline-flex min-h-touch min-w-touch items-center justify-center rounded-tnf border border-tnf-gray-dark bg-white px-3 text-tnf-sm font-semibold text-tnf-navy hover:border-tnf-red hover:text-tnf-red;
     }

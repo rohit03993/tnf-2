@@ -97,6 +97,12 @@ class TnfEpaperViewer {
         this.lastTapAt = 0;
         this.livePreviewFrame = null;
         this.clipShareBusy = false;
+        this.readRecorded = false;
+        this.liking = false;
+        this.els.engagement = root.querySelector('[data-ep-engagement]');
+        this.els.likeBtn = root.querySelector('[data-ep-like]');
+        this.els.likesCount = root.querySelector('[data-ep-likes-count]');
+        this.els.likeLabel = root.querySelector('.tnf-ep-like__label');
     }
 
     get effectiveZoom() {
@@ -134,15 +140,167 @@ class TnfEpaperViewer {
         this.buildThumbnails();
         this.buildPageSelect();
         this.bindActions();
+        this.bindEngagement();
         this.bindTouchZoom();
         this.bindResizeHandler();
         this.bindMobilePanScroll();
         await this.setPage(this.currentPage, false);
         this.setPdfLoading(false);
+        this.scheduleReadTracking();
 
         if (this.pdfDoc) {
             this.schedulePdfThumbnailPrefetch();
         }
+    }
+
+    bindEngagement() {
+        this.els.likeBtn?.addEventListener('click', () => this.toggleLike());
+    }
+
+    scheduleReadTracking() {
+        if (! this.config.readUrl || this.readRecorded) {
+            return;
+        }
+
+        window.setTimeout(() => this.recordRead(), 1200);
+    }
+
+    readCookie(name) {
+        const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+
+        return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    buildJsonHeaders() {
+        const headers = {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        };
+
+        const xsrfToken = this.readCookie('XSRF-TOKEN');
+
+        if (xsrfToken) {
+            headers['X-XSRF-TOKEN'] = xsrfToken;
+        } else {
+            const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            if (metaToken) {
+                headers['X-CSRF-TOKEN'] = metaToken;
+            }
+        }
+
+        return headers;
+    }
+
+    parseCount(value) {
+        const parsed = parseInt(String(value ?? '0').replace(/,/g, ''), 10);
+
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    postEngagement(url) {
+        return fetch(url, {
+            method: 'POST',
+            headers: this.buildJsonHeaders(),
+            credentials: 'same-origin',
+        }).then(async (response) => {
+            if (! response.ok) {
+                throw new Error(`Request failed (${response.status})`);
+            }
+
+            return response.json();
+        });
+    }
+
+    updateEngagement(payload) {
+        if (! payload) {
+            return;
+        }
+
+        if (typeof payload.readers_count === 'number') {
+            const label = payload.readers_label ?? String(payload.readers_count);
+            const noun = payload.readers_count === 1 ? 'reader' : 'readers';
+
+            this.root.querySelectorAll('[data-ep-readers-count]').forEach((el) => {
+                el.textContent = label;
+            });
+
+            this.root.querySelectorAll('[data-ep-readers-label]').forEach((el) => {
+                el.textContent = noun;
+            });
+        }
+
+        if (typeof payload.likes_count === 'number' && this.els.likesCount) {
+            this.els.likesCount.textContent = payload.likes_label ?? String(payload.likes_count);
+        }
+
+        if (typeof payload.liked === 'boolean' && this.els.likeBtn) {
+            this.els.likeBtn.dataset.liked = payload.liked ? 'true' : 'false';
+            this.els.likeBtn.setAttribute('aria-pressed', payload.liked ? 'true' : 'false');
+            this.els.likeBtn.setAttribute('aria-label', payload.liked ? 'Unlike this edition' : 'Like this edition');
+            this.els.likeBtn.classList.toggle('tnf-ep-like--active', payload.liked);
+
+            if (this.els.likeLabel) {
+                this.els.likeLabel.textContent = payload.liked ? 'Liked' : 'Like';
+            }
+        }
+    }
+
+    recordRead() {
+        if (this.readRecorded || ! this.config.readUrl) {
+            return;
+        }
+
+        this.readRecorded = true;
+
+        this.postEngagement(this.config.readUrl)
+            .then((payload) => this.updateEngagement(payload))
+            .catch(() => {
+                this.readRecorded = false;
+            });
+    }
+
+    toggleLike() {
+        if (this.liking || ! this.config.likeUrl || ! this.els.likeBtn) {
+            return;
+        }
+
+        const wasLiked = this.els.likeBtn.dataset.liked === 'true';
+        const previousCount = this.parseCount(this.els.likesCount?.textContent);
+        const optimisticCount = wasLiked
+            ? Math.max(0, previousCount - 1)
+            : previousCount + 1;
+
+        this.liking = true;
+        this.els.likeBtn.classList.add('tnf-ep-like--busy');
+
+        this.updateEngagement({
+            liked: ! wasLiked,
+            likes_count: optimisticCount,
+            likes_label: String(optimisticCount),
+        });
+
+        this.postEngagement(this.config.likeUrl)
+            .then((payload) => {
+                this.updateEngagement(payload);
+
+                if (! this.readRecorded && this.config.readUrl) {
+                    this.readRecorded = true;
+                }
+            })
+            .catch(() => {
+                this.updateEngagement({
+                    liked: wasLiked,
+                    likes_count: previousCount,
+                    likes_label: String(previousCount),
+                });
+            })
+            .finally(() => {
+                this.liking = false;
+                this.els.likeBtn?.classList.remove('tnf-ep-like--busy');
+            });
     }
 
     setPdfLoading(isLoading) {

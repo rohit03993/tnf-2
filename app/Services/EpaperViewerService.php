@@ -40,6 +40,11 @@ class EpaperViewerService
             'shareUrl' => FrontendUrl::route('epaper.show', $edition->slug),
             'pdfDownloadUrl' => self::pdfUrl($edition),
             'clipSignUrl' => route('epaper.sign-clip', $edition->slug),
+            'readUrl' => route('epaper.read', $edition->slug),
+            'likeUrl' => route('epaper.like', $edition->slug),
+            'readersCount' => (int) ($edition->readers_count ?? 0),
+            'likesCount' => (int) ($edition->likes_count ?? 0),
+            'liked' => app(EpaperReadService::class)->readerHasLiked($edition, $request),
         ];
     }
 
