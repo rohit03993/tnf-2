@@ -65,7 +65,7 @@ class OgImageService
 
     public function serveOrGenerate(string $type, int $id, ?string $imageUrl): Response|RedirectResponse
     {
-        $fit = $type === 'epaper' ? 'contain' : 'cover';
+        $fit = $type === 'epaper' ? 'cover-top' : 'cover';
         $og = OgImage::query()->where('entity_type', $type)->where('entity_id', $id)->first();
 
         if ($og && $og->signature_hash !== $fit) {
@@ -226,6 +226,7 @@ class OgImageService
             $destY = (int) (($targetHeight - $newHeight) / 2);
             imagecopy($canvas, $resized, $destX, $destY, 0, 0, $newWidth, $newHeight);
         } else {
+            // cover / cover-top: fill canvas (no letterboxing); crop overflow.
             if ($srcRatio > $targetRatio) {
                 $newHeight = $targetHeight;
                 $newWidth = (int) ($targetHeight * $srcRatio);
@@ -238,7 +239,8 @@ class OgImageService
             imagecopyresampled($resized, $source, 0, 0, 0, 0, $newWidth, $newHeight, $srcWidth, $srcHeight);
 
             $x = (int) (($newWidth - $targetWidth) / 2);
-            $y = (int) (($newHeight - $targetHeight) / 2);
+            // cover-top keeps the masthead (top of the page); cover centers.
+            $y = $fit === 'cover-top' ? 0 : (int) (($newHeight - $targetHeight) / 2);
             imagecopy($canvas, $resized, 0, 0, $x, $y, $targetWidth, $targetHeight);
         }
 

@@ -6,7 +6,8 @@
     "scripts": {
         "cap:sync": "npx cap sync android",
         "cap:open": "npx cap open android",
-        "cap:patch": "node scripts/patch-mainactivity.mjs"
+        "cap:patch": "node scripts/patch-mainactivity.mjs",
+        "branding": "powershell -ExecutionPolicy Bypass -File scripts/apply-branding.ps1"
     },
     "dependencies": {
         "@capacitor/android": "^7.4.2",
