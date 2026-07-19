@@ -305,12 +305,9 @@
     }
 
     .tnf-ep-stage {
-        @apply relative min-h-[52dvh] overflow-auto;
+        @apply relative min-h-[52dvh];
         display: block;
         touch-action: pan-x pan-y;
-        max-height: calc(100dvh - 11rem);
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
     }
 
     @media (max-width: 1023px) {
@@ -324,7 +321,7 @@
 
         .tnf-ep-stage {
             overflow-x: auto;
-            overflow-y: scroll;
+            overflow-y: auto;
             height: calc(100dvh - var(--tnf-header-total, 3.25rem) - var(--tnf-ep-mobile-bar, 3.5rem) - var(--tnf-ep-engagement-h, 3.25rem) - var(--tnf-ep-thumbs-h, 5.5rem) - var(--tnf-safe-bottom, 0px));
             max-height: none;
             min-height: 0;
@@ -353,9 +350,14 @@
     }
 
     @media (min-width: 1024px) {
+        .tnf-ep-stage-wrap {
+            @apply overflow-visible;
+        }
+
         .tnf-ep-stage {
             min-height: 55vh;
-            max-height: calc(100vh - 11rem);
+            max-height: none;
+            overflow: visible;
         }
     }
 

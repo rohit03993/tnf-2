@@ -930,6 +930,12 @@ class TnfEpaperViewer {
             this.els.stage.scrollLeft = 0;
         }
 
+        if (! this.isCoarsePointer() && window.matchMedia('(min-width: 1024px)').matches) {
+            const wrap = this.els.stageWrap;
+            const top = wrap ? wrap.getBoundingClientRect().top + window.scrollY - 80 : 0;
+            window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
+        }
+
         if (pushHistory) {
             const url = new URL(window.location.href);
             url.searchParams.set('tnf_pg', String(next));
@@ -1069,12 +1075,17 @@ class TnfEpaperViewer {
         let scrollAnchor = null;
 
         if (stage && spacer) {
+            const overflowY = getComputedStyle(stage).overflowY;
+            const usesStageScroll = overflowY === 'auto' || overflowY === 'scroll';
             const prevW = Number.parseFloat(spacer.style.width) || stage.scrollWidth || 1;
             const prevH = Number.parseFloat(spacer.style.height) || stage.scrollHeight || 1;
 
             scrollAnchor = {
+                usesStageScroll,
                 ratioX: (stage.scrollLeft + stage.clientWidth * 0.5) / prevW,
-                ratioY: (stage.scrollTop + stage.clientHeight * 0.5) / prevH,
+                ratioY: usesStageScroll
+                    ? (stage.scrollTop + stage.clientHeight * 0.5) / prevH
+                    : null,
             };
         }
 
@@ -1111,8 +1122,10 @@ class TnfEpaperViewer {
         this.updateZoomLabel();
 
         if (stage && scrollAnchor) {
-            stage.scrollLeft = Math.max(0, scrollAnchor.ratioX * cssWidth - stage.clientWidth * 0.5);
-            stage.scrollTop = Math.max(0, scrollAnchor.ratioY * cssHeight - stage.clientHeight * 0.5);
+            if (scrollAnchor.usesStageScroll) {
+                stage.scrollLeft = Math.max(0, scrollAnchor.ratioX * cssWidth - stage.clientWidth * 0.5);
+                stage.scrollTop = Math.max(0, scrollAnchor.ratioY * cssHeight - stage.clientHeight * 0.5);
+            }
         }
 
         if (this.clipMode) {
