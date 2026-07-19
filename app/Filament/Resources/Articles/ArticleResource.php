@@ -141,6 +141,28 @@ class ArticleResource extends Resource
                         ->dehydrated(false)
                 ),
             ])->columns(2),
+            Section::make('Engagement')->schema([
+                TextInput::make('readers_count')
+                    ->label('Readers')
+                    ->numeric()
+                    ->integer()
+                    ->minValue(0)
+                    ->default(0)
+                    ->helperText('Shown publicly. Real readers keep adding from this number. Saving again replaces the total with whatever you enter.'),
+                TextInput::make('likes_count')
+                    ->label('Likes')
+                    ->numeric()
+                    ->integer()
+                    ->minValue(0)
+                    ->default(0)
+                    ->helperText('Shown publicly. Real likes keep adding from this number. Saving again replaces the total with whatever you enter.'),
+                TextInput::make('views_count')
+                    ->label('Views (live)')
+                    ->numeric()
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->helperText('Updated automatically when people open this article. Not editable.'),
+            ])->columns(3)->visibleOn('edit'),
         ]);
     }
 
