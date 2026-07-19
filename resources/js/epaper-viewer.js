@@ -158,6 +158,12 @@ class TnfEpaperViewer {
     }
 
     scheduleReadTracking() {
+        if (this.config.readRecorded) {
+            this.readRecorded = true;
+
+            return;
+        }
+
         if (! this.config.readUrl || this.readRecorded) {
             return;
         }

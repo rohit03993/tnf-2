@@ -30,10 +30,11 @@ class ArticleReadTrackingTest extends TestCase
             ->assertSee('tnf-article-engagement', false)
             ->assertSee('data-article-readers', false)
             ->assertSee('data-article-likes', false)
+            ->assertSee('data-server-recorded="1"', false)
             ->assertSee('Like', false);
     }
 
-    public function test_read_endpoint_updates_reader_count(): void
+    public function test_opening_article_records_a_reader(): void
     {
         $author = User::factory()->create();
         $article = Article::query()->create([
@@ -45,20 +46,42 @@ class ArticleReadTrackingTest extends TestCase
             'published_at' => now(),
         ]);
 
-        $this->get(route('article.show', $article));
+        $this->withUnencryptedCookie(ArticleReadService::READER_COOKIE, 'reader-one')
+            ->get(route('article.show', $article))
+            ->assertOk();
 
-        $this->withUnencryptedCookie(ArticleReadService::READER_COOKIE, 'reader-one');
+        $this->assertDatabaseHas('articles', [
+            'id' => $article->id,
+            'readers_count' => 1,
+            'views_count' => 1,
+        ]);
+    }
 
-        $this->postJson(route('article.read', $article), [], [
-            'X-CSRF-TOKEN' => csrf_token(),
-        ])
-            ->assertOk()
-            ->assertJson([
-                'readers_count' => 1,
-                'views_count' => 1,
-                'likes_count' => 0,
-                'liked' => false,
-            ]);
+    public function test_repeat_visit_increments_views_not_readers(): void
+    {
+        $author = User::factory()->create();
+        $article = Article::query()->create([
+            'title' => 'Tracked article',
+            'slug' => 'tracked-article-repeat',
+            'content' => '<p>Story body</p>',
+            'author_id' => $author->id,
+            'status' => ContentStatus::Published,
+            'published_at' => now(),
+        ]);
+
+        $this->withUnencryptedCookie(ArticleReadService::READER_COOKIE, 'reader-repeat')
+            ->get(route('article.show', $article))
+            ->assertOk();
+
+        $this->withUnencryptedCookie(ArticleReadService::READER_COOKIE, 'reader-repeat')
+            ->get(route('article.show', $article))
+            ->assertOk();
+
+        $this->assertDatabaseHas('articles', [
+            'id' => $article->id,
+            'readers_count' => 1,
+            'views_count' => 2,
+        ]);
     }
 
     public function test_like_endpoint_records_a_like(): void
@@ -73,13 +96,14 @@ class ArticleReadTrackingTest extends TestCase
             'published_at' => now(),
         ]);
 
-        $this->get(route('article.show', $article));
+        $this->withUnencryptedCookie(ArticleReadService::READER_COOKIE, 'reader-like')
+            ->get(route('article.show', $article))
+            ->assertOk();
 
-        $this->withUnencryptedCookie(ArticleReadService::READER_COOKIE, 'reader-like');
-
-        $this->postJson(route('article.like', $article), [], [
-            'X-CSRF-TOKEN' => csrf_token(),
-        ])
+        $this->withUnencryptedCookie(ArticleReadService::READER_COOKIE, 'reader-like')
+            ->postJson(route('article.like', $article), [], [
+                'X-CSRF-TOKEN' => csrf_token(),
+            ])
             ->assertOk()
             ->assertJson([
                 'liked' => true,

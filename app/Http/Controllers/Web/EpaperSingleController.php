@@ -7,15 +7,21 @@ use App\Http\Controllers\Controller;
 use App\Models\EpaperEdition;
 use App\Services\EpaperAccessService;
 use App\Services\EpaperClipSignatureService;
+use App\Services\EpaperReadService;
 use App\Services\EpaperViewerService;
 use App\Services\SeoService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class EpaperSingleController extends Controller
 {
-    public function __invoke(EpaperEdition $edition, SeoService $seo): View|RedirectResponse
-    {
+    public function __invoke(
+        EpaperEdition $edition,
+        Request $request,
+        SeoService $seo,
+        EpaperReadService $reads,
+    ): Response|RedirectResponse {
         abort_unless(
             $edition->status === ContentStatus::Published
             && $edition->published_at
@@ -25,22 +31,40 @@ class EpaperSingleController extends Controller
 
         $edition->load('featuredMedia');
 
-        if (EpaperAccessService::gate(auth()->user(), $edition) === 'premium') {
+        if (EpaperAccessService::gate($request->user(), $edition) === 'premium') {
             return view('epaper.premium-gate', [
                 'edition' => $edition,
-                'isGuest' => ! auth()->check(),
-                'seo' => $seo->forEpaper($edition, request()),
+                'isGuest' => ! $request->user(),
+                'seo' => $seo->forEpaper($edition, $request),
             ]);
         }
 
-        if (request()->boolean('tnf_clip') && ! EpaperClipSignatureService::verify($edition, request())) {
+        if ($request->boolean('tnf_clip') && ! EpaperClipSignatureService::verify($edition, $request)) {
             abort(403, 'This clip link has expired or is invalid.');
         }
 
-        return view('epaper.show', [
+        $clipMode = $request->boolean('tnf_clip');
+        $readRecorded = false;
+
+        if (! $clipMode) {
+            $counts = $reads->record($edition, $request);
+            $edition->setAttribute('readers_count', $counts['readers_count']);
+            $edition->setAttribute('likes_count', $counts['likes_count']);
+            $edition->setAttribute('views_count', $counts['views_count']);
+            $readRecorded = true;
+        }
+
+        $config = EpaperViewerService::config($edition, $request);
+        $config['readRecorded'] = $readRecorded;
+
+        $response = response()->view('epaper.show', [
             'edition' => $edition,
-            'config' => EpaperViewerService::config($edition, request()),
-            'seo' => $seo->forEpaper($edition, request()),
+            'config' => $config,
+            'seo' => $seo->forEpaper($edition, $request),
         ]);
+
+        return $readRecorded
+            ? $reads->attachReaderCookie($request, $response)
+            : $response;
     }
 }

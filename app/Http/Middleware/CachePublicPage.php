@@ -16,7 +16,8 @@ class CachePublicPage
             || $request->user()
             || ! $request->isMethod('GET')
             || $request->ajax()
-            || $request->expectsJson()) {
+            || $request->expectsJson()
+            || $this->isEngagementPage($request)) {
             return $next($request);
         }
 
@@ -39,6 +40,26 @@ class CachePublicPage
         }
 
         return $response;
+    }
+
+    /**
+     * Article / ePaper detail pages must stay uncached so reader/like counts stay fresh
+     * and server-side view tracking can run on every visit.
+     */
+    protected function isEngagementPage(Request $request): bool
+    {
+        $path = $request->path();
+
+        if (preg_match('#^n/\d+$#', $path) === 1) {
+            return true;
+        }
+
+        // /epaper/{slug} but not /epaper archive index
+        if (preg_match('#^epaper/[^/]+$#', $path) === 1) {
+            return true;
+        }
+
+        return false;
     }
 
     /** @return array<string, string> */

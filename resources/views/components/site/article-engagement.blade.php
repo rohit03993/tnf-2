@@ -13,6 +13,7 @@
     class="tnf-article-engagement"
     data-read-url="{{ route('article.read', $article) }}"
     data-like-url="{{ route('article.like', $article) }}"
+    data-server-recorded="{{ ! empty($readRecorded) ? '1' : '0' }}"
     aria-live="polite"
 >
     <div class="tnf-article-engagement__left">

@@ -49,7 +49,7 @@ export function initArticleRead() {
     const likeBtn = engagement.querySelector('[data-article-like]');
     const likeLabelEl = likeBtn?.querySelector('.tnf-article-like__label');
 
-    let recorded = false;
+    let recorded = engagement.dataset.serverRecorded === '1';
     let liking = false;
 
     const updateEngagement = (payload) => {
@@ -149,6 +149,10 @@ export function initArticleRead() {
     };
 
     likeBtn?.addEventListener('click', toggleLike);
+
+    if (recorded) {
+        return;
+    }
 
     if ('IntersectionObserver' in window) {
         const observer = new IntersectionObserver((entries) => {
