@@ -30,7 +30,9 @@
     body.tnf-ep-is-clipping .tnf-ep-mobile-bar,
     body.tnf-ep-is-clipping .tnf-ep-viewer-toolbar,
     body.tnf-ep-is-clipping .tnf-footer,
-    body.tnf-ep-is-clipping .tnf-back-to-top {
+    body.tnf-ep-is-clipping .tnf-back-to-top,
+    body.tnf-ep-is-clipping .tnf-ep-thumbs-sidebar,
+    body.tnf-ep-is-clipping .tnf-ep-thumbs-rail-wrap {
         visibility: hidden;
         pointer-events: none;
     }
@@ -369,6 +371,12 @@
         transform-origin: top center;
     }
 
+    .tnf-ep-stage-inner .tnf-ep-clip-screen {
+        position: absolute;
+        inset: 0;
+        z-index: 6;
+    }
+
     @media (max-width: 1023px) {
         .tnf-ep-stage-inner {
             position: relative;
@@ -393,10 +401,6 @@
         @apply aspect-[3/4] w-full bg-tnf-gray/60 object-cover;
     }
 
-    .tnf-ep-clip-layer {
-        @apply hidden;
-    }
-
     .tnf-epaper-viewer.is-clip-mode .tnf-ep-stage {
         @apply ring-0;
     }
@@ -411,6 +415,27 @@
         @apply hidden;
     }
 
+    .tnf-ep-clip-bar {
+        @apply relative z-30 flex flex-wrap items-center justify-between gap-2 border-b border-tnf-gray-dark/70 bg-white px-3 py-2;
+    }
+
+    .tnf-ep-clip-bar-status {
+        @apply text-tnf-xs font-semibold text-tnf-muted;
+    }
+
+    .tnf-ep-clip-presets {
+        @apply flex flex-wrap items-center gap-1.5;
+    }
+
+    .tnf-ep-clip-preset {
+        @apply inline-flex min-h-8 items-center justify-center rounded-tnf border border-tnf-gray-dark bg-white px-2.5 text-tnf-xs font-semibold text-tnf-navy transition hover:border-tnf-red hover:text-tnf-red;
+        touch-action: manipulation;
+    }
+
+    .tnf-ep-clip-preset.is-active {
+        @apply border-tnf-red bg-tnf-red text-white;
+    }
+
     body.tnf-ep-is-clipping {
         @apply overflow-hidden;
     }
@@ -423,42 +448,14 @@
         @apply hidden;
     }
 
-    .tnf-ep-clip-mobile-actions {
-        @apply fixed inset-x-0 bottom-0 z-[220] border-t border-tnf-gray-dark bg-white/95 backdrop-blur-md lg:hidden;
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-    }
-
-    .tnf-ep-clip-mobile-actions-inner {
-        @apply grid grid-cols-2 gap-2 py-2;
-    }
-
-    .tnf-ep-clip-mobile-cancel,
-    .tnf-ep-clip-mobile-share {
-        @apply inline-flex min-h-touch items-center justify-center rounded-tnf px-4 text-tnf-sm font-semibold transition active:scale-[0.98];
-        touch-action: manipulation;
-    }
-
-    .tnf-ep-clip-mobile-cancel {
-        @apply border border-tnf-gray-dark bg-white text-tnf-navy;
-    }
-
-    .tnf-ep-clip-mobile-share {
-        @apply border border-tnf-red bg-tnf-red text-white disabled:cursor-not-allowed disabled:opacity-45;
-    }
-
-    .tnf-ep-clip-mobile-share.is-ready {
-        @apply shadow-card;
-    }
-
     .tnf-ep-clip-catcher {
         @apply absolute inset-0 z-[1] cursor-crosshair;
-        touch-action: pan-x pan-y;
+        touch-action: none;
         pointer-events: none;
     }
 
     .tnf-ep-clip-catcher.is-draw-active {
         pointer-events: auto;
-        touch-action: none;
     }
 
     .tnf-ep-clip-screen {
@@ -469,106 +466,109 @@
         @apply pointer-events-none absolute inset-0 z-[2];
     }
 
-    .tnf-ep-clip-screen-hint {
-        @apply pointer-events-none absolute left-1/2 top-3 z-[210] max-w-[92%] -translate-x-1/2 rounded-2xl bg-tnf-navy/95 px-4 py-3 text-center text-tnf-sm font-medium leading-snug text-white shadow-lg backdrop-blur-sm;
-    }
-
-    .tnf-ep-clip-image-tint {
-        @apply absolute rounded-sm bg-tnf-navy/25 ring-2 ring-tnf-red/70 ring-offset-2 ring-offset-white;
-    }
-
     .tnf-ep-clip-shade {
-        @apply absolute bg-tnf-navy/85;
+        @apply absolute bg-black/45;
     }
 
     .tnf-ep-clip-box {
-        @apply absolute z-10 cursor-move border-[3px] border-tnf-red bg-tnf-red/20 shadow-[0_0_0_1px_rgba(255,255,255,0.9)_inset];
-        outline: 2px dashed rgba(255, 255, 255, 0.95);
-        outline-offset: -4px;
+        @apply absolute z-10 cursor-move border-0 bg-transparent;
+        outline: 2px dashed #fff;
+        outline-offset: -1px;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
         pointer-events: auto;
         touch-action: none;
     }
 
     .tnf-ep-clip-box.is-complete {
-        @apply border-white bg-tnf-red/25;
+        outline-color: #fff;
+    }
+
+    .tnf-ep-clip-float-actions {
+        @apply absolute left-0 z-20 flex items-center gap-1.5;
+        bottom: calc(100% + 0.5rem);
+        pointer-events: auto;
+    }
+
+    .tnf-ep-clip-float-share,
+    .tnf-ep-clip-float-cancel {
+        @apply inline-flex min-h-9 items-center justify-center rounded-md px-3 text-tnf-xs font-bold shadow-md;
+        touch-action: manipulation;
+    }
+
+    .tnf-ep-clip-float-share {
+        @apply border border-tnf-gray-dark bg-white text-tnf-navy disabled:cursor-not-allowed disabled:opacity-45;
+    }
+
+    .tnf-ep-clip-float-share.is-ready {
+        @apply border-tnf-navy;
+    }
+
+    .tnf-ep-clip-float-cancel {
+        @apply border border-tnf-red bg-tnf-red text-white;
     }
 
     .tnf-ep-clip-handle {
-        @apply absolute h-3 w-3 rounded-full border-2 border-white bg-tnf-red shadow-sm;
+        @apply absolute h-2.5 w-2.5 rounded-sm border border-tnf-navy/40 bg-white shadow-sm;
     }
 
-    @media (pointer: coarse) {
-        .tnf-ep-clip-handle {
-            @apply h-5 w-5 border-[3px];
-        }
+    .tnf-ep-clip-handle--tl {
+        @apply -left-1 -top-1 cursor-nwse-resize;
+    }
 
-        .tnf-ep-clip-handle--tl {
-            @apply -left-2.5 -top-2.5;
-        }
+    .tnf-ep-clip-handle--tr {
+        @apply -right-1 -top-1 cursor-nesw-resize;
+    }
 
-        .tnf-ep-clip-handle--tr {
-            @apply -right-2.5 -top-2.5;
-        }
-
-        .tnf-ep-clip-handle--bl {
-            @apply -bottom-2.5 -left-2.5;
-        }
+    .tnf-ep-clip-handle--bl {
+        @apply -bottom-1 -left-1 cursor-nesw-resize;
+    }
 
     .tnf-ep-clip-handle--br {
-        @apply -bottom-2.5 -right-2.5;
+        @apply -bottom-1 -right-1 cursor-nwse-resize;
     }
 
     .tnf-ep-clip-handle--t,
     .tnf-ep-clip-handle--b {
-        @apply h-2 w-8 -translate-x-1/2 rounded-full;
+        @apply h-2 w-5 -translate-x-1/2 rounded-sm;
         left: 50%;
     }
 
     .tnf-ep-clip-handle--t {
-        @apply -top-2 cursor-ns-resize;
+        @apply -top-1 cursor-ns-resize;
     }
 
     .tnf-ep-clip-handle--b {
-        @apply -bottom-2 cursor-ns-resize;
+        @apply -bottom-1 cursor-ns-resize;
     }
 
     .tnf-ep-clip-handle--l,
     .tnf-ep-clip-handle--r {
-        @apply h-8 w-2 -translate-y-1/2 rounded-full;
+        @apply h-5 w-2 -translate-y-1/2 rounded-sm;
         top: 50%;
     }
 
     .tnf-ep-clip-handle--l {
-        @apply -left-2 cursor-ew-resize;
+        @apply -left-1 cursor-ew-resize;
     }
 
     .tnf-ep-clip-handle--r {
-        @apply -right-2 cursor-ew-resize;
+        @apply -right-1 cursor-ew-resize;
     }
 
-        .tnf-ep-clip-box {
-            @apply border-4;
+    @media (pointer: coarse) {
+        .tnf-ep-clip-handle {
+            @apply h-3.5 w-3.5;
         }
-    }
 
-    .tnf-ep-clip-handle--tl {
-        @apply -left-1.5 -top-1.5;
-    }
+        .tnf-ep-clip-handle--t,
+        .tnf-ep-clip-handle--b {
+            @apply h-2.5 w-7;
+        }
 
-    .tnf-ep-clip-handle--tr {
-        @apply -right-1.5 -top-1.5;
-    }
-
-    .tnf-ep-clip-handle--bl {
-        @apply -bottom-1.5 -left-1.5;
-    }
-
-    .tnf-ep-clip-handle--br {
-        @apply -bottom-1.5 -right-1.5;
-    }
-
-    .tnf-ep-clip-size {
-        @apply absolute -top-9 left-0 rounded bg-tnf-red px-2 py-1 text-tnf-xs font-bold text-white shadow-sm;
+        .tnf-ep-clip-handle--l,
+        .tnf-ep-clip-handle--r {
+            @apply h-7 w-2.5;
+        }
     }
 
     .tnf-ep-clip-banner {
@@ -1351,33 +1351,11 @@
     touch-action: none;
 }
 
-.tnf-ep-clip-screen.is-scroll-mode .tnf-ep-clip-box {
-    pointer-events: none;
-}
-
-.tnf-ep-clip-screen.is-scroll-mode .tnf-ep-clip-move-bar,
-.tnf-ep-clip-screen.is-scroll-mode .tnf-ep-clip-handle {
-    pointer-events: auto;
-    touch-action: none;
-}
-
-.tnf-ep-clip-screen.is-draw-mode .tnf-ep-clip-catcher.is-draw-active {
-    pointer-events: auto;
-    touch-action: none;
-}
-
-.tnf-ep-clip-workspace-page .tnf-ep-clip-screen {
+.tnf-ep-stage-inner > .tnf-ep-clip-screen {
     position: absolute;
     inset: 0;
-    z-index: 10;
+    z-index: 6;
     pointer-events: none;
-}
-
-/* Clip overlay — selection UI inside workspace page */
-.tnf-ep-stage-wrap .tnf-ep-clip-screen {
-    position: absolute;
-    inset: 0;
-    z-index: 200;
 }
 
 .tnf-ep-clip-catcher {
@@ -1385,13 +1363,12 @@
     inset: 0;
     z-index: 1;
     cursor: crosshair;
-    touch-action: pan-x pan-y;
+    touch-action: none;
     pointer-events: none;
 }
 
 .tnf-ep-clip-catcher.is-draw-active {
     pointer-events: auto;
-    touch-action: none;
 }
 
 .tnf-ep-clip-visual {
@@ -1401,40 +1378,9 @@
     pointer-events: none;
 }
 
-.tnf-ep-clip-screen-hint {
-    position: absolute;
-    top: 0.75rem;
-    left: 50%;
-    z-index: 210;
-    max-width: 92%;
-    transform: translateX(-50%);
-    border-radius: 1rem;
-    background: rgba(15, 19, 32, 0.95);
-    padding: 0.75rem 1rem;
-    text-align: center;
-    font-size: 0.875rem;
-    font-weight: 500;
-    line-height: 1.35;
-    color: #fff;
-    box-shadow: 0 10px 25px rgba(15, 19, 32, 0.25);
-    backdrop-filter: blur(4px);
-    pointer-events: none;
-}
-
-.tnf-ep-clip-screen-hint.hidden {
-    display: none;
-}
-
-.tnf-ep-clip-image-tint {
-    position: absolute;
-    border-radius: 0.25rem;
-    background: rgba(15, 19, 32, 0.25);
-    box-shadow: 0 0 0 2px rgba(188, 30, 56, 0.7), 0 0 0 4px #fff;
-}
-
 .tnf-ep-clip-shade {
     position: absolute;
-    background: rgba(15, 19, 32, 0.85);
+    background: rgba(0, 0, 0, 0.45);
 }
 
 .tnf-ep-clip-screen.hidden {
@@ -1448,75 +1394,112 @@ body.tnf-ep-is-clipping {
 .tnf-ep-clip-box {
     position: absolute;
     z-index: 20;
-    border: 3px solid #bc1e38;
-    background: rgba(188, 30, 56, 0.12);
-    outline: 2px dashed rgba(255, 255, 255, 0.95);
-    outline-offset: -4px;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+    border: 0;
+    background: transparent;
+    outline: 2px dashed #fff;
+    outline-offset: -1px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
     pointer-events: auto;
     cursor: move;
     touch-action: none;
 }
 
 .tnf-ep-clip-box.is-complete {
-    border-color: #fff;
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: inset 0 0 0 2px rgba(188, 30, 56, 0.85), 0 0 12px rgba(188, 30, 56, 0.35);
+    outline-color: #fff;
+}
+
+.tnf-ep-clip-float-actions {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 0.5rem);
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    pointer-events: auto;
+}
+
+.tnf-ep-clip-float-share,
+.tnf-ep-clip-float-cancel {
+    display: inline-flex;
+    min-height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 4px 12px rgba(15, 19, 32, 0.22);
+    touch-action: manipulation;
+}
+
+.tnf-ep-clip-float-share {
+    border: 1px solid rgba(15, 19, 32, 0.2);
+    background: #fff;
+    color: #0f1320;
+}
+
+.tnf-ep-clip-float-share:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.tnf-ep-clip-float-cancel {
+    border: 1px solid #bc1e38;
+    background: #bc1e38;
+    color: #fff;
 }
 
 .tnf-ep-clip-handle {
     position: absolute;
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 9999px;
-    border: 2px solid #fff;
-    background: #bc1e38;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 0.125rem;
+    border: 1px solid rgba(15, 19, 32, 0.35);
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     pointer-events: auto;
     touch-action: none;
 }
 
-.tnf-ep-clip-handle--tl { top: -0.375rem; left: -0.375rem; cursor: nwse-resize; }
-.tnf-ep-clip-handle--tr { top: -0.375rem; right: -0.375rem; cursor: nesw-resize; }
-.tnf-ep-clip-handle--bl { bottom: -0.375rem; left: -0.375rem; cursor: nesw-resize; }
-.tnf-ep-clip-handle--br { bottom: -0.375rem; right: -0.375rem; cursor: nwse-resize; }
+.tnf-ep-clip-handle--tl { top: -0.25rem; left: -0.25rem; cursor: nwse-resize; }
+.tnf-ep-clip-handle--tr { top: -0.25rem; right: -0.25rem; cursor: nesw-resize; }
+.tnf-ep-clip-handle--bl { bottom: -0.25rem; left: -0.25rem; cursor: nesw-resize; }
+.tnf-ep-clip-handle--br { bottom: -0.25rem; right: -0.25rem; cursor: nwse-resize; }
 
 .tnf-ep-clip-handle--t {
-    top: -0.3125rem;
+    top: -0.25rem;
     left: 50%;
-    width: 2rem;
+    width: 1.25rem;
     height: 0.5rem;
-    border-radius: 9999px;
     transform: translateX(-50%);
     cursor: ns-resize;
 }
 
 .tnf-ep-clip-handle--b {
-    bottom: -0.3125rem;
+    bottom: -0.25rem;
     left: 50%;
-    width: 2rem;
+    width: 1.25rem;
     height: 0.5rem;
-    border-radius: 9999px;
     transform: translateX(-50%);
     cursor: ns-resize;
 }
 
 .tnf-ep-clip-handle--l {
     top: 50%;
-    left: -0.3125rem;
+    left: -0.25rem;
     width: 0.5rem;
-    height: 2rem;
-    border-radius: 9999px;
+    height: 1.25rem;
     transform: translateY(-50%);
     cursor: ew-resize;
 }
 
 .tnf-ep-clip-handle--r {
     top: 50%;
-    right: -0.3125rem;
+    right: -0.25rem;
     width: 0.5rem;
-    height: 2rem;
-    border-radius: 9999px;
+    height: 1.25rem;
     transform: translateY(-50%);
     cursor: ew-resize;
 }
@@ -1563,23 +1546,28 @@ body.tnf-ep-is-clipping {
 
 @media (pointer: coarse) {
     .tnf-ep-clip-handle {
-        width: 1.25rem;
-        height: 1.25rem;
-        border-width: 3px;
+        width: 0.875rem;
+        height: 0.875rem;
+        border-width: 1px;
+        border-radius: 0.125rem;
+        background: #fff;
     }
 
-    .tnf-ep-clip-handle--tl { top: -0.75rem; left: -0.75rem; }
-    .tnf-ep-clip-handle--tr { top: -0.75rem; right: -0.75rem; }
-    .tnf-ep-clip-handle--bl { bottom: -0.75rem; left: -0.75rem; }
-    .tnf-ep-clip-handle--br { bottom: -0.75rem; right: -0.75rem; }
+    .tnf-ep-clip-handle--tl { top: -0.35rem; left: -0.35rem; }
+    .tnf-ep-clip-handle--tr { top: -0.35rem; right: -0.35rem; }
+    .tnf-ep-clip-handle--bl { bottom: -0.35rem; left: -0.35rem; }
+    .tnf-ep-clip-handle--br { bottom: -0.35rem; right: -0.35rem; }
 
-    .tnf-ep-clip-box {
-        border-width: 4px;
+    .tnf-ep-clip-handle--t,
+    .tnf-ep-clip-handle--b {
+        width: 1.75rem;
+        height: 0.625rem;
     }
 
-    .tnf-ep-clip-move-bar {
-        min-height: 2.375rem;
-        font-size: 0.75rem;
+    .tnf-ep-clip-handle--l,
+    .tnf-ep-clip-handle--r {
+        width: 0.625rem;
+        height: 1.75rem;
     }
 }
 

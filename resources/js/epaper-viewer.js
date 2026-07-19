@@ -34,7 +34,6 @@ class TnfEpaperViewer {
             stageInner: root.querySelector('[data-ep-stage-inner]'),
             pageImage: root.querySelector('[data-ep-page-image]'),
             pdfCanvas: root.querySelector('[data-ep-pdf-canvas]'),
-            clipLayer: root.querySelector('[data-ep-clip-layer]'),
             pageSelect: root.querySelector('[data-ep-page-select]'),
             pager: root.querySelector('[data-ep-pager]'),
             thumbsSidebar: root.querySelector('[data-ep-thumbs-sidebar]'),
@@ -52,35 +51,18 @@ class TnfEpaperViewer {
             clipPreview: root.querySelector('[data-ep-clip-preview]'),
             clipPreviewFrame: root.querySelector('[data-ep-clip-preview-frame]'),
             clipPreviewWrap: root.querySelector('[data-ep-clip-preview-wrap]'),
-            clipScreen: document.querySelector('[data-ep-clip-screen]'),
-            clipWorkspace: document.querySelector('[data-ep-clip-workspace]'),
-            clipWorkspaceImage: document.querySelector('[data-ep-clip-workspace-image]'),
-            clipWorkspacePage: document.querySelector('[data-ep-clip-workspace-page]'),
-            clipWorkspaceScroll: document.querySelector('[data-ep-clip-workspace-scroll]'),
-            clipWorkspaceCancel: document.querySelector('[data-ep-clip-workspace-cancel]'),
-            clipWorkspaceShare: document.querySelector('[data-ep-clip-workspace-share]'),
-            clipWorkspacePageNum: document.querySelector('[data-ep-clip-workspace-page-num]'),
-            clipWorkspaceHint: document.querySelector('[data-ep-clip-workspace-hint]'),
-            clipWorkspaceWhatsapp: document.querySelector('[data-ep-clip-workspace-whatsapp]'),
-            clipLivePreview: document.querySelector('[data-ep-clip-live-preview]'),
-            clipLivePreviewWrap: document.querySelector('[data-ep-clip-live-preview-wrap]'),
-            clipFirstHint: document.querySelector('[data-ep-clip-first-hint]'),
-            clipPresets: document.querySelector('[data-ep-clip-presets]'),
-            clipFooterCancel: document.querySelector('[data-ep-clip-footer-cancel]'),
-            clipFooterWhatsapp: document.querySelector('[data-ep-clip-footer-whatsapp]'),
-            clipFooterShare: document.querySelector('[data-ep-clip-footer-share]'),
-            clipZoomIn: document.querySelector('[data-ep-clip-zoom-in]'),
-            clipZoomOut: document.querySelector('[data-ep-clip-zoom-out]'),
-            clipZoomLabel: document.querySelector('[data-ep-clip-zoom-label]'),
+            clipBar: root.querySelector('[data-ep-clip-bar]'),
+            clipScreen: root.querySelector('[data-ep-clip-screen]'),
+            clipWorkspaceHint: root.querySelector('[data-ep-clip-workspace-hint]'),
+            clipPresets: root.querySelector('[data-ep-clip-presets]'),
+            clipFloatShare: root.querySelector('[data-ep-clip-float-share]'),
+            clipFloatCancel: root.querySelector('[data-ep-clip-float-cancel]'),
             shareModal: root.querySelector('[data-ep-share-modal]'),
             shareUrl: root.querySelector('[data-ep-share-url]'),
             editionShare: root.querySelector('[data-ep-edition-share]'),
             shareCopyBtn: root.querySelector('[data-ep-copy-share]'),
             shareNativeBtn: root.querySelector('[data-ep-share-native]'),
             shareOpen: root.querySelector('[data-ep-share-open]'),
-            clipMobileActions: root.querySelector('[data-ep-clip-mobile-actions]'),
-            clipShareMobile: root.querySelector('[data-ep-clip-share-mobile]'),
-            clipCancelMobile: root.querySelector('[data-ep-clip-cancel-mobile]'),
         };
 
         this.activeClipUrl = '';
@@ -424,14 +406,11 @@ class TnfEpaperViewer {
     }
 
     bindClipWorkspacePanScroll() {
+        // In-page clip no longer uses a separate scrollable workspace.
         if (this.clipPanCleanup) {
             this.clipPanCleanup();
             this.clipPanCleanup = null;
         }
-
-        this.clipPanCleanup = this.bindCoarsePointerPanScroll(this.els.clipWorkspaceScroll, {
-            isEnabled: () => this.clipWorkspaceActive && ! this.clipDrawMode,
-        });
     }
 
     clipHintText() {
@@ -671,14 +650,8 @@ class TnfEpaperViewer {
             this.els.shareNativeBtn.addEventListener('click', () => this.nativeShareEdition());
         }
 
-        this.els.clipCancelMobile?.addEventListener('click', () => this.toggleClipMode(true));
-        this.els.clipShareMobile?.addEventListener('click', () => this.confirmClipShare());
-        this.els.clipWorkspaceCancel?.addEventListener('click', () => this.toggleClipMode(true));
-        this.els.clipWorkspaceShare?.addEventListener('click', () => this.confirmClipShare());
-        this.els.clipFooterCancel?.addEventListener('click', () => this.toggleClipMode(true));
-        this.els.clipFooterShare?.addEventListener('click', () => this.confirmClipShare());
-        this.els.clipWorkspaceWhatsapp?.addEventListener('click', () => void this.shareClipViaWhatsApp());
-        this.els.clipFooterWhatsapp?.addEventListener('click', () => void this.shareClipViaWhatsApp());
+        this.els.clipFloatCancel?.addEventListener('click', () => this.toggleClipMode(true));
+        this.els.clipFloatShare?.addEventListener('click', () => this.confirmClipShare());
 
         this.els.clipPresets?.addEventListener('click', (event) => {
             const preset = event.target.closest('[data-ep-clip-preset]');
@@ -687,9 +660,6 @@ class TnfEpaperViewer {
                 this.applyClipPreset(preset.dataset.epClipPreset);
             }
         });
-
-        this.els.clipZoomIn?.addEventListener('click', () => this.adjustClipPageZoom(0.2));
-        this.els.clipZoomOut?.addEventListener('click', () => this.adjustClipPageZoom(-0.2));
     }
 
     bindTouchZoom() {
@@ -1225,8 +1195,7 @@ class TnfEpaperViewer {
         this.clipMode = forceOff ? false : ! this.clipMode;
 
         this.root.classList.toggle('is-clip-mode', this.clipMode);
-        this.els.clipLayer?.classList.toggle('hidden', ! this.clipMode);
-        this.els.clipHint?.classList.toggle('hidden', ! this.clipMode);
+        this.els.clipHint?.classList.add('hidden');
         this.root.querySelectorAll('[data-ep-action="clip"]').forEach((button) => {
             button.classList.toggle('is-active', this.clipMode);
             button.setAttribute('aria-pressed', this.clipMode ? 'true' : 'false');
@@ -1235,7 +1204,7 @@ class TnfEpaperViewer {
         if (this.clipMode) {
             this.resolveClipElements();
 
-            if (! this.els.clipWorkspace || ! this.els.clipScreen) {
+            if (! this.els.clipScreen) {
                 console.error('TNF ePaper: clip UI is missing. Run npm run build on the server and hard refresh.');
                 this.clipMode = false;
                 this.root.classList.remove('is-clip-mode');
@@ -1246,70 +1215,31 @@ class TnfEpaperViewer {
                 return;
             }
 
-            this.openClipWorkspaceShell();
-            this.els.clipPresets?.classList.remove('is-expanded');
+            document.body.classList.add('tnf-ep-is-clipping');
+            this.els.clipBar?.classList.remove('hidden');
             void this.prepareClipMode();
         } else {
             this.unbindClipDrag();
             this.unmountClipScreen();
-            this.showClipMobileActions(false);
-            this.els.clipPresets?.classList.remove('is-expanded');
         }
     }
 
     resolveClipElements() {
         const selectors = {
+            clipBar: '[data-ep-clip-bar]',
             clipScreen: '[data-ep-clip-screen]',
-            clipWorkspace: '[data-ep-clip-workspace]',
-            clipWorkspaceImage: '[data-ep-clip-workspace-image]',
-            clipWorkspacePage: '[data-ep-clip-workspace-page]',
-            clipWorkspaceScroll: '[data-ep-clip-workspace-scroll]',
-            clipWorkspaceCancel: '[data-ep-clip-workspace-cancel]',
-            clipWorkspaceShare: '[data-ep-clip-workspace-share]',
-            clipWorkspacePageNum: '[data-ep-clip-workspace-page-num]',
             clipWorkspaceHint: '[data-ep-clip-workspace-hint]',
-            clipWorkspaceWhatsapp: '[data-ep-clip-workspace-whatsapp]',
-            clipLivePreview: '[data-ep-clip-live-preview]',
-            clipLivePreviewWrap: '[data-ep-clip-live-preview-wrap]',
-            clipFirstHint: '[data-ep-clip-first-hint]',
             clipPresets: '[data-ep-clip-presets]',
-            clipFooterCancel: '[data-ep-clip-footer-cancel]',
-            clipFooterWhatsapp: '[data-ep-clip-footer-whatsapp]',
-            clipFooterShare: '[data-ep-clip-footer-share]',
-            clipZoomIn: '[data-ep-clip-zoom-in]',
-            clipZoomOut: '[data-ep-clip-zoom-out]',
-            clipZoomLabel: '[data-ep-clip-zoom-label]',
+            clipFloatShare: '[data-ep-clip-float-share]',
+            clipFloatCancel: '[data-ep-clip-float-cancel]',
         };
 
         Object.entries(selectors).forEach(([key, selector]) => {
-            this.els[key] = document.querySelector(selector);
+            this.els[key] = this.root.querySelector(selector) || document.querySelector(selector);
         });
     }
 
-    openClipWorkspaceShell() {
-        const workspace = this.els.clipWorkspace;
-
-        if (! workspace) {
-            return;
-        }
-
-        if (workspace.parentElement !== document.body) {
-            document.body.appendChild(workspace);
-        }
-
-        workspace.classList.remove('hidden', 'has-error');
-        workspace.classList.add('is-loading');
-        workspace.style.display = 'flex';
-        document.body.classList.add('tnf-ep-is-clipping');
-        document.body.style.overflow = 'hidden';
-    }
-
     showClipWorkspaceError(message) {
-        const workspace = this.els.clipWorkspace;
-
-        workspace?.classList.remove('is-loading');
-        workspace?.classList.add('has-error');
-
         if (this.els.clipWorkspaceHint) {
             this.els.clipWorkspaceHint.textContent = message;
         }
@@ -1317,21 +1247,23 @@ class TnfEpaperViewer {
 
     async prepareClipMode() {
         try {
-            const imageReady = await this.loadClipWorkspaceImage();
+            this.setPdfLoading(true);
+            const imageReady = await this.prepareClipCapture();
 
             if (! imageReady) {
                 throw new Error('Could not capture the current page for clipping.');
             }
 
-            this.clipWorkspaceActive = true;
+            this.clipWorkspaceActive = false;
             this.mountClipScreen();
             this.bindClipDrag();
             this.applyClipPreset('lead');
             this.updateClipShareButtonsState();
-            this.setClipInstruction('Lead story ready — share on WhatsApp');
+            this.setClipInstruction('Adjust selection, then Share');
         } catch (error) {
             console.error('TNF ePaper: clip mode failed.', error);
             this.showClipWorkspaceError('Could not prepare the clip. Cancel and try again.');
+            this.toggleClipMode(true);
         } finally {
             this.setPdfLoading(false);
         }
@@ -1439,13 +1371,7 @@ class TnfEpaperViewer {
         }
     }
 
-    async loadClipWorkspaceImage() {
-        const img = this.els.clipWorkspaceImage;
-
-        if (! img) {
-            return false;
-        }
-
+    async prepareClipCapture() {
         const dataUrl = await this.captureCurrentPagePreview();
 
         if (! dataUrl) {
@@ -1453,10 +1379,8 @@ class TnfEpaperViewer {
         }
 
         this.clipWorkspaceImageDataUrl = dataUrl;
-        img.src = dataUrl;
-        await this.waitForImageElement(img);
 
-        return img.naturalWidth > 0 && img.naturalHeight > 0;
+        return true;
     }
 
     getClipMasterScale(pageWidth) {
@@ -1552,31 +1476,11 @@ class TnfEpaperViewer {
     }
 
     getImageOverlayRect() {
-        if (this.clipWorkspaceActive) {
-            const img = this.els.clipWorkspaceImage;
-            const page = this.els.clipWorkspacePage;
-
-            if (! img || ! page || img.clientWidth < 1 || img.clientHeight < 1) {
-                return null;
-            }
-
-            const imgRect = img.getBoundingClientRect();
-            const pageRect = page.getBoundingClientRect();
-
-            return {
-                left: imgRect.left - pageRect.left,
-                top: imgRect.top - pageRect.top,
-                width: imgRect.width,
-                height: imgRect.height,
-                right: imgRect.left - pageRect.left + imgRect.width,
-                bottom: imgRect.top - pageRect.top + imgRect.height,
-            };
-        }
-
         const imageRect = this.getImageScreenRect();
-        const reference = this.els.stage?.getBoundingClientRect() || this.getStageWrapRect();
+        const referenceEl = this.els.clipScreen || this.els.stageInner;
+        const reference = referenceEl?.getBoundingClientRect();
 
-        if (! imageRect || imageRect.width < 1 || imageRect.height < 1) {
+        if (! imageRect || ! reference || imageRect.width < 1 || imageRect.height < 1) {
             return null;
         }
 
@@ -1591,21 +1495,9 @@ class TnfEpaperViewer {
     }
 
     getClipOverlayBounds() {
-        if (this.clipWorkspaceActive && this.els.clipWorkspacePage) {
-            const page = this.els.clipWorkspacePage;
+        const screen = this.els.clipScreen || this.els.stageInner;
 
-            return {
-                width: page.clientWidth,
-                height: page.clientHeight,
-                offsetLeft: 0,
-                offsetTop: 0,
-            };
-        }
-
-        const stage = this.els.stage;
-        const wrap = this.els.stageWrap;
-
-        if (! stage || ! wrap) {
+        if (! screen) {
             return {
                 width: window.innerWidth,
                 height: window.innerHeight,
@@ -1614,14 +1506,11 @@ class TnfEpaperViewer {
             };
         }
 
-        const stageRect = stage.getBoundingClientRect();
-        const wrapRect = wrap.getBoundingClientRect();
-
         return {
-            width: stage.clientWidth,
-            height: stage.clientHeight,
-            offsetLeft: stageRect.left - wrapRect.left,
-            offsetTop: stageRect.top - wrapRect.top,
+            width: screen.clientWidth,
+            height: screen.clientHeight,
+            offsetLeft: 0,
+            offsetTop: 0,
         };
     }
 
@@ -1768,26 +1657,12 @@ class TnfEpaperViewer {
 
     applyClipPreset(name) {
         this.dismissFirstClipHint();
-
-        if (name === 'draw') {
-            this.clipDrawMode = true;
-            this.updateClipCatcherInteraction();
-            this.bindClipWorkspacePanScroll();
-            this.updateClipPresetButtons('draw');
-            this.setClipInstruction(
-                'Drag on the page to select your section',
-            );
-
-            return;
-        }
-
         this.clipDrawMode = false;
         this.updateClipCatcherInteraction();
-        this.bindClipWorkspacePanScroll();
-        this.clipNormalized = this.getClipPreset(name);
+        this.clipNormalized = this.getClipPreset(name === 'reset' ? 'lead' : name);
         this.syncClipOverlay(true);
         this.setClipInstruction(this.clipReadyMessage());
-        this.updateClipPresetButtons(name);
+        this.updateClipPresetButtons(name === 'reset' ? 'lead' : name);
     }
 
     updateClipPresetButtons(activeName = 'lead') {
@@ -1800,37 +1675,28 @@ class TnfEpaperViewer {
 
     updateClipCatcherInteraction() {
         const catcher = this.els.clipScreen?.querySelector('[data-ep-clip-catcher]');
-        const screen = this.els.clipScreen;
 
         if (! catcher) {
             return;
         }
 
-        const drawActive = ! this.isCoarsePointer() || this.clipDrawMode;
-
-        catcher.classList.toggle('is-draw-active', drawActive);
-        screen?.classList.toggle('is-scroll-mode', this.isCoarsePointer() && ! this.clipDrawMode);
-        screen?.classList.toggle('is-draw-mode', this.isCoarsePointer() && this.clipDrawMode);
+        catcher.classList.add('is-draw-active');
+        this.els.clipScreen?.classList.remove('is-scroll-mode', 'is-draw-mode');
     }
 
     exitClipDrawMode() {
-        if (! this.clipDrawMode) {
-            return;
-        }
-
         this.clipDrawMode = false;
         this.updateClipCatcherInteraction();
-        this.bindClipWorkspacePanScroll();
         this.updateClipPresetButtons(null);
         this.setClipInstruction(this.clipReadyMessage());
     }
 
     clipHintMessage() {
-        return 'Drag the edges or pick Lead story · use −/+ to zoom';
+        return 'Drag edges to resize, or drag inside to move';
     }
 
     clipReadyMessage() {
-        return 'Lead story ready — share on WhatsApp';
+        return 'Adjust selection, then Share';
     }
 
     setClipInstruction(message, { showOverlay = false, autoHideMs = null } = {}) {
@@ -1987,17 +1853,86 @@ class TnfEpaperViewer {
     setClipShareBusy(busy) {
         this.clipShareBusy = busy;
 
-        [
-            this.els.clipWorkspaceShare,
-            this.els.clipFooterShare,
-            this.els.clipWorkspaceWhatsapp,
-            this.els.clipFooterWhatsapp,
-        ].forEach((button) => {
+        [this.els.clipFloatShare].forEach((button) => {
             if (button) {
                 button.disabled = busy || ! this.pendingClip;
                 button.classList.toggle('is-busy', busy);
             }
         });
+    }
+
+    updateClipShareButtonsState() {
+        const ready = Boolean(this.pendingClip) && ! this.clipShareBusy;
+
+        [this.els.clipFloatShare].forEach((button) => {
+            if (! button) {
+                return;
+            }
+
+            button.disabled = ! ready;
+            button.classList.toggle('is-ready', ready);
+        });
+    }
+
+    mountClipScreen() {
+        if (! this.els.clipScreen) {
+            return;
+        }
+
+        this.els.clipBar?.classList.remove('hidden');
+        this.els.clipScreen.classList.remove('hidden');
+        this.els.clipScreen.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('tnf-ep-is-clipping');
+
+        this.pendingClip = null;
+        this.clipNormalized = this.getDefaultClipNormalized();
+        this.clipWorkspaceActive = false;
+
+        this.setClipInstruction(this.clipReadyMessage());
+        this.updateClipPresetButtons('lead');
+        this.updateClipCatcherInteraction();
+
+        const ui = this.getClipScreenElements();
+        ui?.box?.classList.remove('is-complete');
+
+        this.scheduleClipOverlaySync(true);
+        this.showFirstClipHint();
+
+        const source = this.getClipSourceElement();
+        if (source && ! (source.complete && (source.naturalWidth || source.width))) {
+            source.addEventListener('load', () => this.scheduleClipOverlaySync(true), { once: true });
+        }
+
+        if (! this.clipScrollHandler) {
+            this.clipScrollHandler = () => this.syncClipOverlay();
+            this.els.stage?.addEventListener('scroll', this.clipScrollHandler, { passive: true });
+            window.addEventListener('resize', this.clipScrollHandler, { passive: true });
+        }
+    }
+
+    unmountClipScreen() {
+        this.els.clipBar?.classList.add('hidden');
+        this.els.clipScreen?.classList.add('hidden');
+        this.els.clipScreen?.setAttribute('aria-hidden', 'true');
+        this.clipWorkspaceActive = false;
+        this.clipDrawMode = false;
+        this.clipCaptureSource = null;
+        document.body.classList.remove('tnf-ep-is-clipping');
+        document.body.style.overflow = '';
+        this.activePointerId = null;
+        this.resetClipScreenSelection();
+        this.updateClipShareButtonsState();
+
+        if (this.clipScrollHandler) {
+            this.els.stage?.removeEventListener('scroll', this.clipScrollHandler);
+            window.removeEventListener('resize', this.clipScrollHandler);
+            this.clipScrollHandler = null;
+        }
+
+        if (this.clipPanCleanup) {
+            this.clipPanCleanup();
+            this.clipPanCleanup = null;
+        }
     }
 
     async shareClipViaWhatsApp() {
@@ -2027,121 +1962,6 @@ class TnfEpaperViewer {
         }
     }
 
-    showClipMobileActions(show) {
-        if (! this.els.clipMobileActions) {
-            return;
-        }
-
-        this.els.clipMobileActions.classList.toggle('hidden', ! show);
-        this.els.clipMobileActions.setAttribute('aria-hidden', show ? 'false' : 'true');
-    }
-
-    updateClipShareButtonsState() {
-        const ready = Boolean(this.pendingClip) && ! this.clipShareBusy;
-
-        [
-            this.els.clipShareMobile,
-            this.els.clipWorkspaceShare,
-            this.els.clipFooterShare,
-            this.els.clipWorkspaceWhatsapp,
-            this.els.clipFooterWhatsapp,
-        ].forEach((button) => {
-            if (! button) {
-                return;
-            }
-
-            button.disabled = ! ready;
-            button.classList.toggle('is-ready', ready);
-        });
-    }
-
-    mountClipScreen() {
-        if (! this.els.clipScreen || ! this.els.clipWorkspace) {
-            return;
-        }
-
-        this.els.clipWorkspace.classList.remove('hidden', 'is-loading');
-        this.els.clipScreen.classList.remove('hidden');
-        this.els.clipScreen.setAttribute('aria-hidden', 'false');
-
-        if (this.els.clipWorkspacePageNum) {
-            this.els.clipWorkspacePageNum.textContent = String(this.currentPage);
-        }
-
-        this.pendingClip = null;
-        this.clipNormalized = this.getDefaultClipNormalized();
-
-        const hint = this.els.clipScreen?.querySelector('[data-ep-clip-hint-text]');
-        if (hint) {
-            hint.classList.add('hidden');
-        }
-
-        this.setClipInstruction(this.clipReadyMessage());
-        this.updateClipPresetButtons('lead');
-        this.updateClipCatcherInteraction();
-
-        const scrollEl = this.els.clipWorkspaceScroll;
-
-        if (scrollEl) {
-            scrollEl.style.overflow = '';
-            scrollEl.style.touchAction = '';
-        }
-
-        const ui = this.getClipScreenElements();
-        ui?.box?.classList.remove('is-complete');
-
-        this.scheduleClipOverlaySync(true);
-        this.showFirstClipHint();
-
-        this.resetClipPageZoom();
-
-        if (this.els.clipWorkspaceImage?.naturalWidth) {
-            this.clipPageBaseWidth = this.els.clipWorkspaceImage.clientWidth || this.els.clipWorkspaceImage.naturalWidth;
-            this.applyClipPageZoom();
-        }
-
-        const source = this.getClipSourceElement();
-        if (source && ! (source.complete && (source.naturalWidth || source.width))) {
-            source.addEventListener('load', () => this.scheduleClipOverlaySync(true), { once: true });
-        }
-
-        if (! this.clipScrollHandler) {
-            this.clipScrollHandler = () => this.syncClipOverlay();
-            this.els.clipWorkspaceScroll?.addEventListener('scroll', this.clipScrollHandler, { passive: true });
-            window.addEventListener('resize', this.clipScrollHandler, { passive: true });
-        }
-
-        this.bindClipWorkspacePanScroll();
-    }
-
-    unmountClipScreen() {
-        this.els.clipWorkspace?.classList.add('hidden');
-        this.els.clipWorkspace?.classList.remove('is-loading', 'has-error');
-        this.els.clipWorkspace?.style.removeProperty('display');
-        this.els.clipScreen?.classList.add('hidden');
-        this.els.clipScreen?.setAttribute('aria-hidden', 'true');
-        this.clipWorkspaceActive = false;
-        this.clipDrawMode = false;
-        this.clipCaptureSource = null;
-        this.resetClipPageZoom();
-        document.body.classList.remove('tnf-ep-is-clipping');
-        document.body.style.overflow = '';
-        this.activePointerId = null;
-        this.resetClipScreenSelection();
-        this.updateClipShareButtonsState();
-
-        if (this.clipScrollHandler) {
-            this.els.clipWorkspaceScroll?.removeEventListener('scroll', this.clipScrollHandler);
-            window.removeEventListener('resize', this.clipScrollHandler);
-            this.clipScrollHandler = null;
-        }
-
-        if (this.clipPanCleanup) {
-            this.clipPanCleanup();
-            this.clipPanCleanup = null;
-        }
-    }
-
     syncClipOverlay(markComplete = false) {
         if (! this.clipNormalized) {
             return;
@@ -2156,10 +1976,6 @@ class TnfEpaperViewer {
         this.updateClipScreenShades(overlay.left, overlay.top, overlay.width, overlay.height);
 
         const ui = this.getClipScreenElements();
-        if (ui?.sizeLabel) {
-            ui.sizeLabel.textContent = `${Math.round(overlay.width)} × ${Math.round(overlay.height)}`;
-        }
-
         const clip = this.normalizedToClip(this.clipNormalized);
 
         if (clip) {
@@ -2171,7 +1987,6 @@ class TnfEpaperViewer {
         }
 
         this.updateClipShareButtonsState();
-        this.scheduleLiveClipPreview();
     }
 
     getClipScreenElements() {
@@ -2190,7 +2005,6 @@ class TnfEpaperViewer {
                 bottom: visual.querySelector('.tnf-ep-clip-shade--bottom'),
             },
             box: visual.querySelector('.tnf-ep-clip-box'),
-            sizeLabel: visual.querySelector('.tnf-ep-clip-size'),
         };
     }
 
@@ -2279,19 +2093,10 @@ class TnfEpaperViewer {
 
         this.pendingClip = null;
         this.clipNormalized = null;
-        this.els.clipLivePreviewWrap?.classList.add('hidden');
-
-        if (this.els.clipLivePreview) {
-            this.els.clipLivePreview.removeAttribute('src');
-        }
 
         this.updateClipScreenShades(0, 0, 0, 0);
         ui.box?.classList.remove('is-complete');
         ui.visual?.classList.remove('is-active');
-
-        if (ui.sizeLabel) {
-            ui.sizeLabel.textContent = '';
-        }
 
         this.updateClipShareButtonsState();
     }
@@ -2349,13 +2154,9 @@ class TnfEpaperViewer {
     }
 
     clientPointToOverlay(clientX, clientY) {
-        const reference = this.clipWorkspaceActive
-            ? this.els.clipWorkspacePage?.getBoundingClientRect()
-            : this.els.stage?.getBoundingClientRect() || this.getStageWrapRect();
-
-        if (! reference) {
-            return { x: clientX, y: clientY };
-        }
+        const reference = this.els.clipScreen?.getBoundingClientRect()
+            || this.els.stageInner?.getBoundingClientRect()
+            || this.getStageWrapRect();
 
         return {
             x: clientX - reference.left,
@@ -2385,10 +2186,6 @@ class TnfEpaperViewer {
             this.clipNormalized = normalized;
             this.syncClipOverlay(true);
             this.setClipInstruction(this.clipReadyMessage());
-
-            if (this.isCoarsePointer() && this.clipDrawMode) {
-                this.exitClipDrawMode();
-            }
 
             return true;
         };
@@ -2455,21 +2252,15 @@ class TnfEpaperViewer {
                 return;
             }
 
-            const moveBar = event.target.closest('[data-ep-clip-move]');
+            if (event.target.closest('[data-ep-clip-float-actions]')) {
+                return;
+            }
+
             const handle = event.target.closest('[data-ep-clip-handle]');
             const box = event.target.closest('.tnf-ep-clip-box');
             const onCatcher = event.currentTarget === catcherEl;
-            const coarse = this.isCoarsePointer();
 
-            if (coarse) {
-                if (moveBar || handle) {
-                    // Adjust crop via move bar or corner handles.
-                } else if (this.clipDrawMode && onCatcher && this.isPointInsideImage(event.clientX, event.clientY)) {
-                    // Custom draw mode on the page.
-                } else {
-                    return;
-                }
-            } else if (! moveBar && ! box && ! handle && ! this.isPointInsideImage(event.clientX, event.clientY)) {
+            if (! handle && ! box && ! (onCatcher && this.isPointInsideImage(event.clientX, event.clientY))) {
                 return;
             }
 
@@ -2506,7 +2297,7 @@ class TnfEpaperViewer {
                 return;
             }
 
-            if (moveBar || (box && ! coarse)) {
+            if (box) {
                 interactionMode = 'move';
                 startRect = { ...overlay };
                 dragStart = point;
@@ -2514,12 +2305,10 @@ class TnfEpaperViewer {
                 return;
             }
 
-            if (! coarse || this.clipDrawMode) {
-                interactionMode = 'draw';
-                dragStart = this.clampOverlayPointToImage(point.x, point.y);
-                startRect = { left: dragStart.left, top: dragStart.top, width: 0, height: 0 };
-                this.updateClipScreenShades(startRect.left, startRect.top, 0, 0);
-            }
+            interactionMode = 'draw';
+            dragStart = this.clampOverlayPointToImage(point.x, point.y);
+            startRect = { left: dragStart.left, top: dragStart.top, width: 0, height: 0 };
+            this.updateClipScreenShades(startRect.left, startRect.top, 0, 0);
         };
 
         const onPointerMove = (event) => {
@@ -2581,11 +2370,6 @@ class TnfEpaperViewer {
 
             this.updateClipScreenShades(left, top, width, height);
             lastDragRect = { left, top, width, height };
-
-            const elements = this.getClipScreenElements();
-            if (elements?.sizeLabel) {
-                elements.sizeLabel.textContent = `${Math.round(width)} × ${Math.round(height)}`;
-            }
         };
 
         const onPointerUp = (event) => {
@@ -2754,10 +2538,6 @@ class TnfEpaperViewer {
     }
 
     getClipSourceElement() {
-        if (this.clipWorkspaceActive && this.els.clipWorkspaceImage?.src) {
-            return this.els.clipWorkspaceImage;
-        }
-
         if (this.els.pageImage && ! this.els.pageImage.classList.contains('hidden')) {
             return this.els.pageImage;
         }
@@ -2929,16 +2709,6 @@ class TnfEpaperViewer {
 
             if (fromWorkspace) {
                 return fromWorkspace;
-            }
-        }
-
-        const workspaceImg = this.els.clipWorkspaceImage;
-
-        if (workspaceImg?.naturalWidth) {
-            const fromDom = this.renderClipBitmapFromImageElement(exportClip, workspaceImg);
-
-            if (fromDom) {
-                return fromDom;
             }
         }
 
