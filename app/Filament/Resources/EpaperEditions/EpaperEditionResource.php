@@ -110,6 +110,28 @@ class EpaperEditionResource extends Resource
                 TextInput::make('pdf_job_id')->disabled(),
                 Textarea::make('pdf_error')->disabled()->rows(2),
             ])->columns(2)->visibleOn('edit'),
+            Section::make('Engagement')->schema([
+                TextInput::make('readers_count')
+                    ->label('Readers')
+                    ->numeric()
+                    ->integer()
+                    ->minValue(0)
+                    ->default(0)
+                    ->helperText('Shown publicly. Real readers keep adding from this number. Saving again replaces the total with whatever you enter.'),
+                TextInput::make('likes_count')
+                    ->label('Likes')
+                    ->numeric()
+                    ->integer()
+                    ->minValue(0)
+                    ->default(0)
+                    ->helperText('Shown publicly. Real likes keep adding from this number. Saving again replaces the total with whatever you enter.'),
+                TextInput::make('views_count')
+                    ->label('Views (live)')
+                    ->numeric()
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->helperText('Updated automatically when people open this edition. Not editable.'),
+            ])->columns(3)->visibleOn('edit'),
         ]);
     }
 
@@ -126,6 +148,16 @@ class EpaperEditionResource extends Resource
                 TextColumn::make('title')->searchable()->limit(40),
                 IconColumn::make('restricted')->boolean()->label('Premium'),
                 TextColumn::make('pdf_status')->badge(),
+                TextColumn::make('readers_count')
+                    ->label('Readers')
+                    ->sortable()
+                    ->numeric()
+                    ->alignCenter(),
+                TextColumn::make('likes_count')
+                    ->label('Likes')
+                    ->sortable()
+                    ->numeric()
+                    ->alignCenter(),
                 TextColumn::make('status')->badge(),
                 TextColumn::make('published_at')->dateTime()->sortable(),
             ])
