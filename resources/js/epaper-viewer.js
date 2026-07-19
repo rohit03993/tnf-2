@@ -40,6 +40,7 @@ class TnfEpaperViewer {
             thumbsSidebar: root.querySelector('[data-ep-thumbs-sidebar]'),
             thumbsRail: root.querySelector('[data-ep-thumbs-rail]'),
             mobilePage: root.querySelector('[data-ep-mobile-page]'),
+            mobilePageSelect: root.querySelector('[data-ep-mobile-page-select]'),
             clipModal: root.querySelector('[data-ep-clip-modal]'),
             clipUrl: root.querySelector('[data-ep-clip-url]'),
             clipShare: root.querySelector('[data-ep-clip-share]'),
@@ -144,6 +145,8 @@ class TnfEpaperViewer {
         this.bindTouchZoom();
         this.bindResizeHandler();
         this.bindMobilePanScroll();
+        this.syncChromeHeights();
+        this.maybeShowZoomHint();
         await this.setPage(this.currentPage, false);
         this.setPdfLoading(false);
         this.scheduleReadTracking();
@@ -227,14 +230,13 @@ class TnfEpaperViewer {
 
         if (typeof payload.readers_count === 'number') {
             const label = payload.readers_label ?? String(payload.readers_count);
-            const noun = payload.readers_count === 1 ? 'reader' : 'readers';
 
             this.root.querySelectorAll('[data-ep-readers-count]').forEach((el) => {
                 el.textContent = label;
             });
 
             this.root.querySelectorAll('[data-ep-readers-label]').forEach((el) => {
-                el.textContent = noun;
+                el.textContent = 'पाठक';
             });
         }
 
@@ -245,11 +247,11 @@ class TnfEpaperViewer {
         if (typeof payload.liked === 'boolean' && this.els.likeBtn) {
             this.els.likeBtn.dataset.liked = payload.liked ? 'true' : 'false';
             this.els.likeBtn.setAttribute('aria-pressed', payload.liked ? 'true' : 'false');
-            this.els.likeBtn.setAttribute('aria-label', payload.liked ? 'Unlike this edition' : 'Like this edition');
+            this.els.likeBtn.setAttribute('aria-label', payload.liked ? 'पसंद हटाएँ' : 'पसंद करें');
             this.els.likeBtn.classList.toggle('tnf-ep-like--active', payload.liked);
 
             if (this.els.likeLabel) {
-                this.els.likeLabel.textContent = payload.liked ? 'Liked' : 'Like';
+                this.els.likeLabel.textContent = 'पसंद';
             }
         }
     }
@@ -434,9 +436,7 @@ class TnfEpaperViewer {
     }
 
     clipHintText() {
-        return this.isCoarsePointer()
-            ? 'Touch and drag on the newspaper to select the area you want to share'
-            : 'Drag on the newspaper to highlight the section you want to share';
+        return 'पेज पर खींचकर हिस्सा चुनें';
     }
 
     getPageUrl(page) {
@@ -457,10 +457,10 @@ class TnfEpaperViewer {
                 btn.type = 'button';
                 btn.className = 'tnf-ep-thumb';
                 btn.dataset.page = String(page);
-                btn.setAttribute('aria-label', `Page ${page}`);
+                btn.setAttribute('aria-label', `पृष्ठ ${page}`);
 
                 const img = document.createElement('img');
-                img.alt = `Page ${page}`;
+                img.alt = `पृष्ठ ${page}`;
                 img.loading = 'lazy';
                 const thumbSrc = this.getPageUrl(page) || this.pdfThumbCache[page] || null;
 
@@ -474,7 +474,7 @@ class TnfEpaperViewer {
 
                 const label = document.createElement('span');
                 label.className = 'tnf-ep-thumb-label';
-                label.textContent = `Page ${page}`;
+                label.textContent = `पृष्ठ ${page}`;
                 btn.appendChild(label);
 
                 btn.addEventListener('click', () => this.setPage(page));
@@ -484,22 +484,79 @@ class TnfEpaperViewer {
     }
 
     buildPageSelect() {
-        if (! this.els.pageSelect) {
+        const selects = [this.els.pageSelect, this.els.mobilePageSelect].filter(Boolean);
+
+        if (! selects.length) {
             return;
         }
 
-        this.els.pageSelect.innerHTML = '';
+        selects.forEach((select) => {
+            select.innerHTML = '';
 
-        for (let page = 1; page <= this.pageCount; page++) {
-            const option = document.createElement('option');
-            option.value = String(page);
-            option.textContent = `Page ${page} of ${this.pageCount}`;
-            this.els.pageSelect.appendChild(option);
+            for (let page = 1; page <= this.pageCount; page++) {
+                const option = document.createElement('option');
+                option.value = String(page);
+                option.textContent = `पृष्ठ ${page} / ${this.pageCount}`;
+                select.appendChild(option);
+            }
+
+            select.addEventListener('change', () => {
+                this.setPage(Number(select.value));
+            });
+        });
+    }
+
+    pageLabel(page = this.currentPage) {
+        return `${page}/${Math.max(1, this.pageCount)}`;
+    }
+
+    syncChromeHeights() {
+        const root = document.documentElement;
+        const mobileBar = this.root.querySelector('[data-ep-mobile-bar]');
+        const engagement = this.root.querySelector('[data-ep-engagement]');
+        const thumbs = this.root.querySelector('[data-ep-thumbs-rail-wrap]');
+
+        if (mobileBar) {
+            root.style.setProperty('--tnf-ep-mobile-bar', `${mobileBar.offsetHeight}px`);
         }
 
-        this.els.pageSelect.addEventListener('change', () => {
-            this.setPage(Number(this.els.pageSelect.value));
-        });
+        if (engagement) {
+            root.style.setProperty('--tnf-ep-engagement-h', `${engagement.offsetHeight}px`);
+        }
+
+        if (thumbs && getComputedStyle(thumbs).display !== 'none') {
+            root.style.setProperty('--tnf-ep-thumbs-h', `${thumbs.offsetHeight}px`);
+        } else {
+            root.style.setProperty('--tnf-ep-thumbs-h', '0px');
+        }
+    }
+
+    maybeShowZoomHint() {
+        const hint = this.root.querySelector('[data-ep-mobile-zoom-hint]');
+
+        if (! hint || window.matchMedia('(min-width: 1024px)').matches) {
+            return;
+        }
+
+        try {
+            if (window.localStorage.getItem('tnf_ep_zoom_hint_seen') === '1') {
+                return;
+            }
+        } catch {
+            return;
+        }
+
+        hint.hidden = false;
+
+        window.setTimeout(() => {
+            hint.hidden = true;
+
+            try {
+                window.localStorage.setItem('tnf_ep_zoom_hint_seen', '1');
+            } catch {
+                // Ignore storage failures.
+            }
+        }, 4000);
     }
 
     bindActions() {
@@ -536,15 +593,41 @@ class TnfEpaperViewer {
         });
 
         document.addEventListener('keydown', (event) => {
-            if (event.key !== 'Escape') {
+            if (event.key === 'Escape') {
+                if (! this.els.shareModal?.classList.contains('hidden')) {
+                    this.closeShareModal();
+                } else if (! this.els.clipModal?.classList.contains('hidden')) {
+                    this.closeClipModal();
+                } else if (this.clipMode) {
+                    this.toggleClipMode(true);
+                }
+
                 return;
             }
 
-            if (! this.els.shareModal?.classList.contains('hidden')) {
-                this.closeShareModal();
-            } else if (! this.els.clipModal?.classList.contains('hidden')) {
-                this.closeClipModal();
+            const target = event.target;
+            const typing = target instanceof HTMLElement && (
+                target.tagName === 'INPUT'
+                || target.tagName === 'TEXTAREA'
+                || target.tagName === 'SELECT'
+                || target.isContentEditable
+            );
+
+            if (typing || this.clipMode || this.config.clipMode) {
+                return;
             }
+
+            if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+                event.preventDefault();
+                this.setPage(this.currentPage - 1);
+            } else if (event.key === 'ArrowRight' || event.key === 'PageDown') {
+                event.preventDefault();
+                this.setPage(this.currentPage + 1);
+            }
+        });
+
+        this.root.querySelector('[data-ep-clip-more-options]')?.addEventListener('click', () => {
+            this.els.clipPresets?.classList.add('is-expanded');
         });
 
         this.els.clipCopyBtn?.addEventListener('click', () => this.copyClipUrl());
@@ -864,8 +947,12 @@ class TnfEpaperViewer {
             this.els.pageSelect.value = String(this.currentPage);
         }
 
+        if (this.els.mobilePageSelect) {
+            this.els.mobilePageSelect.value = String(this.currentPage);
+        }
+
         if (this.els.mobilePage) {
-            this.els.mobilePage.textContent = `Page ${this.currentPage} of ${this.pageCount}`;
+            this.els.mobilePage.textContent = this.pageLabel();
         }
 
         this.root.querySelectorAll('.tnf-ep-thumb').forEach((thumb) => {
@@ -874,6 +961,7 @@ class TnfEpaperViewer {
 
         this.renderPager();
         this.updateZoomLabel();
+        this.syncChromeHeights();
 
         this.root.querySelectorAll('.tnf-ep-stage-nav-btn--prev').forEach((button) => {
             button.disabled = this.currentPage <= 1;
@@ -911,6 +999,7 @@ class TnfEpaperViewer {
 
         this.resizeHandler = () => {
             window.requestAnimationFrame(() => {
+                this.syncChromeHeights();
                 void this.applyPageZoom();
             });
         };
@@ -1093,7 +1182,7 @@ class TnfEpaperViewer {
         const resetBtn = this.root.querySelector('[data-ep-action="zoom-reset"]');
         if (resetBtn) {
             resetBtn.textContent = this.userZoomFactor === 1
-                ? 'Fit'
+                ? 'फिट'
                 : `${Math.round(this.effectiveZoom * 100)}%`;
         }
     }
@@ -1124,11 +1213,13 @@ class TnfEpaperViewer {
             }
 
             this.openClipWorkspaceShell();
+            this.els.clipPresets?.classList.remove('is-expanded');
             void this.prepareClipMode();
         } else {
             this.unbindClipDrag();
             this.unmountClipScreen();
             this.showClipMobileActions(false);
+            this.els.clipPresets?.classList.remove('is-expanded');
         }
     }
 
@@ -1202,10 +1293,12 @@ class TnfEpaperViewer {
             this.clipWorkspaceActive = true;
             this.mountClipScreen();
             this.bindClipDrag();
+            this.applyClipPreset('lead');
             this.updateClipShareButtonsState();
+            this.setClipInstruction('मुख्य खबर तैयार है — WhatsApp पर भेजें');
         } catch (error) {
             console.error('TNF ePaper: clip mode failed.', error);
-            this.showClipWorkspaceError('Could not prepare this page for clipping. Tap Cancel and try again, or refresh the page.');
+            this.showClipWorkspaceError('क्लिप तैयार नहीं हो सकी। रद्द करें और फिर कोशिश करें।');
         } finally {
             this.setPdfLoading(false);
         }
@@ -1649,9 +1742,7 @@ class TnfEpaperViewer {
             this.bindClipWorkspacePanScroll();
             this.updateClipPresetButtons('draw');
             this.setClipInstruction(
-                this.isCoarsePointer()
-                    ? 'Drag on the page to draw your selection'
-                    : 'Drag on the page to draw your selection · पेज पर खींचकर चुनें',
+                'पेज पर खींचकर अपना हिस्सा चुनें',
             );
 
             return;
@@ -1702,15 +1793,11 @@ class TnfEpaperViewer {
     }
 
     clipHintMessage() {
-        return this.isCoarsePointer()
-            ? 'Move bar, edges or corners · −/+ to zoom'
-            : 'Drag edges, corners or Move bar · −/+ to zoom · बॉक्स बदलें';
+        return 'किनारे खींचें या मुख्य खबर चुनें · −/+ से ज़ूम';
     }
 
     clipReadyMessage() {
-        return this.isCoarsePointer()
-            ? 'Swipe to explore · tap Top/Lead/Full · Draw to custom-select · −/+ to zoom'
-            : 'Resize or choose a preset, then Share · बॉक्स बदलें या शेयर करें';
+        return 'मुख्य खबर तैयार है — WhatsApp पर भेजें';
     }
 
     setClipInstruction(message, { showOverlay = false, autoHideMs = null } = {}) {
@@ -3095,8 +3182,8 @@ class TnfEpaperViewer {
         }
 
         const messages = {
-            empty: 'This edition has no pages yet. Upload a PDF in admin under Content → ePaper Editions.',
-            pdf: 'The PDF could not be loaded. Check that storage is linked (<code>php artisan storage:link</code>) and the PDF file exists in storage.',
+            empty: 'यह संस्करण अभी उपलब्ध नहीं है। कृपया बाद में फिर देखें।',
+            pdf: 'अखबार लोड नहीं हो सका। कृपया पेज रिफ्रेश करें या बाद में कोशिश करें।',
         };
 
         this.els.stage.innerHTML = `<p class="p-8 text-center text-tnf-muted">${messages[reason] || messages.empty}</p>`;

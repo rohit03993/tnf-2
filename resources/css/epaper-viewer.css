@@ -627,7 +627,7 @@
     }
 
     .tnf-ep-mobile-bar-inner {
-        @apply grid min-h-14 grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] items-center gap-0.5 px-1;
+        @apply grid min-h-14 grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] items-center gap-1 px-2;
     }
 
     .tnf-ep-mobile-zoom-btn {
@@ -639,23 +639,53 @@
         touch-action: manipulation;
     }
 
+    .tnf-ep-mobile-page-wrap {
+        @apply relative min-w-0;
+    }
+
     .tnf-ep-mobile-page {
-        @apply truncate px-1 text-center text-tnf-sm font-semibold text-tnf-navy;
+        @apply inline-flex min-h-touch w-full min-w-0 items-center justify-center truncate rounded-tnf px-2 text-center text-tnf-sm font-bold tabular-nums text-tnf-navy;
+        touch-action: manipulation;
+        pointer-events: none;
+    }
+
+    .tnf-ep-mobile-page-select {
+        @apply absolute inset-0 z-10 cursor-pointer opacity-0;
+    }
+
+    .tnf-ep-mobile-clip-btn,
+    .tnf-ep-mobile-share-btn {
+        @apply inline-flex min-h-touch min-w-touch items-center justify-center rounded-full border transition-colors active:scale-[0.98];
+        touch-action: manipulation;
     }
 
     .tnf-ep-mobile-clip-btn {
-        @apply inline-flex min-h-touch items-center justify-center gap-1.5 rounded-full border border-tnf-gray-dark bg-tnf-gray/60 px-3 text-tnf-sm font-semibold text-tnf-navy transition-colors active:scale-[0.98];
-        touch-action: manipulation;
+        @apply border-tnf-gray-dark bg-tnf-gray/60 text-tnf-navy;
     }
 
     .tnf-ep-mobile-share-btn {
-        @apply inline-flex min-h-touch items-center justify-center gap-1 rounded-full border border-tnf-red bg-tnf-red px-3 text-tnf-sm font-semibold text-white transition-colors active:scale-[0.98];
-        touch-action: manipulation;
+        @apply border-tnf-red bg-tnf-red text-white;
     }
 
     .tnf-ep-mobile-share-btn svg,
     .tnf-ep-mobile-clip-btn svg {
         @apply h-5 w-5 shrink-0;
+    }
+
+    .tnf-ep-clip-preset--advanced {
+        display: none;
+    }
+
+    .tnf-ep-clip-workspace-presets.is-expanded .tnf-ep-clip-preset--advanced {
+        display: inline-flex;
+    }
+
+    .tnf-ep-clip-more-options {
+        @apply inline-flex min-h-9 items-center justify-center rounded-full border border-dashed border-tnf-gray-dark bg-white px-3 text-tnf-xs font-semibold text-tnf-muted;
+    }
+
+    .tnf-ep-clip-workspace-presets.is-expanded .tnf-ep-clip-more-options {
+        display: none;
     }
 
     .tnf-ep-mobile-clip-btn svg {
