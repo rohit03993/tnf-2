@@ -35,7 +35,6 @@
                                        class="tnf-drawer-link tnf-drawer-link--category {{ request()->routeIs('category.show') && request()->route('category')?->slug === $category['slug'] ? 'tnf-drawer-link--active' : '' }}"
                                        role="menuitem">
                                         <span>{{ $category['label'] }}</span>
-                                        <span class="tnf-drawer-category-count">{{ $category['articles_count'] }}</span>
                                     </a>
                                 @endforeach
                             @endif

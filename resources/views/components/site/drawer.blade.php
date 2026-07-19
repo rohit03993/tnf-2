@@ -63,7 +63,6 @@
                            class="tnf-drawer-category-link {{ $categoryActive($category['slug']) ? 'tnf-drawer-category-link--active' : '' }}"
                            data-tnf-drawer-close>
                             <span class="tnf-drawer-category-name">{{ $category['label'] }}</span>
-                            <span class="tnf-drawer-category-count">{{ $category['articles_count'] }}</span>
                         </a>
                     </li>
                 @endforeach
