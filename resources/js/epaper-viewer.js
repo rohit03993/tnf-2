@@ -60,7 +60,6 @@ class TnfEpaperViewer {
             clipWorkspaceCancel: document.querySelector('[data-ep-clip-workspace-cancel]'),
             clipWorkspaceShare: document.querySelector('[data-ep-clip-workspace-share]'),
             clipWorkspacePageNum: document.querySelector('[data-ep-clip-workspace-page-num]'),
-            clipWorkspacePageNumHi: document.querySelector('[data-ep-clip-workspace-page-num-hi]'),
             clipWorkspaceHint: document.querySelector('[data-ep-clip-workspace-hint]'),
             clipWorkspaceWhatsapp: document.querySelector('[data-ep-clip-workspace-whatsapp]'),
             clipLivePreview: document.querySelector('[data-ep-clip-live-preview]'),
@@ -236,7 +235,7 @@ class TnfEpaperViewer {
             });
 
             this.root.querySelectorAll('[data-ep-readers-label]').forEach((el) => {
-                el.textContent = 'पाठक';
+                el.textContent = payload.readers_count === 1 ? 'reader' : 'readers';
             });
         }
 
@@ -247,11 +246,11 @@ class TnfEpaperViewer {
         if (typeof payload.liked === 'boolean' && this.els.likeBtn) {
             this.els.likeBtn.dataset.liked = payload.liked ? 'true' : 'false';
             this.els.likeBtn.setAttribute('aria-pressed', payload.liked ? 'true' : 'false');
-            this.els.likeBtn.setAttribute('aria-label', payload.liked ? 'पसंद हटाएँ' : 'पसंद करें');
+            this.els.likeBtn.setAttribute('aria-label', payload.liked ? 'Unlike this edition' : 'Like this edition');
             this.els.likeBtn.classList.toggle('tnf-ep-like--active', payload.liked);
 
             if (this.els.likeLabel) {
-                this.els.likeLabel.textContent = 'पसंद';
+                this.els.likeLabel.textContent = payload.liked ? 'Liked' : 'Like';
             }
         }
     }
@@ -436,7 +435,7 @@ class TnfEpaperViewer {
     }
 
     clipHintText() {
-        return 'पेज पर खींचकर हिस्सा चुनें';
+        return 'Drag on the page to select a section';
     }
 
     getPageUrl(page) {
@@ -457,10 +456,10 @@ class TnfEpaperViewer {
                 btn.type = 'button';
                 btn.className = 'tnf-ep-thumb';
                 btn.dataset.page = String(page);
-                btn.setAttribute('aria-label', `पृष्ठ ${page}`);
+                btn.setAttribute('aria-label', `Page ${page}`);
 
                 const img = document.createElement('img');
-                img.alt = `पृष्ठ ${page}`;
+                img.alt = `Page ${page}`;
                 img.loading = 'lazy';
                 const thumbSrc = this.getPageUrl(page) || this.pdfThumbCache[page] || null;
 
@@ -474,7 +473,7 @@ class TnfEpaperViewer {
 
                 const label = document.createElement('span');
                 label.className = 'tnf-ep-thumb-label';
-                label.textContent = `पृष्ठ ${page}`;
+                label.textContent = `Page ${page}`;
                 btn.appendChild(label);
 
                 btn.addEventListener('click', () => this.setPage(page));
@@ -496,7 +495,7 @@ class TnfEpaperViewer {
             for (let page = 1; page <= this.pageCount; page++) {
                 const option = document.createElement('option');
                 option.value = String(page);
-                option.textContent = `पृष्ठ ${page} / ${this.pageCount}`;
+                option.textContent = `Page ${page} / ${this.pageCount}`;
                 select.appendChild(option);
             }
 
@@ -1182,7 +1181,7 @@ class TnfEpaperViewer {
         const resetBtn = this.root.querySelector('[data-ep-action="zoom-reset"]');
         if (resetBtn) {
             resetBtn.textContent = this.userZoomFactor === 1
-                ? 'फिट'
+                ? 'Fit'
                 : `${Math.round(this.effectiveZoom * 100)}%`;
         }
     }
@@ -1233,7 +1232,6 @@ class TnfEpaperViewer {
             clipWorkspaceCancel: '[data-ep-clip-workspace-cancel]',
             clipWorkspaceShare: '[data-ep-clip-workspace-share]',
             clipWorkspacePageNum: '[data-ep-clip-workspace-page-num]',
-            clipWorkspacePageNumHi: '[data-ep-clip-workspace-page-num-hi]',
             clipWorkspaceHint: '[data-ep-clip-workspace-hint]',
             clipWorkspaceWhatsapp: '[data-ep-clip-workspace-whatsapp]',
             clipLivePreview: '[data-ep-clip-live-preview]',
@@ -1295,10 +1293,10 @@ class TnfEpaperViewer {
             this.bindClipDrag();
             this.applyClipPreset('lead');
             this.updateClipShareButtonsState();
-            this.setClipInstruction('मुख्य खबर तैयार है — WhatsApp पर भेजें');
+            this.setClipInstruction('Lead story ready — share on WhatsApp');
         } catch (error) {
             console.error('TNF ePaper: clip mode failed.', error);
-            this.showClipWorkspaceError('क्लिप तैयार नहीं हो सकी। रद्द करें और फिर कोशिश करें।');
+            this.showClipWorkspaceError('Could not prepare the clip. Cancel and try again.');
         } finally {
             this.setPdfLoading(false);
         }
@@ -1742,7 +1740,7 @@ class TnfEpaperViewer {
             this.bindClipWorkspacePanScroll();
             this.updateClipPresetButtons('draw');
             this.setClipInstruction(
-                'पेज पर खींचकर अपना हिस्सा चुनें',
+                'Drag on the page to select your section',
             );
 
             return;
@@ -1793,11 +1791,11 @@ class TnfEpaperViewer {
     }
 
     clipHintMessage() {
-        return 'किनारे खींचें या मुख्य खबर चुनें · −/+ से ज़ूम';
+        return 'Drag the edges or pick Lead story · use −/+ to zoom';
     }
 
     clipReadyMessage() {
-        return 'मुख्य खबर तैयार है — WhatsApp पर भेजें';
+        return 'Lead story ready — share on WhatsApp';
     }
 
     setClipInstruction(message, { showOverlay = false, autoHideMs = null } = {}) {
@@ -1883,7 +1881,7 @@ class TnfEpaperViewer {
         }
 
         this.setClipInstruction(
-            'Drag on the page to select a headline or article · पेज पर खींचकर हिस्सा चुनें',
+            'Drag on the page to select a headline or article',
             { showOverlay: true },
         );
         this.getClipScreenElements()?.box?.classList.add('tnf-ep-clip-box--pulse');
@@ -2033,10 +2031,6 @@ class TnfEpaperViewer {
 
         if (this.els.clipWorkspacePageNum) {
             this.els.clipWorkspacePageNum.textContent = String(this.currentPage);
-        }
-
-        if (this.els.clipWorkspacePageNumHi) {
-            this.els.clipWorkspacePageNumHi.textContent = String(this.currentPage);
         }
 
         this.pendingClip = null;
@@ -3182,8 +3176,8 @@ class TnfEpaperViewer {
         }
 
         const messages = {
-            empty: 'यह संस्करण अभी उपलब्ध नहीं है। कृपया बाद में फिर देखें।',
-            pdf: 'अखबार लोड नहीं हो सका। कृपया पेज रिफ्रेश करें या बाद में कोशिश करें।',
+            empty: 'This edition is not available right now. Please try again later.',
+            pdf: 'Could not load the newspaper. Please refresh the page or try again later.',
         };
 
         this.els.stage.innerHTML = `<p class="p-8 text-center text-tnf-muted">${messages[reason] || messages.empty}</p>`;
