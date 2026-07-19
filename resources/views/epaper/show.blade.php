@@ -18,12 +18,10 @@
         @unless($config['clipMode'])
             <div class="tnf-ep-viewer-toolbar">
                 <div class="tnf-container tnf-ep-toolbar-inner">
-                    <div class="tnf-ep-toolbar-group">
-                        <button type="button" class="tnf-ep-btn" data-ep-action="prev" aria-label="Previous page">‹</button>
-                        <label class="sr-only" for="tnf-ep-page-select">Page</label>
-                        <select id="tnf-ep-page-select" class="tnf-ep-page-select" data-ep-page-select></select>
+                    <div class="tnf-ep-toolbar-group tnf-ep-page-nav" role="navigation" aria-label="Pages">
+                        <button type="button" class="tnf-ep-btn tnf-ep-page-nav__btn" data-ep-action="prev" aria-label="Previous page">‹</button>
                         <div class="tnf-ep-pager" data-ep-pager></div>
-                        <button type="button" class="tnf-ep-btn" data-ep-action="next" aria-label="Next page">›</button>
+                        <button type="button" class="tnf-ep-btn tnf-ep-page-nav__btn" data-ep-action="next" aria-label="Next page">›</button>
                     </div>
                     <div class="tnf-ep-toolbar-group tnf-ep-toolbar-title">
                         <span class="tnf-ep-edition-title">{{ $edition->title }}</span>

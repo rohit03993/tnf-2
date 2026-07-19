@@ -473,7 +473,7 @@ class TnfEpaperViewer {
 
                 const label = document.createElement('span');
                 label.className = 'tnf-ep-thumb-label';
-                label.textContent = `Page ${page}`;
+                label.textContent = String(page);
                 btn.appendChild(label);
 
                 btn.addEventListener('click', () => this.setPage(page));
@@ -495,7 +495,7 @@ class TnfEpaperViewer {
             for (let page = 1; page <= this.pageCount; page++) {
                 const option = document.createElement('option');
                 option.value = String(page);
-                option.textContent = `Page ${page} / ${this.pageCount}`;
+                option.textContent = `${page} / ${this.pageCount}`;
                 select.appendChild(option);
             }
 
@@ -507,6 +507,34 @@ class TnfEpaperViewer {
 
     pageLabel(page = this.currentPage) {
         return `${page}/${Math.max(1, this.pageCount)}`;
+    }
+
+    pagerPages() {
+        const total = Math.max(1, this.pageCount);
+        const current = this.currentPage;
+
+        if (total <= 10) {
+            return Array.from({ length: total }, (_, index) => index + 1);
+        }
+
+        const pages = new Set([1, total, current]);
+        for (let page = current - 1; page <= current + 1; page++) {
+            if (page >= 1 && page <= total) {
+                pages.add(page);
+            }
+        }
+
+        const sorted = [...pages].sort((a, b) => a - b);
+        const result = [];
+
+        sorted.forEach((page, index) => {
+            if (index > 0 && page - sorted[index - 1] > 1) {
+                result.push('…');
+            }
+            result.push(page);
+        });
+
+        return result;
     }
 
     syncChromeHeights() {
@@ -962,10 +990,10 @@ class TnfEpaperViewer {
         this.updateZoomLabel();
         this.syncChromeHeights();
 
-        this.root.querySelectorAll('.tnf-ep-stage-nav-btn--prev').forEach((button) => {
+        this.root.querySelectorAll('[data-ep-action="prev"]').forEach((button) => {
             button.disabled = this.currentPage <= 1;
         });
-        this.root.querySelectorAll('.tnf-ep-stage-nav-btn--next').forEach((button) => {
+        this.root.querySelectorAll('[data-ep-action="next"]').forEach((button) => {
             button.disabled = this.currentPage >= this.pageCount;
         });
     }
@@ -976,19 +1004,26 @@ class TnfEpaperViewer {
         }
 
         this.els.pager.innerHTML = '';
-        const windowSize = 5;
-        let start = Math.max(1, this.currentPage - Math.floor(windowSize / 2));
-        let end = Math.min(this.pageCount, start + windowSize - 1);
-        start = Math.max(1, end - windowSize + 1);
 
-        for (let page = start; page <= end; page++) {
+        this.pagerPages().forEach((item) => {
+            if (item === '…') {
+                const dots = document.createElement('span');
+                dots.className = 'tnf-ep-pager-ellipsis';
+                dots.textContent = '…';
+                dots.setAttribute('aria-hidden', 'true');
+                this.els.pager.appendChild(dots);
+                return;
+            }
+
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'tnf-ep-pager-btn' + (page === this.currentPage ? ' is-active' : '');
-            btn.textContent = String(page);
-            btn.addEventListener('click', () => this.setPage(page));
+            btn.className = 'tnf-ep-pager-btn' + (item === this.currentPage ? ' is-active' : '');
+            btn.textContent = String(item);
+            btn.setAttribute('aria-label', `Page ${item}`);
+            btn.setAttribute('aria-current', item === this.currentPage ? 'page' : 'false');
+            btn.addEventListener('click', () => this.setPage(item));
             this.els.pager.appendChild(btn);
-        }
+        });
     }
 
     bindResizeHandler() {

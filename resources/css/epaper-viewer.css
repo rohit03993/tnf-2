@@ -183,20 +183,32 @@
         @apply shrink-0;
     }
 
-    .tnf-ep-page-select {
-        @apply min-h-touch rounded-tnf border border-tnf-gray-dark bg-white px-2 text-tnf-sm;
+    .tnf-ep-page-nav {
+        @apply gap-1.5;
+    }
+
+    .tnf-ep-page-nav__btn {
+        @apply min-h-9 min-w-9 px-0 text-lg leading-none;
+    }
+
+    .tnf-ep-page-nav__btn:disabled {
+        @apply cursor-not-allowed opacity-40 hover:border-tnf-gray-dark hover:text-tnf-navy;
     }
 
     .tnf-ep-pager {
-        @apply hidden items-center gap-1 sm:flex;
+        @apply flex items-center gap-0.5 rounded-tnf border border-tnf-gray-dark bg-tnf-gray/40 p-0.5;
     }
 
     .tnf-ep-pager-btn {
-        @apply inline-flex min-h-9 min-w-9 items-center justify-center rounded-tnf text-tnf-sm font-medium text-tnf-navy hover:bg-tnf-gray;
+        @apply inline-flex min-h-8 min-w-8 items-center justify-center rounded-[0.35rem] text-tnf-sm font-semibold tabular-nums text-tnf-navy transition-colors hover:bg-white;
     }
 
     .tnf-ep-pager-btn.is-active {
-        @apply bg-tnf-red text-white;
+        @apply bg-tnf-red text-white shadow-sm hover:bg-tnf-red;
+    }
+
+    .tnf-ep-pager-ellipsis {
+        @apply inline-flex min-h-8 min-w-6 items-center justify-center text-tnf-xs font-semibold text-tnf-muted;
     }
 
     .tnf-ep-thumbs-sidebar {
@@ -217,7 +229,7 @@
     }
 
     .tnf-ep-thumb-label {
-        @apply block bg-white px-1 py-1.5 text-center text-tnf-xs font-semibold text-tnf-navy;
+        @apply block bg-white px-1 py-1 text-center text-tnf-xs font-bold tabular-nums text-tnf-navy;
     }
 
     .tnf-ep-thumbs-rail .tnf-ep-thumb-label {
