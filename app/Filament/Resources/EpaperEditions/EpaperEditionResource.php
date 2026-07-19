@@ -117,7 +117,7 @@ class EpaperEditionResource extends Resource
                     ->integer()
                     ->minValue(0)
                     ->default(0)
-                    ->helperText('Shown publicly. Real readers keep adding from this number. Saving again replaces the total with whatever you enter.'),
+                    ->helperText('Shown publicly. Increases by 1 on every page open. Saving again replaces the total with whatever you enter.'),
                 TextInput::make('likes_count')
                     ->label('Likes')
                     ->numeric()

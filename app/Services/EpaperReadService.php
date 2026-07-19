@@ -38,10 +38,8 @@ class EpaperReadService
             ])->save();
         }
 
-        if ($isNewReader) {
-            $edition->increment('readers_count');
-        }
-
+        // Public "readers" counter bumps on every open (from the admin base upward).
+        $edition->increment('readers_count');
         $edition->increment('views_count');
         $edition->refresh();
 

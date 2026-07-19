@@ -41,7 +41,7 @@ class ArticleReadServiceTest extends TestCase
         $article->refresh();
 
         $this->assertFalse($second['is_new_reader']);
-        $this->assertSame(1, $second['readers_count']);
+        $this->assertSame(2, $second['readers_count']);
         $this->assertSame(2, $second['views_count']);
     }
 

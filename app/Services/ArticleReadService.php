@@ -42,10 +42,8 @@ class ArticleReadService
             ])->save();
         }
 
-        if ($isNewReader) {
-            $article->increment('readers_count');
-        }
-
+        // Public "readers" counter bumps on every open (from the admin base upward).
+        $article->increment('readers_count');
         $article->increment('views_count');
         $article->refresh();
 
@@ -76,6 +74,7 @@ class ArticleReadService
         $isNewReader = $read->wasRecentlyCreated;
 
         if ($isNewReader) {
+            // Reader row created via like before a page view — keep counts in sync.
             $article->increment('readers_count');
         } else {
             $read->forceFill([

@@ -57,7 +57,7 @@ class ArticleReadTrackingTest extends TestCase
         ]);
     }
 
-    public function test_repeat_visit_increments_views_not_readers(): void
+    public function test_repeat_visit_increments_readers_and_views(): void
     {
         $author = User::factory()->create();
         $article = Article::query()->create([
@@ -79,7 +79,7 @@ class ArticleReadTrackingTest extends TestCase
 
         $this->assertDatabaseHas('articles', [
             'id' => $article->id,
-            'readers_count' => 1,
+            'readers_count' => 2,
             'views_count' => 2,
         ]);
     }

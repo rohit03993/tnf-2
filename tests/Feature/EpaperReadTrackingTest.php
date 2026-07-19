@@ -55,7 +55,7 @@ class EpaperReadTrackingTest extends TestCase
         ]);
     }
 
-    public function test_repeat_read_increments_views_not_readers(): void
+    public function test_repeat_read_increments_readers_and_views(): void
     {
         $edition = $this->createEdition();
         $service = app(\App\Services\EpaperReadService::class);
@@ -74,7 +74,7 @@ class EpaperReadTrackingTest extends TestCase
         $edition->refresh();
 
         $this->assertFalse($second['is_new_reader']);
-        $this->assertSame(1, $second['readers_count']);
+        $this->assertSame(2, $second['readers_count']);
         $this->assertSame(2, $second['views_count']);
     }
 
