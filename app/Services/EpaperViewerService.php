@@ -155,6 +155,10 @@ class EpaperViewerService
             $url = $pages[0]['url'] ?? $edition->featuredMedia?->url();
         }
 
+        if (! $url && $edition->pdf_path) {
+            $url = app(EpaperCoverService::class)->ensurePageImage($edition, $pageIndex + 1);
+        }
+
         return filled($url) ? $url : null;
     }
 }

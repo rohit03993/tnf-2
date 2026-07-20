@@ -19,6 +19,77 @@ class EpaperCoverService
         return $this->diagnose($edition) === null && $this->generateCover($edition);
     }
 
+    /**
+     * Resolve or render a JPEG for a specific PDF page (1-based).
+     * Used for clip OG previews when pages_json has no raster for that page.
+     */
+    public function ensurePageImage(EpaperEdition $edition, int $pageNumber): ?string
+    {
+        if ($pageNumber < 1) {
+            return null;
+        }
+
+        $edition = $edition->fresh(['featuredMedia']);
+
+        if (! $edition?->pdf_path) {
+            return null;
+        }
+
+        $disk = Storage::disk('public');
+
+        if (! $disk->exists($edition->pdf_path)) {
+            return null;
+        }
+
+        if ($pageNumber === 1) {
+            if ($url = $edition->featuredMedia?->url()) {
+                return $url;
+            }
+
+            $coverPath = "epaper/covers/{$edition->id}.jpg";
+
+            if ($disk->exists($coverPath)) {
+                return '/storage/'.$coverPath;
+            }
+        }
+
+        $renderPath = "epaper/renders/{$edition->id}/page-{$pageNumber}.jpg";
+
+        if ($disk->exists($renderPath)) {
+            return '/storage/'.$renderPath;
+        }
+
+        if (! $this->hasRenderer()) {
+            return null;
+        }
+
+        $disk->makeDirectory("epaper/renders/{$edition->id}");
+
+        $pdfPath = $disk->path($edition->pdf_path);
+        $outputPath = $disk->path($renderPath);
+        $tempPath = $outputPath.'.tmp.jpg';
+        $rendered = false;
+
+        foreach ($this->renderers() as $renderer) {
+            if ($this->{$renderer}($pdfPath, $tempPath, $pageNumber)) {
+                $rendered = true;
+                break;
+            }
+        }
+
+        if (! $rendered || ! is_file($tempPath)) {
+            return null;
+        }
+
+        if (is_file($outputPath)) {
+            @unlink($outputPath);
+        }
+
+        rename($tempPath, $outputPath);
+
+        return '/storage/'.$renderPath;
+    }
+
     public function diagnose(EpaperEdition $edition): ?string
     {
         $edition = $edition->fresh(['featuredMedia']);
@@ -71,7 +142,7 @@ class EpaperCoverService
         $rendered = false;
 
         foreach ($this->renderers() as $renderer) {
-            if ($this->{$renderer}($pdfPath, $tempPath)) {
+            if ($this->{$renderer}($pdfPath, $tempPath, 1)) {
                 $rendered = true;
                 break;
             }
@@ -108,7 +179,7 @@ class EpaperCoverService
         return ['renderWithImagick', 'renderWithPdftoppm', 'renderWithGhostscript'];
     }
 
-    protected function renderWithImagick(string $pdfPath, string $outputPath): bool
+    protected function renderWithImagick(string $pdfPath, string $outputPath, int $pageNumber = 1): bool
     {
         if (! extension_loaded('imagick')) {
             return false;
@@ -117,7 +188,7 @@ class EpaperCoverService
         try {
             $imagick = new \Imagick;
             $imagick->setResolution(150, 150);
-            $imagick->readImage($pdfPath.'[0]');
+            $imagick->readImage($pdfPath.'['.max(0, $pageNumber - 1).']');
             $imagick->setImageFormat('jpeg');
             $imagick->setImageCompressionQuality(85);
             $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
@@ -133,7 +204,7 @@ class EpaperCoverService
         }
     }
 
-    protected function renderWithPdftoppm(string $pdfPath, string $outputPath): bool
+    protected function renderWithPdftoppm(string $pdfPath, string $outputPath, int $pageNumber = 1): bool
     {
         $binary = $this->findBinary(['pdftoppm', 'pdftoppm.exe']);
 
@@ -151,8 +222,8 @@ class EpaperCoverService
             $result = Process::timeout(120)->run([
                 $binary,
                 '-jpeg',
-                '-f', '1',
-                '-l', '1',
+                '-f', (string) $pageNumber,
+                '-l', (string) $pageNumber,
                 '-singlefile',
                 '-r', '150',
                 $pdfPath,
@@ -181,7 +252,7 @@ class EpaperCoverService
         }
     }
 
-    protected function renderWithGhostscript(string $pdfPath, string $outputPath): bool
+    protected function renderWithGhostscript(string $pdfPath, string $outputPath, int $pageNumber = 1): bool
     {
         $binary = $this->findBinary(['gswin64c', 'gswin32c', 'gs', 'gs.exe']);
 
@@ -196,8 +267,8 @@ class EpaperCoverService
                 '-dBATCH',
                 '-dSAFER',
                 '-sDEVICE=jpeg',
-                '-dFirstPage=1',
-                '-dLastPage=1',
+                '-dFirstPage='.$pageNumber,
+                '-dLastPage='.$pageNumber,
                 '-r150',
                 '-dJPEGQ=85',
                 '-sOutputFile='.$outputPath,
