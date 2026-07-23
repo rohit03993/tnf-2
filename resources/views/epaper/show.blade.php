@@ -46,7 +46,9 @@
             <div class="tnf-ep-clip-banner">
                 <div class="tnf-container tnf-ep-clip-banner-inner">
                     <div class="tnf-ep-clip-banner-brand">
-                        @php($clipLogoUrl = \App\Services\BrandLogoService::url())
+                        @php
+                            $clipLogoUrl = \App\Services\BrandLogoService::url();
+                        @endphp
                         @if($clipLogoUrl)
                             <img
                                 src="{{ $clipLogoUrl }}"
