@@ -2689,21 +2689,144 @@ class TnfEpaperViewer {
         }
     }
 
-    downloadClipPreview() {
+    async downloadClipPreview() {
         const dataUrl = this.clipPreviewDataUrl || this.els.clipPreview?.src;
 
         if (! dataUrl) {
             return;
         }
 
+        const branded = await this.buildBrandedClipDownloadDataUrl(dataUrl);
         const anchor = document.createElement('a');
-        anchor.href = dataUrl;
+        anchor.href = branded || dataUrl;
         const pageNum = this.config.clip?.page || this.currentPage;
         anchor.download = `tnf-clip-page-${pageNum}.jpg`;
         anchor.rel = 'noopener';
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();
+    }
+
+    /**
+     * Build a downloadable JPEG with logo + edition title above the crop
+     * (matches the shared clip card look).
+     */
+    async buildBrandedClipDownloadDataUrl(cropDataUrl) {
+        const cropImage = await this.loadImageElement(cropDataUrl);
+
+        if (! cropImage) {
+            return null;
+        }
+
+        const cropW = cropImage.naturalWidth || cropImage.width;
+        const cropH = cropImage.naturalHeight || cropImage.height;
+
+        if (! cropW || ! cropH) {
+            return null;
+        }
+
+        const padding = Math.max(16, Math.round(cropW * 0.03));
+        const headerH = Math.max(72, Math.round(cropW * 0.12));
+        const canvasW = cropW + (padding * 2);
+        const canvasH = headerH + cropH + (padding * 2);
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasW;
+        canvas.height = canvasH;
+        const ctx = canvas.getContext('2d');
+
+        if (! ctx) {
+            return null;
+        }
+
+        ctx.fillStyle = '#e8eaed';
+        ctx.fillRect(0, 0, canvasW, canvasH);
+        ctx.fillStyle = '#0F1320';
+        ctx.fillRect(0, 0, canvasW, headerH);
+        ctx.fillStyle = '#BC1E38';
+        ctx.fillRect(0, 0, canvasW, 4);
+
+        let textLeft = padding;
+        const logoUrl = this.config.logoUrl;
+
+        if (logoUrl) {
+            const logo = await this.loadImageElement(logoUrl);
+
+            if (logo) {
+                const maxLogoH = Math.round(headerH * 0.58);
+                const maxLogoW = Math.round(canvasW * 0.28);
+                const scale = Math.min(maxLogoW / logo.naturalWidth, maxLogoH / logo.naturalHeight, 1);
+                const drawW = Math.max(1, Math.round(logo.naturalWidth * scale));
+                const drawH = Math.max(1, Math.round(logo.naturalHeight * scale));
+                const logoX = padding;
+                const logoY = Math.round((headerH - drawH) / 2);
+
+                ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                const boxPad = 6;
+                ctx.fillRect(logoX - boxPad, logoY - boxPad, drawW + (boxPad * 2), drawH + (boxPad * 2));
+                ctx.drawImage(logo, logoX, logoY, drawW, drawH);
+                textLeft = logoX + drawW + Math.round(padding * 0.9);
+            }
+        }
+
+        const title = (this.config.title || 'TNF Today').trim();
+        const maxTextWidth = canvasW - textLeft - padding;
+        ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        ctx.font = `bold ${Math.max(12, Math.round(headerH * 0.16))}px Arial, sans-serif`;
+        ctx.fillText('SHARED NEWSPAPER CLIP', textLeft, Math.round(headerH * 0.38));
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.max(16, Math.round(headerH * 0.28))}px Arial, sans-serif`;
+        this.drawCanvasTextLine(ctx, title, textLeft, Math.round(headerH * 0.72), maxTextWidth);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(padding, headerH + padding, cropW, cropH);
+        ctx.drawImage(cropImage, padding, headerH + padding, cropW, cropH);
+
+        try {
+            return canvas.toDataURL('image/jpeg', 0.92);
+        } catch (error) {
+            console.warn('TNF ePaper: branded clip download failed.', error);
+
+            return null;
+        }
+    }
+
+    loadImageElement(src) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.decoding = 'async';
+
+            const absolute = src.startsWith('http') ? src : new URL(src, window.location.origin).href;
+            const sameOrigin = absolute.startsWith(window.location.origin);
+
+            // Avoid tainting the canvas for same-origin logos/storage images.
+            if (! src.startsWith('data:') && ! sameOrigin) {
+                img.crossOrigin = 'anonymous';
+            }
+
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = src;
+        });
+    }
+
+    drawCanvasTextLine(ctx, text, x, y, maxWidth) {
+        if (! text) {
+            return;
+        }
+
+        if (ctx.measureText(text).width <= maxWidth) {
+            ctx.fillText(text, x, y);
+
+            return;
+        }
+
+        let truncated = text;
+
+        while (truncated.length > 4 && ctx.measureText(`${truncated}...`).width > maxWidth) {
+            truncated = truncated.slice(0, -1);
+        }
+
+        ctx.fillText(`${truncated}...`, x, y);
     }
 
     getClipPreviewImageUrl(clip) {
