@@ -3092,11 +3092,8 @@ class TnfEpaperViewer {
             return;
         }
 
-        if (! this.pdfDoc && this.config.pdfUrl) {
-            await this.initPdfFallback();
-        }
-
-        const bitmap = await this.renderClipBitmap(clip);
+        // Prefer a page image crop (fast). Only open the full PDF if needed.
+        const bitmap = await this.renderSharedClipBitmap(clip);
 
         if (! bitmap) {
             this.showEmptyState(this.config.pdfUrl ? 'pdf' : 'empty');
@@ -3111,26 +3108,19 @@ class TnfEpaperViewer {
         const brand = document.createElement('div');
         brand.className = 'tnf-ep-clip-card__brand';
 
-        if (this.config.logoUrl) {
-            const logo = document.createElement('img');
-            logo.className = 'tnf-ep-clip-card__logo';
-            logo.src = this.config.logoUrl;
-            logo.alt = this.config.title || 'TNF Today';
-            brand.appendChild(logo);
-        }
-
         const brandText = document.createElement('div');
         brandText.className = 'min-w-0';
-        brandText.innerHTML = `
-            <p class="tnf-ep-clip-card__eyebrow">Shared newspaper clip</p>
-            <p class="tnf-ep-clip-card__title"></p>
-        `;
-        const titleEl = brandText.querySelector('.tnf-ep-clip-card__title');
 
-        if (titleEl) {
-            titleEl.textContent = this.config.title || '';
-        }
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'tnf-ep-clip-card__eyebrow';
+        eyebrow.textContent = 'Shared newspaper clip';
 
+        const titleEl = document.createElement('p');
+        titleEl.className = 'tnf-ep-clip-card__title';
+        titleEl.textContent = this.config.title || '';
+
+        brandText.appendChild(eyebrow);
+        brandText.appendChild(titleEl);
         brand.appendChild(brandText);
         card.appendChild(brand);
 
@@ -3142,6 +3132,7 @@ class TnfEpaperViewer {
         img.src = bitmap;
         img.alt = `${this.config.title} — clip`;
         img.decoding = 'async';
+        img.loading = 'eager';
 
         viewport.appendChild(img);
         card.appendChild(viewport);
@@ -3155,6 +3146,40 @@ class TnfEpaperViewer {
             downloadBtn.dataset.epBound = '1';
             downloadBtn.addEventListener('click', () => this.downloadClipPreview());
         }
+    }
+
+    async renderSharedClipBitmap(clip) {
+        const normalized = this.clampNormalizedRect({
+            x: clip.x,
+            y: clip.y,
+            w: clip.w,
+            h: clip.h,
+        });
+
+        if (! normalized) {
+            return null;
+        }
+
+        const exportClip = { ...clip, ...normalized };
+        const pageUrl = this.getPageUrl(exportClip.page);
+
+        if (pageUrl) {
+            const fromImage = await this.renderClipBitmapFromImageUrl(exportClip, pageUrl);
+
+            if (fromImage) {
+                return fromImage;
+            }
+        }
+
+        if (! this.pdfDoc && this.config.pdfUrl) {
+            await this.initPdfFallback();
+        }
+
+        if (this.pdfDoc) {
+            return this.renderClipBitmapFromPdf(exportClip);
+        }
+
+        return null;
     }
 
     async waitForPdfJs(timeoutMs = 12000) {

@@ -45,21 +45,9 @@
         @else
             <div class="tnf-ep-clip-banner">
                 <div class="tnf-container tnf-ep-clip-banner-inner">
-                    <div class="tnf-ep-clip-banner-brand">
-                        @php
-                            $clipLogoUrl = \App\Services\BrandLogoService::url();
-                        @endphp
-                        @if($clipLogoUrl)
-                            <img
-                                src="{{ $clipLogoUrl }}"
-                                alt="{{ config('app.name') }}"
-                                class="tnf-ep-clip-banner-logo"
-                            >
-                        @endif
-                        <div class="min-w-0">
-                            <p class="tnf-ep-clip-banner-eyebrow">Shared newspaper clip</p>
-                            <p class="tnf-ep-clip-banner-title">{{ $edition->title }}</p>
-                        </div>
+                    <div class="min-w-0">
+                        <p class="tnf-ep-clip-banner-eyebrow">Shared newspaper clip</p>
+                        <p class="tnf-ep-clip-banner-title">{{ $edition->title }}</p>
                     </div>
                     <a href="{{ route('epaper.show', $edition->slug) }}" class="tnf-ep-full-edition-btn shrink-0">
                         Full edition
