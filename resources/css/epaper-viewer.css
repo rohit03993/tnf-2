@@ -352,6 +352,28 @@
         touch-action: pan-x pan-y;
     }
 
+    /* JS drag-to-scroll owns gestures so touch/mouse drag pans the PDF reliably. */
+    .tnf-ep-stage.tnf-ep-stage--drag-scroll {
+        cursor: grab;
+        touch-action: none;
+        -webkit-user-drag: none;
+    }
+
+    .tnf-ep-stage.tnf-ep-stage--drag-scroll.is-panning {
+        cursor: grabbing;
+        user-select: none;
+    }
+
+    .tnf-epaper-viewer.is-clip-mode .tnf-ep-stage.tnf-ep-stage--drag-scroll {
+        cursor: crosshair;
+    }
+
+    .tnf-epaper-viewer:not(.is-clip-mode) .tnf-ep-pdf-canvas,
+    .tnf-epaper-viewer:not(.is-clip-mode) .tnf-ep-page-image {
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
     @media (max-width: 1023px) {
         .tnf-ep-main {
             min-height: 0;
@@ -367,7 +389,6 @@
             height: calc(100dvh - var(--tnf-header-total, 3.25rem) - var(--tnf-ep-mobile-bar, 3.75rem) - var(--tnf-ep-engagement-h, 3.25rem) - var(--tnf-ep-thumbs-h, 5.5rem) - var(--tnf-safe-bottom, 0px));
             max-height: none;
             min-height: 0;
-            touch-action: pan-x pan-y;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
             border-radius: 0.75rem;
@@ -376,13 +397,6 @@
         .tnf-epaper-viewer:not(.is-clip-mode) .tnf-ep-pdf-canvas,
         .tnf-epaper-viewer:not(.is-clip-mode) .tnf-ep-page-image {
             pointer-events: none;
-            user-select: none;
-            -webkit-user-drag: none;
-        }
-
-        .tnf-ep-stage-spacer,
-        .tnf-ep-stage-inner {
-            touch-action: pan-x pan-y;
         }
 
         .tnf-epaper-viewer.is-clip-mode .tnf-ep-stage {

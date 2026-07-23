@@ -71,6 +71,7 @@ class TnfEpaperViewer {
         this.clipNormalized = null;
         this.clipDragCleanup = null;
         this.clipScrollHandler = null;
+        this.stagePanCleanup = null;
         this.resizeHandler = null;
         this.pdfThumbCache = {};
         this.activePointerId = null;
@@ -315,17 +316,16 @@ class TnfEpaperViewer {
         return window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
     }
 
-    bindCoarsePointerPanScroll(element, { isEnabled = () => true } = {}) {
-        if (! element || ! this.isCoarsePointer()) {
+    /**
+     * Drag-to-scroll on the PDF stage (touch + mouse).
+     * Uses a movement threshold so taps/clicks still work; disabled in clip mode.
+     */
+    bindStageDragScroll(element, { isEnabled = () => true } = {}) {
+        if (! element) {
             return null;
         }
 
-        let panning = false;
-        let startX = 0;
-        let startY = 0;
-        let startScrollLeft = 0;
-        let startScrollTop = 0;
-
+        const dragThreshold = 8;
         const interactiveSelector = [
             '[data-ep-clip-move]',
             '[data-ep-clip-handle]',
@@ -341,66 +341,142 @@ class TnfEpaperViewer {
             '[data-ep-clip-zoom-in]',
             '[data-ep-clip-zoom-out]',
             '.tnf-ep-clip-zoom-btn',
+            '.tnf-ep-stage-nav-btn',
+            'button',
+            'a',
+            'input',
+            'select',
+            'textarea',
         ].join(', ');
 
-        const onTouchStart = (event) => {
-            if (! isEnabled() || event.touches.length !== 1) {
-                panning = false;
+        let pointerId = null;
+        let panning = false;
+        let startX = 0;
+        let startY = 0;
+        let originScrollX = 0;
+        let originScrollY = 0;
+        let usesStageScroll = false;
 
-                return;
+        const readScrollTarget = () => {
+            const overflowY = getComputedStyle(element).overflowY;
+            usesStageScroll = overflowY === 'auto' || overflowY === 'scroll';
+
+            if (usesStageScroll) {
+                return { x: element.scrollLeft, y: element.scrollTop };
             }
 
-            if (event.target.closest(interactiveSelector)) {
-                panning = false;
-
-                return;
-            }
-
-            panning = true;
-            startX = event.touches[0].clientX;
-            startY = event.touches[0].clientY;
-            startScrollLeft = element.scrollLeft;
-            startScrollTop = element.scrollTop;
+            return { x: window.scrollX, y: window.scrollY };
         };
 
-        const onTouchMove = (event) => {
-            if (! panning || ! isEnabled() || event.touches.length !== 1) {
+        const applyScroll = (x, y) => {
+            if (usesStageScroll) {
+                element.scrollLeft = x;
+                element.scrollTop = y;
+
                 return;
             }
 
-            const dx = startX - event.touches[0].clientX;
-            const dy = startY - event.touches[0].clientY;
-
-            if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-                event.preventDefault();
-                element.scrollLeft = startScrollLeft + dx;
-                element.scrollTop = startScrollTop + dy;
-            }
+            window.scrollTo(x, y);
         };
 
-        const onTouchEnd = () => {
+        const endPan = (event) => {
+            if (pointerId === null || (event && event.pointerId !== pointerId)) {
+                return;
+            }
+
+            if (panning) {
+                try {
+                    element.releasePointerCapture(pointerId);
+                } catch (error) {
+                    // Pointer may already be released.
+                }
+
+                element.classList.remove('is-panning');
+            }
+
+            pointerId = null;
             panning = false;
         };
 
-        element.addEventListener('touchstart', onTouchStart, { passive: true });
-        element.addEventListener('touchmove', onTouchMove, { passive: false });
-        element.addEventListener('touchend', onTouchEnd, { passive: true });
-        element.addEventListener('touchcancel', onTouchEnd, { passive: true });
+        const onPointerDown = (event) => {
+            if (! isEnabled() || ! event.isPrimary || event.button !== 0) {
+                return;
+            }
+
+            if (event.target instanceof Element && event.target.closest(interactiveSelector)) {
+                return;
+            }
+
+            const scroll = readScrollTarget();
+
+            pointerId = event.pointerId;
+            panning = false;
+            startX = event.clientX;
+            startY = event.clientY;
+            originScrollX = scroll.x;
+            originScrollY = scroll.y;
+        };
+
+        const onPointerMove = (event) => {
+            if (pointerId === null || event.pointerId !== pointerId || ! isEnabled()) {
+                return;
+            }
+
+            const dx = startX - event.clientX;
+            const dy = startY - event.clientY;
+
+            if (! panning) {
+                if (Math.hypot(dx, dy) < dragThreshold) {
+                    return;
+                }
+
+                panning = true;
+                element.classList.add('is-panning');
+
+                try {
+                    element.setPointerCapture(pointerId);
+                } catch (error) {
+                    // Capture is best-effort; scrolling still works without it.
+                }
+            }
+
+            event.preventDefault();
+            applyScroll(originScrollX + dx, originScrollY + dy);
+        };
+
+        element.classList.add('tnf-ep-stage--drag-scroll');
+        element.addEventListener('pointerdown', onPointerDown);
+        element.addEventListener('pointermove', onPointerMove, { passive: false });
+        element.addEventListener('pointerup', endPan);
+        element.addEventListener('pointercancel', endPan);
+        element.addEventListener('lostpointercapture', endPan);
 
         return () => {
-            element.removeEventListener('touchstart', onTouchStart);
-            element.removeEventListener('touchmove', onTouchMove);
-            element.removeEventListener('touchend', onTouchEnd);
-            element.removeEventListener('touchcancel', onTouchEnd);
+            endPan();
+            element.classList.remove('tnf-ep-stage--drag-scroll', 'is-panning');
+            element.removeEventListener('pointerdown', onPointerDown);
+            element.removeEventListener('pointermove', onPointerMove);
+            element.removeEventListener('pointerup', endPan);
+            element.removeEventListener('pointercancel', endPan);
+            element.removeEventListener('lostpointercapture', endPan);
         };
     }
 
     bindMobilePanScroll() {
-        // Prefer native overflow scrolling. Custom preventDefault pan blocked taps on mobile.
         if (this.stagePanCleanup) {
             this.stagePanCleanup();
             this.stagePanCleanup = null;
         }
+
+        const stage = this.els.stage;
+
+        if (! stage) {
+            return;
+        }
+
+        this.stagePanCleanup = this.bindStageDragScroll(stage, {
+            isEnabled: () => ! this.clipMode && ! this.config.clipMode,
+        });
     }
 
     bindMobilePageSwipe() {
