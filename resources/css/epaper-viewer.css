@@ -32,9 +32,9 @@
     body.tnf-ep-is-clipping .tnf-footer,
     body.tnf-ep-is-clipping .tnf-back-to-top,
     body.tnf-ep-is-clipping .tnf-ep-thumbs-sidebar,
-    body.tnf-ep-is-clipping .tnf-ep-thumbs-rail-wrap {
-        visibility: hidden;
-        pointer-events: none;
+    body.tnf-ep-is-clipping .tnf-ep-thumbs-rail-wrap,
+    body.tnf-ep-is-clipping .tnf-ep-engagement {
+        display: none !important;
     }
 
     .tnf-epaper-viewer {
@@ -83,8 +83,7 @@
     }
 
     body.tnf-ep-is-clipping .tnf-ep-engagement {
-        visibility: hidden;
-        pointer-events: none;
+        display: none !important;
     }
 
     .tnf-ep-engagement-inner {
@@ -410,6 +409,12 @@
             overflow-y: auto;
             touch-action: pan-x pan-y;
             -webkit-overflow-scrolling: touch;
+            /* Keep the page bottom clear of the fixed Cancel/Share dock */
+            scroll-padding-bottom: var(--tnf-ep-clip-dock, 4.75rem);
+        }
+
+        .tnf-epaper-viewer.is-clip-mode .tnf-ep-stage-spacer {
+            padding-bottom: calc(var(--tnf-ep-clip-dock, 4.75rem) + 0.75rem);
         }
 
         .tnf-epaper-viewer.is-clip-mode .tnf-ep-pdf-canvas,

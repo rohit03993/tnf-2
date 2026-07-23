@@ -658,8 +658,10 @@ class TnfEpaperViewer {
             root.style.setProperty('--tnf-ep-mobile-bar', `${mobileBar.offsetHeight}px`);
         }
 
-        if (engagement) {
+        if (engagement && getComputedStyle(engagement).display !== 'none') {
             root.style.setProperty('--tnf-ep-engagement-h', `${engagement.offsetHeight}px`);
+        } else {
+            root.style.setProperty('--tnf-ep-engagement-h', '0px');
         }
 
         if (thumbs && getComputedStyle(thumbs).display !== 'none') {
@@ -668,9 +670,12 @@ class TnfEpaperViewer {
             root.style.setProperty('--tnf-ep-thumbs-h', '0px');
         }
 
-        const clipChrome = (clipBar && ! clipBar.classList.contains('hidden') ? clipBar.offsetHeight : 0)
-            + (clipDock && ! clipDock.classList.contains('hidden') ? clipDock.offsetHeight : 0);
-        root.style.setProperty('--tnf-ep-clip-chrome', `${Math.max(clipChrome, 24)}px`);
+        const clipBarH = clipBar && ! clipBar.classList.contains('hidden') ? clipBar.offsetHeight : 0;
+        const clipDockH = clipDock && ! clipDock.classList.contains('hidden') ? clipDock.offsetHeight : 0;
+
+        root.style.setProperty('--tnf-ep-clip-bar', `${clipBarH}px`);
+        root.style.setProperty('--tnf-ep-clip-dock', `${clipDockH}px`);
+        root.style.setProperty('--tnf-ep-clip-chrome', `${Math.max(clipBarH + clipDockH, 24)}px`);
     }
 
     maybeShowZoomHint() {
@@ -2091,6 +2096,10 @@ class TnfEpaperViewer {
         this.scheduleClipOverlaySync(true);
         this.showFirstClipHint();
         this.syncChromeHeights();
+        requestAnimationFrame(() => {
+            this.syncChromeHeights();
+            this.syncClipOverlay(true);
+        });
 
         const source = this.getClipSourceElement();
         if (source && ! (source.complete && (source.naturalWidth || source.width))) {
