@@ -32,8 +32,7 @@
     body.tnf-ep-is-clipping .tnf-footer,
     body.tnf-ep-is-clipping .tnf-back-to-top,
     body.tnf-ep-is-clipping .tnf-ep-thumbs-sidebar,
-    body.tnf-ep-is-clipping .tnf-ep-thumbs-rail-wrap,
-    body.tnf-ep-is-clipping .tnf-ep-mobile-zoom-fab {
+    body.tnf-ep-is-clipping .tnf-ep-thumbs-rail-wrap {
         visibility: hidden;
         pointer-events: none;
     }
@@ -386,7 +385,7 @@
         .tnf-ep-stage {
             overflow-x: auto;
             overflow-y: auto;
-            height: calc(100dvh - var(--tnf-header-total, 3.25rem) - var(--tnf-ep-mobile-bar, 3.75rem) - var(--tnf-ep-engagement-h, 3.25rem) - var(--tnf-ep-thumbs-h, 5.5rem) - var(--tnf-safe-bottom, 0px));
+            height: calc(100dvh - var(--tnf-header-total, 3.25rem) - var(--tnf-ep-mobile-bar, 3.5rem) - var(--tnf-ep-engagement-h, 2.5rem) - var(--tnf-ep-thumbs-h, 4.25rem) - var(--tnf-safe-bottom, 0px));
             max-height: none;
             min-height: 0;
             -webkit-overflow-scrolling: touch;
@@ -711,33 +710,38 @@
     }
 
     .tnf-ep-mobile-bar-inner {
-        @apply flex min-h-[3.75rem] items-center justify-between gap-3 px-2;
+        @apply grid min-h-[3.25rem] grid-cols-[minmax(0,1.1fr)_auto_minmax(0,1fr)] items-center gap-1.5 px-2 py-1.5;
     }
 
     .tnf-ep-mobile-bar-nav,
+    .tnf-ep-mobile-bar-zoom,
     .tnf-ep-mobile-bar-actions {
-        @apply flex items-center gap-1;
+        @apply flex items-center;
     }
 
     .tnf-ep-mobile-bar-nav {
-        @apply min-w-0 flex-1;
+        @apply min-w-0 justify-start gap-0.5;
+    }
+
+    .tnf-ep-mobile-bar-zoom {
+        @apply shrink-0 justify-center gap-0.5 rounded-full border border-tnf-gray-dark/70 bg-tnf-gray/50 p-0.5;
     }
 
     .tnf-ep-mobile-bar-actions {
-        @apply shrink-0;
+        @apply min-w-0 justify-end gap-1.5;
     }
 
     .tnf-ep-mobile-icon-btn {
-        @apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-tnf-navy transition-colors active:bg-tnf-gray;
+        @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-tnf-navy transition-colors active:bg-tnf-gray;
         touch-action: manipulation;
     }
 
     .tnf-ep-mobile-page-wrap {
-        @apply relative min-w-[4.5rem] flex-1;
+        @apply relative min-w-[3.75rem] max-w-[4.75rem] flex-1;
     }
 
     .tnf-ep-mobile-page {
-        @apply inline-flex h-11 w-full items-center justify-center truncate rounded-xl bg-tnf-gray/70 px-2 text-center text-tnf-sm font-bold tabular-nums text-tnf-navy;
+        @apply inline-flex h-10 w-full items-center justify-center truncate rounded-xl bg-tnf-gray/70 px-1.5 text-center text-tnf-xs font-bold tabular-nums text-tnf-navy;
         touch-action: manipulation;
         pointer-events: none;
     }
@@ -747,9 +751,18 @@
         touch-action: manipulation;
     }
 
+    .tnf-ep-mobile-zoom-btn {
+        @apply inline-flex h-9 min-w-9 items-center justify-center rounded-full text-tnf-sm font-bold text-tnf-navy active:bg-white;
+        touch-action: manipulation;
+    }
+
+    .tnf-ep-mobile-zoom-btn--fit {
+        @apply min-w-[2.5rem] px-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-tnf-muted;
+    }
+
     .tnf-ep-mobile-clip-btn,
     .tnf-ep-mobile-share-btn {
-        @apply inline-flex h-11 items-center justify-center gap-1.5 rounded-full border px-3.5 text-tnf-xs font-bold transition-colors active:scale-[0.98];
+        @apply inline-flex h-10 items-center justify-center gap-1 rounded-full border px-2.5 text-[0.6875rem] font-bold transition-colors active:scale-[0.98];
         touch-action: manipulation;
     }
 
@@ -764,26 +777,6 @@
     .tnf-ep-mobile-share-btn svg,
     .tnf-ep-mobile-clip-btn svg {
         @apply h-4 w-4 shrink-0;
-    }
-
-    .tnf-ep-mobile-zoom-fab {
-        @apply fixed z-[54] flex items-center gap-0.5 rounded-full border border-tnf-gray-dark bg-white/95 p-1 shadow-card backdrop-blur-md;
-        right: max(0.75rem, env(safe-area-inset-right, 0px));
-        bottom: calc(var(--tnf-ep-mobile-bar, 3.75rem) + 0.75rem);
-    }
-
-    body.tnf-ep-is-clipping .tnf-ep-mobile-zoom-fab {
-        @apply hidden;
-    }
-
-    .tnf-ep-mobile-zoom-fab__btn,
-    .tnf-ep-mobile-zoom-fab__fit {
-        @apply inline-flex h-10 min-w-10 items-center justify-center rounded-full text-tnf-sm font-bold text-tnf-navy active:bg-tnf-gray;
-        touch-action: manipulation;
-    }
-
-    .tnf-ep-mobile-zoom-fab__fit {
-        @apply min-w-[2.75rem] px-2 text-tnf-xs;
     }
 
     .tnf-ep-clip-mobile-dock {
@@ -816,16 +809,52 @@
     }
 
     @media (max-width: 1023px) {
-        .tnf-ep-clip-float-actions {
-            display: none;
+        .tnf-ep-viewer-body {
+            @apply gap-0 px-0 py-0;
+        }
+
+        .tnf-ep-thumbs-rail-wrap {
+            @apply border-b border-tnf-gray-dark/40 bg-white px-2 pt-1.5;
+        }
+
+        .tnf-ep-thumbs-rail {
+            @apply gap-1.5 pb-1.5;
+        }
+
+        .tnf-ep-thumbs-rail .tnf-ep-thumb {
+            @apply w-11;
+        }
+
+        .tnf-ep-engagement {
+            @apply mb-0 rounded-none border-x-0 border-t-0;
         }
 
         .tnf-ep-engagement-inner {
-            @apply min-h-10 gap-1 px-2 py-1.5;
+            @apply min-h-9 gap-1 px-2.5 py-1;
         }
 
         .tnf-ep-like {
-            @apply min-h-10 gap-1.5 px-2.5 py-1;
+            @apply min-h-8 gap-1 px-2 py-0.5 text-tnf-xs;
+        }
+
+        .tnf-ep-like__icon {
+            @apply h-6 w-6;
+        }
+
+        .tnf-ep-like__svg {
+            @apply h-3.5 w-3.5;
+        }
+
+        .tnf-ep-readers__text {
+            @apply text-tnf-xs;
+        }
+
+        .tnf-ep-stage-wrap {
+            @apply rounded-none;
+        }
+
+        .tnf-ep-clip-float-actions {
+            display: none;
         }
 
         .tnf-ep-clip-handle {
@@ -845,10 +874,15 @@
         }
     }
 
-    @media (min-width: 380px) and (max-width: 1023px) {
+    @media (min-width: 400px) and (max-width: 1023px) {
         .tnf-ep-mobile-share-btn span,
         .tnf-ep-mobile-clip-btn span {
             display: inline;
+        }
+
+        .tnf-ep-mobile-clip-btn,
+        .tnf-ep-mobile-share-btn {
+            @apply px-3 text-tnf-xs;
         }
     }
 

@@ -338,6 +338,7 @@ class TnfEpaperViewer {
             '.tnf-ep-mobile-icon-btn',
             '.tnf-ep-mobile-clip-btn',
             '.tnf-ep-mobile-share-btn',
+            '.tnf-ep-mobile-zoom-btn',
             '[data-ep-clip-zoom-in]',
             '[data-ep-clip-zoom-out]',
             '.tnf-ep-clip-zoom-btn',

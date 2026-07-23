@@ -60,7 +60,7 @@
             <aside class="tnf-ep-thumbs-sidebar" data-ep-thumbs-sidebar aria-label="Page thumbnails"></aside>
 
             <div class="tnf-ep-main">
-                <div class="tnf-ep-thumbs-rail-wrap">
+                <div class="tnf-ep-thumbs-rail-wrap" data-ep-thumbs-rail-wrap>
                     <div class="tnf-ep-thumbs-rail" data-ep-thumbs-rail aria-label="Page thumbnails"></div>
                 </div>
 
@@ -191,14 +191,8 @@
         </div>
 
         @unless($config['clipMode'])
-            <div class="tnf-ep-mobile-zoom-fab lg:hidden" data-ep-mobile-zoom-fab aria-label="Zoom">
-                <button type="button" class="tnf-ep-mobile-zoom-fab__btn" data-ep-action="zoom-out" aria-label="Zoom out">−</button>
-                <button type="button" class="tnf-ep-mobile-zoom-fab__fit" data-ep-action="zoom-reset" aria-label="Fit page">Fit</button>
-                <button type="button" class="tnf-ep-mobile-zoom-fab__btn" data-ep-action="zoom-in" aria-label="Zoom in">+</button>
-            </div>
-
             <div class="tnf-ep-mobile-bar" data-ep-mobile-bar>
-                <div class="tnf-container tnf-ep-mobile-bar-inner">
+                <div class="tnf-ep-mobile-bar-inner">
                     <div class="tnf-ep-mobile-bar-nav" role="group" aria-label="Page">
                         <button type="button" class="tnf-ep-mobile-icon-btn" data-ep-action="prev" aria-label="Previous page">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -215,6 +209,13 @@
                             </svg>
                         </button>
                     </div>
+
+                    <div class="tnf-ep-mobile-bar-zoom" role="group" aria-label="Zoom">
+                        <button type="button" class="tnf-ep-mobile-zoom-btn" data-ep-action="zoom-out" aria-label="Zoom out">−</button>
+                        <button type="button" class="tnf-ep-mobile-zoom-btn tnf-ep-mobile-zoom-btn--fit" data-ep-action="zoom-reset" aria-label="Fit page">Fit</button>
+                        <button type="button" class="tnf-ep-mobile-zoom-btn" data-ep-action="zoom-in" aria-label="Zoom in">+</button>
+                    </div>
+
                     <div class="tnf-ep-mobile-bar-actions" role="group" aria-label="Share tools">
                         <button type="button" class="tnf-ep-mobile-share-btn" data-ep-action="share" aria-label="Share">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
