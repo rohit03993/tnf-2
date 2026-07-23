@@ -794,6 +794,14 @@ class TnfEpaperViewer {
         });
 
         this.els.clipPresets?.addEventListener('click', (event) => {
+            const drawBtn = event.target.closest('[data-ep-clip-draw]');
+
+            if (drawBtn) {
+                this.enterClipDrawMode();
+
+                return;
+            }
+
             const preset = event.target.closest('[data-ep-clip-preset]');
 
             if (preset?.dataset.epClipPreset) {
@@ -1826,17 +1834,41 @@ class TnfEpaperViewer {
 
             button.classList.toggle('is-active', activeName !== null && key === activeName);
         });
+
+        const drawBtn = this.els.clipPresets?.querySelector('[data-ep-clip-draw]');
+
+        if (drawBtn) {
+            drawBtn.classList.toggle('is-active', this.clipDrawMode);
+            drawBtn.setAttribute('aria-pressed', this.clipDrawMode ? 'true' : 'false');
+        }
     }
 
     updateClipCatcherInteraction() {
         const catcher = this.els.clipScreen?.querySelector('[data-ep-clip-catcher]');
 
-        if (! catcher) {
+        if (! catcher || ! this.els.clipScreen) {
             return;
         }
 
-        catcher.classList.add('is-draw-active');
-        this.els.clipScreen?.classList.remove('is-scroll-mode', 'is-draw-mode');
+        // Scroll-first by default: empty page area scrolls so users can reach lower stories.
+        // Draw mode (optional) turns the catcher back on for a freehand selection.
+        if (this.clipDrawMode) {
+            catcher.classList.add('is-draw-active');
+            this.els.clipScreen.classList.add('is-draw-mode');
+            this.els.clipScreen.classList.remove('is-scroll-mode');
+        } else {
+            catcher.classList.remove('is-draw-active');
+            this.els.clipScreen.classList.add('is-scroll-mode');
+            this.els.clipScreen.classList.remove('is-draw-mode');
+        }
+    }
+
+    enterClipDrawMode() {
+        this.dismissFirstClipHint();
+        this.clipDrawMode = true;
+        this.updateClipCatcherInteraction();
+        this.updateClipPresetButtons(null);
+        this.setClipInstruction('Drag on the page to draw a new selection');
     }
 
     exitClipDrawMode() {
@@ -1851,7 +1883,7 @@ class TnfEpaperViewer {
     }
 
     clipReadyMessage() {
-        return 'Adjust selection, then Share';
+        return 'Scroll to find a story, adjust the box, then Share';
     }
 
     setClipInstruction(message, { showOverlay = false, autoHideMs = null } = {}) {
@@ -2328,6 +2360,40 @@ class TnfEpaperViewer {
         };
     }
 
+    /**
+     * While dragging a clip box near the viewport edge, scroll the stage
+     * so lower/upper parts of the page stay reachable.
+     */
+    autoScrollStageDuringClip(clientY) {
+        const stage = this.els.stage;
+
+        if (! stage) {
+            return;
+        }
+
+        const overflowY = getComputedStyle(stage).overflowY;
+        const usesStageScroll = overflowY === 'auto' || overflowY === 'scroll';
+
+        if (! usesStageScroll) {
+            return;
+        }
+
+        const rect = stage.getBoundingClientRect();
+        const edge = 56;
+        let delta = 0;
+
+        if (clientY < rect.top + edge) {
+            delta = -Math.ceil((edge - (clientY - rect.top)) * 0.35);
+        } else if (clientY > rect.bottom - edge) {
+            delta = Math.ceil((edge - (rect.bottom - clientY)) * 0.35);
+        }
+
+        if (delta !== 0) {
+            stage.scrollTop += delta;
+            this.syncClipOverlay();
+        }
+    }
+
     bindClipDrag() {
         const catcherEl = this.els.clipScreen?.querySelector('[data-ep-clip-catcher]');
         const ui = this.getClipScreenElements();
@@ -2534,6 +2600,7 @@ class TnfEpaperViewer {
 
             this.updateClipScreenShades(left, top, width, height);
             lastDragRect = { left, top, width, height };
+            this.autoScrollStageDuringClip(event.clientY);
         };
 
         const onPointerUp = (event) => {
@@ -2558,6 +2625,10 @@ class TnfEpaperViewer {
                 if (overlay) {
                     applyOverlayRect(overlay.left, overlay.top, overlay.width, overlay.height);
                 }
+            }
+
+            if (interactionMode === 'draw') {
+                this.exitClipDrawMode();
             }
 
             finishInteraction();

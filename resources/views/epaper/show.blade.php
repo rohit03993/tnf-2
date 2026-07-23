@@ -118,7 +118,7 @@
                 <div class="tnf-ep-stage-wrap" data-ep-stage-wrap>
                     <div class="tnf-ep-clip-bar hidden" data-ep-clip-bar>
                         <p class="tnf-ep-clip-bar-status" data-ep-clip-workspace-hint>
-                            Adjust selection, then Share
+                            Scroll to find a story, adjust the box, then Share
                         </p>
                         <div class="tnf-ep-clip-presets" data-ep-clip-presets role="toolbar" aria-label="Clip options">
                             <button type="button" class="tnf-ep-clip-preset is-active" data-ep-clip-preset="lead">
@@ -129,6 +129,9 @@
                             </button>
                             <button type="button" class="tnf-ep-clip-preset" data-ep-clip-preset="full">
                                 Full page
+                            </button>
+                            <button type="button" class="tnf-ep-clip-preset" data-ep-clip-draw aria-pressed="false">
+                                Draw
                             </button>
                         </div>
                     </div>
