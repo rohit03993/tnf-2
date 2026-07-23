@@ -90,13 +90,14 @@ class OgImageService
     }
 
     /** @param array{x: float, y: float, w: float, h: float} $crop */
-    public function serveCropped(?string $imageUrl, array $crop): Response
+    public function serveCropped(?string $imageUrl, array $crop, ?string $title = null): Response
     {
         if (! $imageUrl) {
             return $this->serveDefault();
         }
 
-        $jpeg = $this->buildJpeg($imageUrl, $crop, 'cover');
+        $jpeg = $this->buildBrandedClipJpeg($imageUrl, $crop, $title)
+            ?? $this->buildJpeg($imageUrl, $crop, 'cover');
 
         if ($jpeg === null) {
             return $this->serveDefault();
@@ -106,6 +107,229 @@ class OgImageService
             'Content-Type' => 'image/jpeg',
             'Cache-Control' => 'public, max-age=86400',
         ]);
+    }
+
+    /**
+     * Crop + brand card for shared ePaper clips (logo + edition title above the crop).
+     *
+     * @param  array{x: float, y: float, w: float, h: float}  $crop
+     */
+    public function buildBrandedClipJpeg(string $imageUrl, array $crop, ?string $title = null): ?string
+    {
+        if (! extension_loaded('gd')) {
+            return null;
+        }
+
+        $bytes = $this->loadImageBytes($imageUrl);
+
+        if ($bytes === null) {
+            return null;
+        }
+
+        $source = @imagecreatefromstring($bytes);
+
+        if ($source === false) {
+            return null;
+        }
+
+        $srcWidth = imagesx($source);
+        $srcHeight = imagesy($source);
+
+        $cropX = (int) round(max(0, min(1, (float) ($crop['x'] ?? 0))) * $srcWidth);
+        $cropY = (int) round(max(0, min(1, (float) ($crop['y'] ?? 0))) * $srcHeight);
+        $cropW = (int) round(max(0.01, min(1, (float) ($crop['w'] ?? 1))) * $srcWidth);
+        $cropH = (int) round(max(0.01, min(1, (float) ($crop['h'] ?? 1))) * $srcHeight);
+
+        $cropW = min($cropW, $srcWidth - $cropX);
+        $cropH = min($cropH, $srcHeight - $cropY);
+
+        if ($cropW < 1 || $cropH < 1) {
+            imagedestroy($source);
+
+            return null;
+        }
+
+        $cropped = imagecreatetruecolor($cropW, $cropH);
+        imagecopy($cropped, $source, 0, 0, $cropX, $cropY, $cropW, $cropH);
+        imagedestroy($source);
+
+        $targetWidth = 1200;
+        $targetHeight = 630;
+        $headerHeight = 126;
+        $padding = 28;
+        $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
+
+        $navy = imagecolorallocate($canvas, 15, 19, 32);
+        $red = imagecolorallocate($canvas, 188, 30, 56);
+        $white = imagecolorallocate($canvas, 255, 255, 255);
+        $muted = imagecolorallocate($canvas, 180, 186, 198);
+        $paper = imagecolorallocate($canvas, 232, 234, 237);
+
+        imagefilledrectangle($canvas, 0, 0, $targetWidth, $targetHeight, $paper);
+        imagefilledrectangle($canvas, 0, 0, $targetWidth, $headerHeight, $navy);
+        imagefilledrectangle($canvas, 0, 0, $targetWidth, 6, $red);
+
+        $logoMaxH = 64;
+        $logoMaxW = 220;
+        $textLeft = $padding;
+        $logo = $this->loadBrandLogoResource();
+
+        if ($logo !== null) {
+            $logoW = imagesx($logo);
+            $logoH = imagesy($logo);
+            $scale = min($logoMaxW / max(1, $logoW), $logoMaxH / max(1, $logoH), 1);
+            $drawW = max(1, (int) round($logoW * $scale));
+            $drawH = max(1, (int) round($logoH * $scale));
+            $logoX = $padding;
+            $logoY = (int) (($headerHeight - $drawH) / 2) + 2;
+
+            imagecopyresampled($canvas, $logo, $logoX, $logoY, 0, 0, $drawW, $drawH, $logoW, $logoH);
+            imagedestroy($logo);
+            $textLeft = $logoX + $drawW + 20;
+        }
+
+        $editionTitle = trim((string) $title);
+        $eyebrow = 'SHARED NEWSPAPER CLIP';
+        $this->drawOgText($canvas, $eyebrow, $textLeft, 38, 18, $muted, $targetWidth - $textLeft - $padding);
+        $this->drawOgText(
+            $canvas,
+            $editionTitle !== '' ? $editionTitle : (string) config('app.name', 'TNF Today'),
+            $textLeft,
+            72,
+            28,
+            $white,
+            $targetWidth - $textLeft - $padding,
+        );
+
+        $contentTop = $headerHeight + $padding;
+        $contentWidth = $targetWidth - ($padding * 2);
+        $contentHeight = $targetHeight - $contentTop - $padding;
+        $srcRatio = $cropW / $cropH;
+        $boxRatio = $contentWidth / $contentHeight;
+
+        if ($srcRatio > $boxRatio) {
+            $drawWidth = $contentWidth;
+            $drawHeight = (int) round($contentWidth / $srcRatio);
+        } else {
+            $drawHeight = $contentHeight;
+            $drawWidth = (int) round($contentHeight * $srcRatio);
+        }
+
+        $destX = (int) (($targetWidth - $drawWidth) / 2);
+        $destY = $contentTop + (int) (($contentHeight - $drawHeight) / 2);
+
+        $resized = imagecreatetruecolor($drawWidth, $drawHeight);
+        $resizedWhite = imagecolorallocate($resized, 255, 255, 255);
+        imagefill($resized, 0, 0, $resizedWhite);
+        imagecopyresampled($resized, $cropped, 0, 0, 0, 0, $drawWidth, $drawHeight, $cropW, $cropH);
+        imagecopy($canvas, $resized, $destX, $destY, 0, 0, $drawWidth, $drawHeight);
+
+        ob_start();
+        imagejpeg($canvas, null, 85);
+        $jpeg = ob_get_clean() ?: null;
+
+        imagedestroy($cropped);
+        imagedestroy($resized);
+        imagedestroy($canvas);
+
+        return $jpeg;
+    }
+
+    /** @return \GdImage|resource|null */
+    protected function loadBrandLogoResource()
+    {
+        $path = (string) \App\Models\Setting::get('site_logo', BrandLogoService::CANONICAL_PATH);
+
+        if (! filled($path) || ! Storage::disk('public')->exists($path)) {
+            if ($path !== BrandLogoService::CANONICAL_PATH && Storage::disk('public')->exists(BrandLogoService::CANONICAL_PATH)) {
+                $path = BrandLogoService::CANONICAL_PATH;
+            } else {
+                return null;
+            }
+        }
+
+        $bytes = Storage::disk('public')->get($path);
+        $logo = @imagecreatefromstring($bytes);
+
+        return $logo === false ? null : $logo;
+    }
+
+    protected function resolveOgFontPath(): ?string
+    {
+        $candidates = [
+            public_path('fonts/DejaVuSans.ttf'),
+            public_path('fonts/NotoSans-Regular.ttf'),
+            'C:/Windows/Fonts/arial.ttf',
+            'C:/Windows/Fonts/segoeui.ttf',
+            'C:/Windows/Fonts/Nirmala.ttf',
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+            '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    /** @param \GdImage|resource $canvas */
+    protected function drawOgText($canvas, string $text, int $x, int $y, int $size, int $color, int $maxWidth): void
+    {
+        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+
+        if ($text === '') {
+            return;
+        }
+
+        $font = $this->resolveOgFontPath();
+
+        if ($font && function_exists('imagettftext')) {
+            $lines = $this->wrapOgText($text, $font, $size, $maxWidth);
+
+            foreach (array_slice($lines, 0, 2) as $index => $line) {
+                imagettftext($canvas, $size, 0, $x, $y + ($index * (int) round($size * 1.25)), $color, $font, $line);
+            }
+
+            return;
+        }
+
+        $safe = preg_replace('/[^\x20-\x7E]/', '', $text) ?: (string) config('app.name', 'TNF Today');
+        $fontSize = $size >= 26 ? 5 : 3;
+        $charWidth = imagefontwidth($fontSize);
+        $maxChars = max(8, (int) floor($maxWidth / max(1, $charWidth)));
+        $line = strlen($safe) > $maxChars ? rtrim(substr($safe, 0, $maxChars - 1)).'…' : $safe;
+        imagestring($canvas, $fontSize, $x, $y - imagefontheight($fontSize), $line, $color);
+    }
+
+    /** @return list<string> */
+    protected function wrapOgText(string $text, string $font, int $size, int $maxWidth): array
+    {
+        $words = preg_split('/\s+/u', $text) ?: [$text];
+        $lines = [];
+        $current = '';
+
+        foreach ($words as $word) {
+            $trial = $current === '' ? $word : $current.' '.$word;
+            $box = imagettfbbox($size, 0, $font, $trial);
+            $width = $box ? (int) abs($box[2] - $box[0]) : strlen($trial) * $size;
+
+            if ($width <= $maxWidth || $current === '') {
+                $current = $trial;
+            } else {
+                $lines[] = $current;
+                $current = $word;
+            }
+        }
+
+        if ($current !== '') {
+            $lines[] = $current;
+        }
+
+        return $lines === [] ? [$text] : $lines;
     }
 
     public function serveDefault(): Response

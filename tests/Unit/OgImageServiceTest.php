@@ -66,4 +66,67 @@ class OgImageServiceTest extends TestCase
 
         imagedestroy($result);
     }
+
+    public function test_branded_clip_jpeg_includes_header_band_above_crop(): void
+    {
+        if (! extension_loaded('gd')) {
+            $this->markTestSkipped('GD extension required');
+        }
+
+        Storage::fake('public');
+
+        $source = imagecreatetruecolor(800, 1000);
+        $green = imagecolorallocate($source, 20, 180, 60);
+        imagefilledrectangle($source, 0, 0, 799, 999, $green);
+
+        ob_start();
+        imagejpeg($source, null, 90);
+        $bytes = ob_get_clean() ?: '';
+        imagedestroy($source);
+
+        Storage::disk('public')->put('epaper/covers/clip-source.jpg', $bytes);
+
+        $logo = imagecreatetruecolor(120, 40);
+        $white = imagecolorallocate($logo, 255, 255, 255);
+        imagefilledrectangle($logo, 0, 0, 119, 39, $white);
+        ob_start();
+        imagepng($logo);
+        $logoBytes = ob_get_clean() ?: '';
+        imagedestroy($logo);
+        Storage::disk('public')->put('settings/brand/logo.png', $logoBytes);
+
+        \App\Models\Setting::set('site_logo', 'settings/brand/logo.png');
+
+        $jpeg = app(OgImageService::class)->buildBrandedClipJpeg(
+            '/storage/epaper/covers/clip-source.jpg',
+            ['x' => 0.1, 'y' => 0.2, 'w' => 0.5, 'h' => 0.3],
+            '23 July 2024 TNF Today Newspaper',
+        );
+
+        $this->assertNotNull($jpeg);
+
+        $result = imagecreatefromstring($jpeg);
+        $this->assertNotFalse($result);
+        $this->assertSame(1200, imagesx($result));
+        $this->assertSame(630, imagesy($result));
+
+        // Header band should be navy, not the green crop.
+        $header = imagecolorat($result, 600, 40);
+        $hr = ($header >> 16) & 0xFF;
+        $hg = ($header >> 8) & 0xFF;
+        $hb = $header & 0xFF;
+        $this->assertLessThan(40, $hr);
+        $this->assertLessThan(40, $hg);
+        $this->assertLessThan(50, $hb);
+
+        // Content area below header should contain green from the crop.
+        $body = imagecolorat($result, 600, 360);
+        $br = ($body >> 16) & 0xFF;
+        $bg = ($body >> 8) & 0xFF;
+        $bb = $body & 0xFF;
+        $this->assertGreaterThan(100, $bg);
+        $this->assertLessThan(80, $br);
+
+        imagedestroy($result);
+    }
 }

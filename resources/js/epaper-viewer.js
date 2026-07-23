@@ -3105,6 +3105,35 @@ class TnfEpaperViewer {
 
         this.clipPreviewDataUrl = bitmap;
 
+        const card = document.createElement('div');
+        card.className = 'tnf-ep-clip-card';
+
+        const brand = document.createElement('div');
+        brand.className = 'tnf-ep-clip-card__brand';
+
+        if (this.config.logoUrl) {
+            const logo = document.createElement('img');
+            logo.className = 'tnf-ep-clip-card__logo';
+            logo.src = this.config.logoUrl;
+            logo.alt = this.config.title || 'TNF Today';
+            brand.appendChild(logo);
+        }
+
+        const brandText = document.createElement('div');
+        brandText.className = 'min-w-0';
+        brandText.innerHTML = `
+            <p class="tnf-ep-clip-card__eyebrow">Shared newspaper clip</p>
+            <p class="tnf-ep-clip-card__title"></p>
+        `;
+        const titleEl = brandText.querySelector('.tnf-ep-clip-card__title');
+
+        if (titleEl) {
+            titleEl.textContent = this.config.title || '';
+        }
+
+        brand.appendChild(brandText);
+        card.appendChild(brand);
+
         const viewport = document.createElement('div');
         viewport.className = 'tnf-ep-clip-viewport';
 
@@ -3115,7 +3144,8 @@ class TnfEpaperViewer {
         img.decoding = 'async';
 
         viewport.appendChild(img);
-        this.els.stage.replaceChildren(viewport);
+        card.appendChild(viewport);
+        this.els.stage.replaceChildren(card);
         this.els.stage.scrollTop = 0;
         this.els.stage.scrollLeft = 0;
 

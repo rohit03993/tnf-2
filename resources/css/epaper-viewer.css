@@ -673,6 +673,46 @@
         @apply bg-tnf-navy text-white;
     }
 
+    .tnf-ep-clip-banner-inner {
+        @apply flex flex-wrap items-center justify-between gap-3 py-3;
+    }
+
+    .tnf-ep-clip-banner-brand {
+        @apply flex min-w-0 items-center gap-3;
+    }
+
+    .tnf-ep-clip-banner-logo {
+        @apply h-10 w-auto max-w-[9rem] shrink-0 object-contain bg-white/95 p-1.5 rounded-md;
+    }
+
+    .tnf-ep-clip-banner-eyebrow {
+        @apply text-tnf-xs font-bold uppercase tracking-wider text-white/70;
+    }
+
+    .tnf-ep-clip-banner-title {
+        @apply truncate text-tnf-sm font-semibold text-white sm:text-tnf-base;
+    }
+
+    .tnf-ep-clip-card {
+        @apply mx-auto w-full max-w-3xl overflow-hidden rounded-tnf-lg border border-tnf-gray-dark/50 bg-white shadow-card;
+    }
+
+    .tnf-ep-clip-card__brand {
+        @apply flex items-center gap-3 border-b border-tnf-gray-dark/40 bg-tnf-navy px-3 py-2.5 text-white sm:px-4;
+    }
+
+    .tnf-ep-clip-card__logo {
+        @apply h-9 w-auto max-w-[8rem] shrink-0 object-contain rounded bg-white/95 p-1;
+    }
+
+    .tnf-ep-clip-card__eyebrow {
+        @apply text-[0.625rem] font-bold uppercase tracking-wider text-white/70;
+    }
+
+    .tnf-ep-clip-card__title {
+        @apply truncate text-tnf-sm font-semibold text-white;
+    }
+
     .tnf-ep-full-edition-btn {
         @apply inline-flex min-h-touch items-center justify-center rounded-tnf bg-tnf-red px-5 py-2.5 text-tnf-sm font-semibold text-white shadow-card transition-colors hover:bg-tnf-red-dark;
     }
@@ -708,12 +748,20 @@
     }
 
     .tnf-ep-clip-viewport {
-        @apply mx-auto w-fit max-w-full overflow-hidden rounded-tnf-lg bg-white shadow-card;
+        @apply mx-auto w-fit max-w-full overflow-hidden bg-white;
+    }
+
+    .tnf-ep-clip-card .tnf-ep-clip-viewport {
+        @apply w-full max-w-none;
     }
 
     .tnf-ep-clip-viewport img,
     .tnf-ep-clip-shared-image {
         @apply mx-auto block h-auto w-auto max-w-full;
+    }
+
+    .tnf-ep-clip-card .tnf-ep-clip-shared-image {
+        @apply w-full max-w-none;
     }
 
     .tnf-epaper-viewer--shared-clip .tnf-ep-thumbs-sidebar,

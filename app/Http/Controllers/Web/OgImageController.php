@@ -66,7 +66,7 @@ class OgImageController extends Controller
             'h' => (float) $this->clipQuery($request, 'ch', 0),
         ];
 
-        return $ogImages->serveCropped($imageUrl, $crop);
+        return $ogImages->serveCropped($imageUrl, $crop, $edition->title);
     }
 
     protected function clipRequest(Request $request): Request

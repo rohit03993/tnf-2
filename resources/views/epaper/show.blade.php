@@ -44,10 +44,20 @@
             </div>
         @else
             <div class="tnf-ep-clip-banner">
-                <div class="tnf-container flex flex-wrap items-center justify-between gap-3 py-3">
-                    <div class="min-w-0">
-                        <p class="text-tnf-xs font-bold uppercase tracking-wider text-white/70">Shared newspaper clip</p>
-                        <p class="truncate text-tnf-sm font-semibold text-white">{{ $edition->title }}</p>
+                <div class="tnf-container tnf-ep-clip-banner-inner">
+                    <div class="tnf-ep-clip-banner-brand">
+                        @php($clipLogoUrl = \App\Services\BrandLogoService::url())
+                        @if($clipLogoUrl)
+                            <img
+                                src="{{ $clipLogoUrl }}"
+                                alt="{{ config('app.name') }}"
+                                class="tnf-ep-clip-banner-logo"
+                            >
+                        @endif
+                        <div class="min-w-0">
+                            <p class="tnf-ep-clip-banner-eyebrow">Shared newspaper clip</p>
+                            <p class="tnf-ep-clip-banner-title">{{ $edition->title }}</p>
+                        </div>
                     </div>
                     <a href="{{ route('epaper.show', $edition->slug) }}" class="tnf-ep-full-edition-btn shrink-0">
                         Full edition
