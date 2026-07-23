@@ -3108,8 +3108,20 @@ class TnfEpaperViewer {
         const brand = document.createElement('div');
         brand.className = 'tnf-ep-clip-card__brand';
 
+        if (this.config.logoUrl) {
+            const logo = document.createElement('img');
+            logo.className = 'tnf-ep-clip-card__logo';
+            logo.src = this.config.logoUrl;
+            logo.alt = this.config.title || 'TNF Today';
+            logo.width = 120;
+            logo.height = 36;
+            logo.decoding = 'async';
+            logo.loading = 'eager';
+            brand.appendChild(logo);
+        }
+
         const brandText = document.createElement('div');
-        brandText.className = 'min-w-0';
+        brandText.className = 'tnf-ep-clip-card__text min-w-0';
 
         const eyebrow = document.createElement('p');
         eyebrow.className = 'tnf-ep-clip-card__eyebrow';

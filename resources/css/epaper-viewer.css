@@ -690,7 +690,23 @@
     }
 
     .tnf-ep-clip-card__brand {
-        @apply border-b border-tnf-gray-dark/40 bg-tnf-navy px-3 py-2.5 text-white sm:px-4;
+        @apply flex items-center gap-3 border-b border-tnf-gray-dark/40 bg-tnf-navy px-3 py-2.5 text-white sm:px-4;
+    }
+
+    .tnf-ep-clip-card__logo {
+        display: block;
+        height: 2.25rem;
+        width: auto;
+        max-width: 7.5rem;
+        flex-shrink: 0;
+        object-fit: contain;
+        border-radius: 0.375rem;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 0.25rem;
+    }
+
+    .tnf-ep-clip-card__text {
+        @apply min-w-0;
     }
 
     .tnf-ep-clip-card__eyebrow {

@@ -23,6 +23,7 @@ class EpaperViewerService
             'editionId' => $edition->id,
             'title' => $edition->title,
             'slug' => $edition->slug,
+            'logoUrl' => rescue(static fn () => BrandLogoService::url(), null, report: false),
             'pages' => $pages,
             'pageCount' => $pageCount,
             'pdfUrl' => $pdfUrl,
