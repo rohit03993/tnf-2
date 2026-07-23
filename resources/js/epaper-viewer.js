@@ -475,6 +475,15 @@ class TnfEpaperViewer {
             return;
         }
 
+        // Touch devices: native overflow scroll (inertia + compositor). JS pan feels laggy.
+        if (this.isCoarsePointer()) {
+            stage.classList.remove('tnf-ep-stage--drag-scroll', 'is-panning');
+            stage.classList.add('tnf-ep-stage--native-scroll');
+
+            return;
+        }
+
+        stage.classList.remove('tnf-ep-stage--native-scroll');
         this.stagePanCleanup = this.bindStageDragScroll(stage, {
             isEnabled: () => ! this.clipMode && ! this.config.clipMode,
         });
@@ -1231,7 +1240,9 @@ class TnfEpaperViewer {
             this.els.pdfCanvas.style.width = `${cssWidth}px`;
             this.els.pdfCanvas.style.height = `${cssHeight}px`;
 
-            const neededQuality = this.effectiveZoom * (window.devicePixelRatio || 1) * 1.75;
+            const neededQuality = this.effectiveZoom
+                * (window.devicePixelRatio || 1)
+                * (this.isCoarsePointer() ? 1.2 : 1.75);
 
             if (! this.cachedPdfRenderScale || neededQuality > this.cachedPdfRenderScale * 1.18) {
                 if (this.pdfZoomRenderTimer) {
@@ -3115,9 +3126,15 @@ class TnfEpaperViewer {
 
         const displayScale = this.effectiveZoom;
         const pixelRatio = window.devicePixelRatio || 1;
-        const mobileBoost = this.isCoarsePointer() ? 1.35 : 1;
-        const previewScale = Math.max(1, displayScale * Math.min(pixelRatio, 1.5) * mobileBoost);
-        const finalScale = Math.max(previewScale, displayScale * pixelRatio * 1.75);
+        const isMobile = this.isCoarsePointer();
+        // Keep mobile canvases lighter so finger-scroll stays smooth.
+        const previewScale = Math.max(
+            1,
+            displayScale * Math.min(pixelRatio, isMobile ? 1.25 : 1.5) * (isMobile ? 1.05 : 1),
+        );
+        const finalScale = isMobile
+            ? Math.max(previewScale, displayScale * Math.min(pixelRatio, 2) * 1.2)
+            : Math.max(previewScale, displayScale * pixelRatio * 1.75);
 
         await this.paintPdfPage(pdfPage, baseViewport, previewScale);
 

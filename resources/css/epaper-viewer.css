@@ -351,7 +351,7 @@
         touch-action: pan-x pan-y;
     }
 
-    /* JS drag-to-scroll owns gestures so touch/mouse drag pans the PDF reliably. */
+    /* Mouse/desktop: JS grab-to-pan. Touch/mobile uses native overflow (smoother). */
     .tnf-ep-stage.tnf-ep-stage--drag-scroll {
         cursor: grab;
         touch-action: none;
@@ -361,6 +361,12 @@
     .tnf-ep-stage.tnf-ep-stage--drag-scroll.is-panning {
         cursor: grabbing;
         user-select: none;
+    }
+
+    .tnf-ep-stage.tnf-ep-stage--native-scroll {
+        touch-action: pan-x pan-y;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
     }
 
     .tnf-epaper-viewer.is-clip-mode .tnf-ep-stage.tnf-ep-stage--drag-scroll {
@@ -710,38 +716,38 @@
     }
 
     .tnf-ep-mobile-bar-inner {
-        @apply grid min-h-[3.25rem] grid-cols-[minmax(0,1.1fr)_auto_minmax(0,1fr)] items-center gap-1.5 px-2 py-1.5;
+        @apply flex min-h-[3.25rem] items-center justify-between gap-2 px-2.5 py-1.5;
     }
 
     .tnf-ep-mobile-bar-nav,
     .tnf-ep-mobile-bar-zoom,
     .tnf-ep-mobile-bar-actions {
-        @apply flex items-center;
+        @apply flex shrink-0 items-center;
     }
 
     .tnf-ep-mobile-bar-nav {
-        @apply min-w-0 justify-start gap-0.5;
+        @apply gap-0;
     }
 
     .tnf-ep-mobile-bar-zoom {
-        @apply shrink-0 justify-center gap-0.5 rounded-full border border-tnf-gray-dark/70 bg-tnf-gray/50 p-0.5;
+        @apply gap-0 rounded-full border border-tnf-gray-dark/60 bg-tnf-gray/40 p-0.5;
     }
 
     .tnf-ep-mobile-bar-actions {
-        @apply min-w-0 justify-end gap-1.5;
+        @apply gap-1.5;
     }
 
     .tnf-ep-mobile-icon-btn {
-        @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-tnf-navy transition-colors active:bg-tnf-gray;
+        @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-tnf-navy transition-colors active:bg-tnf-gray;
         touch-action: manipulation;
     }
 
     .tnf-ep-mobile-page-wrap {
-        @apply relative min-w-[3.75rem] max-w-[4.75rem] flex-1;
+        @apply relative w-[3.25rem] shrink-0;
     }
 
     .tnf-ep-mobile-page {
-        @apply inline-flex h-10 w-full items-center justify-center truncate rounded-xl bg-tnf-gray/70 px-1.5 text-center text-tnf-xs font-bold tabular-nums text-tnf-navy;
+        @apply inline-flex h-9 w-full items-center justify-center truncate rounded-lg bg-tnf-gray/70 px-1 text-center text-[0.6875rem] font-bold tabular-nums text-tnf-navy;
         touch-action: manipulation;
         pointer-events: none;
     }
@@ -752,17 +758,17 @@
     }
 
     .tnf-ep-mobile-zoom-btn {
-        @apply inline-flex h-9 min-w-9 items-center justify-center rounded-full text-tnf-sm font-bold text-tnf-navy active:bg-white;
+        @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-tnf-sm font-bold leading-none text-tnf-navy active:bg-white;
         touch-action: manipulation;
     }
 
     .tnf-ep-mobile-zoom-btn--fit {
-        @apply min-w-[2.5rem] px-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-tnf-muted;
+        @apply w-auto min-w-0 px-1.5 text-[0.625rem] font-bold uppercase tracking-wide text-tnf-muted;
     }
 
     .tnf-ep-mobile-clip-btn,
     .tnf-ep-mobile-share-btn {
-        @apply inline-flex h-10 items-center justify-center gap-1 rounded-full border px-2.5 text-[0.6875rem] font-bold transition-colors active:scale-[0.98];
+        @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border p-0 transition-colors active:scale-[0.98];
         touch-action: manipulation;
     }
 
@@ -777,6 +783,11 @@
     .tnf-ep-mobile-share-btn svg,
     .tnf-ep-mobile-clip-btn svg {
         @apply h-4 w-4 shrink-0;
+    }
+
+    .tnf-ep-mobile-share-btn span,
+    .tnf-ep-mobile-clip-btn span {
+        display: none;
     }
 
     .tnf-ep-clip-mobile-dock {
@@ -866,23 +877,6 @@
             content: '';
             position: absolute;
             inset: -0.5rem;
-        }
-
-        .tnf-ep-mobile-share-btn span,
-        .tnf-ep-mobile-clip-btn span {
-            display: none;
-        }
-    }
-
-    @media (min-width: 400px) and (max-width: 1023px) {
-        .tnf-ep-mobile-share-btn span,
-        .tnf-ep-mobile-clip-btn span {
-            display: inline;
-        }
-
-        .tnf-ep-mobile-clip-btn,
-        .tnf-ep-mobile-share-btn {
-            @apply px-3 text-tnf-xs;
         }
     }
 
