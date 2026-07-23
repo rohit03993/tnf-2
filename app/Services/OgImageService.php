@@ -238,7 +238,7 @@ class OgImageService
     /** @return \GdImage|resource|null */
     protected function loadBrandLogoResource()
     {
-        $path = (string) \App\Models\Setting::get('site_logo', BrandLogoService::CANONICAL_PATH);
+        $path = BrandLogoService::storedLogoPath();
 
         if (! filled($path) || ! Storage::disk('public')->exists($path)) {
             if ($path !== BrandLogoService::CANONICAL_PATH && Storage::disk('public')->exists(BrandLogoService::CANONICAL_PATH)) {
@@ -301,7 +301,7 @@ class OgImageService
         $fontSize = $size >= 26 ? 5 : 3;
         $charWidth = imagefontwidth($fontSize);
         $maxChars = max(8, (int) floor($maxWidth / max(1, $charWidth)));
-        $line = strlen($safe) > $maxChars ? rtrim(substr($safe, 0, $maxChars - 1)).'…' : $safe;
+        $line = strlen($safe) > $maxChars ? rtrim(substr($safe, 0, $maxChars - 1)).'...' : $safe;
         imagestring($canvas, $fontSize, $x, $y - imagefontheight($fontSize), $line, $color);
     }
 

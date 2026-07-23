@@ -15,13 +15,24 @@ class BrandLogoService
 
     public static function url(?string $path = null): ?string
     {
-        $path ??= (string) \App\Models\Setting::get('site_logo', '');
+        $path ??= self::storedLogoPath();
 
         if (! filled($path) || ! Storage::disk('public')->exists($path)) {
             return null;
         }
 
         return asset('storage/'.$path);
+    }
+
+    public static function storedLogoPath(): string
+    {
+        $stored = \App\Models\Setting::get('site_logo', '');
+
+        if (is_array($stored)) {
+            $stored = $stored[0] ?? $stored['path'] ?? '';
+        }
+
+        return is_string($stored) ? $stored : '';
     }
 
     public static function process(string $disk, string $sourcePath): string
