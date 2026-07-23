@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicStorageController;
 use App\Http\Controllers\Web\AccountController;
+use App\Http\Controllers\Web\EpaperClipShortController;
 use App\Http\Controllers\Web\EpaperClipSignController;
 use App\Http\Controllers\Web\OgImageController;
 use App\Http\Controllers\Web\SubmissionController;
@@ -49,6 +50,9 @@ Route::middleware(['cache.public', 'cache.headers'])->group(function () {
 
     Route::get('/epaper', EpaperArchiveController::class)->name('epaper.index');
     Route::get('/epaper/{edition:slug}', EpaperSingleController::class)->name('epaper.show');
+    Route::get('/c/{token}', EpaperClipShortController::class)
+        ->where('token', '[A-Za-z0-9_-]+')
+        ->name('epaper.clip.short');
     Route::get('/videos', VideoArchiveController::class)->name('videos.index');
     Route::get('/videos/{video:slug}', VideoSingleController::class)->name('videos.show');
     Route::get('/search', SearchController::class)->name('search');

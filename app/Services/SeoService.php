@@ -173,7 +173,11 @@ class SeoService
                 title: 'Newspaper clip — '.$edition->title,
                 description: $description,
                 image: $this->resolveEpaperClipShareImage($edition, $request),
-                url: FrontendUrl::to($request->fullUrl()),
+                url: FrontendUrl::to(
+                    $request->routeIs('epaper.clip.short')
+                        ? $request->url()
+                        : $request->fullUrl()
+                ),
                 type: 'article',
                 imageWidth: self::OG_IMAGE_WIDTH,
                 imageHeight: self::OG_IMAGE_HEIGHT,

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Enums\ContentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\EpaperEdition;
-use App\Services\EpaperClipSignatureService;
+use App\Services\EpaperClipCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -36,19 +36,12 @@ class EpaperClipSignController extends Controller
             'h' => (float) $validated['h'],
         ];
 
-        $url = route('epaper.show', $edition->slug);
-        $query = array_merge([
-            'tnf_clip' => '1',
-            'tnf_pg' => $clip['page'],
-            'tnf_cx' => number_format($clip['x'], 4, '.', ''),
-            'tnf_cy' => number_format($clip['y'], 4, '.', ''),
-            'tnf_cw' => number_format($clip['w'], 4, '.', ''),
-            'tnf_ch' => number_format($clip['h'], 4, '.', ''),
-        ], EpaperClipSignatureService::sign($edition, $clip));
+        $token = EpaperClipCodeService::encode($edition->id, $clip);
 
         return response()->json([
-            'url' => $url.'?'.http_build_query($query),
-            'signed' => EpaperClipSignatureService::signingEnabled(),
+            'url' => route('epaper.clip.short', ['token' => $token]),
+            'token' => $token,
+            'signed' => true,
         ]);
     }
 }
