@@ -289,6 +289,27 @@ class WhatsAppCloudService
     {
         $options = [];
 
+        $fromDb = \App\Models\WhatsappTemplate::query()
+            ->where('status', 'APPROVED')
+            ->orderBy('name')
+            ->get(['name', 'language', 'category']);
+
+        foreach ($fromDb as $template) {
+            $name = (string) $template->name;
+            $lang = (string) $template->language;
+            if ($name === '' || $lang === '') {
+                continue;
+            }
+
+            $key = $name.'||'.$lang;
+            $category = $template->category ?: '—';
+            $options[$key] = "{$name} · {$lang} · {$category}";
+        }
+
+        if ($options !== []) {
+            return $options;
+        }
+
         foreach ($this->cachedMessageTemplates() as $template) {
             if (($template['status'] ?? '') !== 'APPROVED') {
                 continue;
@@ -303,6 +324,24 @@ class WhatsAppCloudService
             $key = $name.'||'.$lang;
             $category = $template['category'] ?? '—';
             $options[$key] = "{$name} · {$lang} · {$category}";
+        }
+
+        return $options;
+    }
+
+    /**
+     * @return array<string, string> name => label (approved only, one per name)
+     */
+    public function approvedTemplateNameOptions(): array
+    {
+        $options = [];
+
+        foreach ($this->approvedTemplatePickOptions() as $key => $label) {
+            $name = explode('||', (string) $key, 2)[0] ?? '';
+            if ($name === '' || isset($options[$name])) {
+                continue;
+            }
+            $options[$name] = $label;
         }
 
         return $options;
@@ -519,6 +558,10 @@ class WhatsAppCloudService
     protected function ingestInboundMessages(array $value): void
     {
         foreach ($value['messages'] ?? [] as $message) {
+            if (! is_array($message)) {
+                continue;
+            }
+
             $wamid = $message['id'] ?? null;
             if (filled($wamid) && WhatsappMessage::query()->where('wamid', $wamid)->exists()) {
                 continue;
@@ -529,17 +572,10 @@ class WhatsAppCloudService
                 continue;
             }
 
-            $type = $message['type'] ?? 'unknown';
-            $body = match ($type) {
-                'text' => $message['text']['body'] ?? null,
-                'button' => $message['button']['text'] ?? null,
-                'interactive' => $message['interactive']['button_reply']['title']
-                    ?? $message['interactive']['list_reply']['title']
-                    ?? null,
-                default => '['.$type.']',
-            };
-
+            $parsed = \App\Support\WhatsAppInboundParser::parse($message);
+            $body = $parsed['body'];
             $lower = Str::lower(trim((string) $body));
+
             if (in_array($lower, ['stop', 'unsubscribe', 'cancel'], true)) {
                 User::query()->where('phone', $phone)->update([
                     'whatsapp_opt_in' => false,
@@ -553,12 +589,16 @@ class WhatsAppCloudService
                 ]);
             }
 
-            WhatsappMessage::query()->create([
+            $record = WhatsappMessage::query()->create([
                 'wamid' => $wamid,
                 'direction' => 'inbound',
                 'phone' => $phone,
                 'user_id' => User::query()->where('phone', $phone)->value('id'),
-                'type' => $type,
+                'type' => $parsed['type'],
+                'media_id' => $parsed['media_id'],
+                'media_mime_type' => $parsed['media_mime_type'],
+                'media_filename' => $parsed['media_filename'],
+                'caption' => $parsed['caption'],
                 'body' => $body,
                 'payload' => $message,
                 'status' => 'received',
@@ -566,6 +606,10 @@ class WhatsAppCloudService
                     ? now()->setTimestamp((int) $message['timestamp'])
                     : now(),
             ]);
+
+            if (\App\Support\WhatsAppInboundParser::isMediaType($parsed['type']) && filled($parsed['media_id'])) {
+                \App\Jobs\DownloadWhatsAppMediaJob::dispatch($record->id);
+            }
         }
     }
 
@@ -636,6 +680,11 @@ class WhatsAppCloudService
         }
 
         return $ok;
+    }
+
+    public function publicGraphUrl(string $path): string
+    {
+        return $this->graphUrl($path);
     }
 
     protected function graphUrl(string $path): string

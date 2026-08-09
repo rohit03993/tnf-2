@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class WhatsappMessage extends Model
 {
@@ -13,6 +14,11 @@ class WhatsappMessage extends Model
         'phone',
         'user_id',
         'type',
+        'media_id',
+        'media_path',
+        'media_mime_type',
+        'media_filename',
+        'caption',
         'body',
         'payload',
         'status',
@@ -39,6 +45,22 @@ class WhatsappMessage extends Model
     public function isInbound(): bool
     {
         return $this->direction === 'inbound';
+    }
+
+    public function isMedia(): bool
+    {
+        return in_array($this->type, ['image', 'video', 'audio', 'document', 'sticker'], true);
+    }
+
+    public function isImage(): bool
+    {
+        return $this->type === 'image'
+            || str_starts_with((string) $this->media_mime_type, 'image/');
+    }
+
+    public function hasStoredMedia(): bool
+    {
+        return filled($this->media_path) && Storage::disk('local')->exists((string) $this->media_path);
     }
 
     public function markAsRead(): void

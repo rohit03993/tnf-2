@@ -24,17 +24,23 @@ class WhatsappMessageResource extends Resource
 {
     protected static ?string $model = WhatsappMessage::class;
 
-    protected static ?string $navigationLabel = 'WhatsApp Inbox';
+    protected static ?string $navigationLabel = 'Message log';
 
     protected static ?string $modelLabel = 'WhatsApp message';
 
     protected static ?string $pluralModelLabel = 'WhatsApp messages';
 
-    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedInbox;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedQueueList;
 
     protected static string|\UnitEnum|null $navigationGroup = 'WhatsApp';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        // Conversation inbox lives on WhatsAppInboxPage; keep this as a raw log if needed.
+        return false;
+    }
 
     public static function canAccess(): bool
     {

@@ -27,6 +27,7 @@ use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\TagController;
 use App\Http\Controllers\Web\VideoArchiveController;
 use App\Http\Controllers\Web\VideoSingleController;
+use App\Http\Controllers\Admin\WhatsAppMediaController;
 use App\Http\Controllers\Web\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,12 @@ Route::get('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'verify'])
     ->name('webhooks.whatsapp.verify');
 Route::post('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'receive'])
     ->name('webhooks.whatsapp.receive');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/whatsapp-media/{message}', WhatsAppMediaController::class)
+        ->whereNumber('message')
+        ->name('admin.whatsapp.media');
+});
 
 Route::redirect('/admin/login', '/login');
 Route::permanentRedirect('/admin/login/', '/login');

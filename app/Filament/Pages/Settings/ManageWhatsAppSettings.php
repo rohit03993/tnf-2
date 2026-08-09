@@ -6,9 +6,11 @@ use App\Enums\UserRole;
 use App\Filament\Pages\Settings\Concerns\ManagesSettings;
 use App\Models\Setting;
 use App\Services\WhatsAppCloudService;
+use App\Services\WhatsAppTemplateCatalogService;
 use App\Support\TnfSetting;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -133,7 +135,7 @@ class ManageWhatsAppSettings extends SettingsPage
                 ->icon(Heroicon::OutlinedArrowPath)
                 ->color('gray')
                 ->action(function (): void {
-                    $result = app(WhatsAppCloudService::class)->syncMessageTemplates();
+                    $result = app(WhatsAppTemplateCatalogService::class)->syncFromMeta();
 
                     if (! $result['ok']) {
                         Notification::make()
@@ -148,7 +150,7 @@ class ManageWhatsAppSettings extends SettingsPage
 
                     Notification::make()
                         ->title('Templates synced')
-                        ->body($result['approved'].' approved / '.$result['count'].' total')
+                        ->body($result['approved'].' approved / '.$result['count'].' total. Open WhatsApp → Templates to manage them.')
                         ->success()
                         ->persistent()
                         ->send();
