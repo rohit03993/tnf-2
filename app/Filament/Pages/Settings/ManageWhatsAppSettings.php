@@ -82,6 +82,10 @@ class ManageWhatsAppSettings extends SettingsPage
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('saveSettings')
+                ->label('Save settings')
+                ->icon(Heroicon::OutlinedCheck)
+                ->action(fn () => $this->save()),
             Action::make('testConnection')
                 ->label('Test connection')
                 ->icon(Heroicon::OutlinedSignal)
@@ -137,6 +141,43 @@ class ManageWhatsAppSettings extends SettingsPage
         ];
     }
 
+    public function save(): void
+    {
+        $data = $this->form->getState();
+
+        $waba = trim((string) ($data['whatsapp_business_account_id'] ?? ''));
+        if ($waba !== '' && ! preg_match('/^\d+$/', $waba)) {
+            Notification::make()
+                ->title('Invalid WABA ID')
+                ->body('WhatsApp Business Account ID must be numbers only (from Meta), not an email.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $verifyToken = (string) ($data['whatsapp_webhook_verify_token'] ?? '');
+        if ($verifyToken !== '' && str_contains($verifyToken, '#')) {
+            Notification::make()
+                ->title('Invalid verify token')
+                ->body('Do not use # in the webhook verify token — Meta URL verification will fail. Use letters/numbers only.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        foreach ($data as $key => $value) {
+            if (in_array($key, $this->secretKeys(), true) && blank($value)) {
+                continue;
+            }
+
+            Setting::set($key, $value);
+        }
+
+        Notification::make()->title('Settings saved')->success()->send();
+    }
+
     public function form(Schema $schema): Schema
     {
         $whatsApp = app(WhatsAppCloudService::class);
@@ -149,10 +190,12 @@ class ManageWhatsAppSettings extends SettingsPage
         $templates = $whatsApp->cachedMessageTemplates();
         $syncedAt = Setting::get('whatsapp_templates_synced_at');
         $pickOptions = $whatsApp->approvedTemplatePickOptions();
+        $tokenSaved = filled(TnfSetting::get('whatsapp_access_token'));
+        $secretSaved = filled(TnfSetting::get('whatsapp_app_secret'));
 
         return $schema->components([
             Section::make('Connection status')
-                ->description('Save credentials first, then click “Test connection” in the header.')
+                ->description('Fill credentials below, click Save settings (top right), then Test connection. Access token / App secret stay blank after save on purpose — they are stored, not lost.')
                 ->schema([
                     Placeholder::make('connection_badge')
                         ->label('Status')
@@ -167,13 +210,19 @@ class ManageWhatsAppSettings extends SettingsPage
                             $quality ? 'Quality: '.$quality : null,
                             $lastChecked ? 'Checked: '.$lastChecked : null,
                         ])->filter()->implode(' · ') ?: '—'),
+                    Placeholder::make('secrets_status')
+                        ->label('Saved secrets')
+                        ->content(fn (): string => collect([
+                            $tokenSaved ? 'Access token: saved' : 'Access token: missing',
+                            $secretSaved ? 'App secret: saved' : 'App secret: missing (optional for local)',
+                        ])->implode(' · ')),
                     Placeholder::make('webhook_url')
                         ->label('Webhook callback URL')
                         ->content($webhookUrl),
                 ])->columns(1),
 
             Section::make('Meta API credentials')
-                ->description('From Meta Developer → WhatsApp → API Setup: Phone number ID, WhatsApp Business Account ID, and a permanent System User token.')
+                ->description('From Meta Developer → WhatsApp → API Setup. WABA ID is a long number — never an email.')
                 ->schema([
                     Toggle::make('whatsapp_enabled')
                         ->label('Enable WhatsApp integration')
@@ -182,24 +231,30 @@ class ManageWhatsAppSettings extends SettingsPage
                         ->label('Access token')
                         ->password()
                         ->revealable()
-                        ->helperText('Leave blank to keep the current token.')
+                        ->helperText($tokenSaved
+                            ? 'Saved on server. Leave blank to keep it, or paste a new token to replace.'
+                            : 'Paste your permanent System User token, then Save settings.')
                         ->columnSpanFull(),
                     TextInput::make('whatsapp_phone_number_id')
                         ->label('Phone number ID')
+                        ->helperText('Numeric ID from Meta API Setup (not your phone number).')
                         ->required(fn ($get) => (bool) $get('whatsapp_enabled')),
                     TextInput::make('whatsapp_business_account_id')
                         ->label('WhatsApp Business Account ID (WABA)')
-                        ->helperText('Required to sync / list message templates.'),
+                        ->helperText('Digits only, e.g. 111704343541197 — required for Sync templates.'),
                     TextInput::make('whatsapp_app_id')
-                        ->label('Meta App ID'),
+                        ->label('Meta App ID')
+                        ->helperText('From your app dashboard URL / App settings.'),
                     TextInput::make('whatsapp_app_secret')
                         ->label('Meta App Secret')
                         ->password()
                         ->revealable()
-                        ->helperText('Used to verify webhook signatures. Leave blank to keep current.'),
+                        ->helperText($secretSaved
+                            ? 'Saved on server. Leave blank to keep it.'
+                            : 'App settings → Basic → App secret. Needed for webhook signature checks.'),
                     TextInput::make('whatsapp_webhook_verify_token')
                         ->label('Webhook verify token')
-                        ->helperText('Any secret string you also paste into Meta webhook “Verify token”.'),
+                        ->helperText('Must match Meta exactly. Use letters/numbers only — no # or spaces. Example: tnfWhatsAppVerify2026'),
                     TextInput::make('whatsapp_graph_version')
                         ->label('Graph API version')
                         ->placeholder('v21.0'),

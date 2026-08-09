@@ -6,6 +6,8 @@ use App\Enums\UserRole;
 use App\Filament\Resources\ContactMessages\Pages\ListContactMessages;
 use App\Filament\Resources\ContactMessages\Pages\ViewContactMessage;
 use App\Models\ContactMessage;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -97,6 +99,19 @@ class ContactMessageResource extends Resource
                         true: fn (Builder $query) => $query->whereNull('read_at'),
                         false: fn (Builder $query) => $query->whereNotNull('read_at'),
                     ),
+            ])
+            ->recordActions([
+                ViewAction::make()
+                    ->label('View')
+                    ->icon(Heroicon::OutlinedEye),
+                DeleteAction::make()
+                    ->label('Delete')
+                    ->icon(Heroicon::OutlinedTrash)
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete contact message')
+                    ->modalDescription('This permanently removes the message. This cannot be undone.')
+                    ->successNotificationTitle('Message deleted'),
             ])
             ->recordUrl(fn (ContactMessage $record) => static::getUrl('view', ['record' => $record]));
     }

@@ -52,13 +52,27 @@ class WhatsAppIntegrationTest extends TestCase
         Setting::set('whatsapp_webhook_verify_token', 'secret-token');
 
         $response = $this->get('/webhooks/whatsapp?'.http_build_query([
-            'hub_mode' => 'subscribe',
-            'hub_verify_token' => 'secret-token',
-            'hub_challenge' => '12345',
+            'hub.mode' => 'subscribe',
+            'hub.verify_token' => 'secret-token',
+            'hub.challenge' => '12345',
         ]));
 
         $response->assertOk();
         $response->assertSee('12345');
+    }
+
+    public function test_webhook_verify_accepts_underscore_keys(): void
+    {
+        Setting::set('whatsapp_webhook_verify_token', 'secret-token');
+
+        $response = $this->get('/webhooks/whatsapp?'.http_build_query([
+            'hub_mode' => 'subscribe',
+            'hub_verify_token' => 'secret-token',
+            'hub_challenge' => '999',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('999');
     }
 
     public function test_webhook_stores_inbound_message(): void
