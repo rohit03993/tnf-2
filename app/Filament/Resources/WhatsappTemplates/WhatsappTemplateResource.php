@@ -108,14 +108,34 @@ class WhatsappTemplateResource extends Resource
                     'AUTHENTICATION' => 'Authentication (OTP)',
                 ])
                 ->default('UTILITY')
-                ->required(),
+                ->required()
+                ->live(),
+            Placeholder::make('auth_note')
+                ->hiddenLabel()
+                ->content(new HtmlString(
+                    '<div class="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">'
+                    .'Authentication OTP templates use Meta’s fixed OTP format (Copy code button). '
+                    .'Body/header text below is ignored for this category — set expiry minutes only.'
+                    .'</div>'
+                ))
+                ->visible(fn (Get $get): bool => $get('category') === 'AUTHENTICATION')
+                ->columnSpanFull(),
+            TextInput::make('code_expiration_minutes')
+                ->label('OTP expiry (minutes)')
+                ->numeric()
+                ->default(10)
+                ->minValue(1)
+                ->maxValue(90)
+                ->required()
+                ->visible(fn (Get $get): bool => $get('category') === 'AUTHENTICATION'),
             TextInput::make('header_text')
                 ->label('Header (optional)')
                 ->maxLength(60)
-                ->helperText('Plain text only — no variables.'),
+                ->helperText('Plain text only — no variables.')
+                ->visible(fn (Get $get): bool => $get('category') !== 'AUTHENTICATION'),
             Textarea::make('body_text')
                 ->label('Message body')
-                ->required()
+                ->required(fn (Get $get): bool => $get('category') !== 'AUTHENTICATION')
                 ->rows(8)
                 ->helperText('Example: Your TNF Today code is {{1}}. Valid for 10 minutes.')
                 ->live(debounce: 400)
@@ -125,6 +145,7 @@ class WhatsappTemplateResource extends Resource
                         static::syncSampleRows((string) $state, $get('body_variable_samples') ?? []),
                     );
                 })
+                ->visible(fn (Get $get): bool => $get('category') !== 'AUTHENTICATION')
                 ->columnSpanFull(),
             Section::make('Template variables')
                 ->description('Meta requires one sample value per {{n}} for approval.')
@@ -158,15 +179,17 @@ class WhatsappTemplateResource extends Resource
                         })
                         ->columnSpanFull(),
                 ])
-                ->visible(fn (Get $get): bool => count(WhatsAppTemplateBuilder::placeholderOrder((string) $get('body_text'))) > 0)
+                ->visible(fn (Get $get): bool => $get('category') !== 'AUTHENTICATION'
+                    && count(WhatsAppTemplateBuilder::placeholderOrder((string) $get('body_text'))) > 0)
                 ->columnSpanFull(),
             TextInput::make('footer_text')
                 ->label('Footer (optional)')
-                ->maxLength(60),
+                ->maxLength(60)
+                ->visible(fn (Get $get): bool => $get('category') !== 'AUTHENTICATION'),
             Toggle::make('allow_category_change')
                 ->label('Allow Meta to recategorize')
                 ->default(true)
-                ->dehydrated(false)
+                ->dehydrated(true)
                 ->helperText('Recommended — Meta may adjust UTILITY vs MARKETING during review.'),
         ];
     }
@@ -261,7 +284,14 @@ class WhatsappTemplateResource extends Resource
                 ->implode(',');
         }
 
-        unset($data['body_variable_samples'], $data['allow_category_change']);
+        unset($data['body_variable_samples']);
+
+        if (($data['category'] ?? '') === 'AUTHENTICATION') {
+            $data['body_text'] = $data['body_text'] ?? '';
+            $data['header_text'] = null;
+            $data['footer_text'] = null;
+            $data['body_examples'] = null;
+        }
 
         return $data;
     }

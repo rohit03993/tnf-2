@@ -17,6 +17,8 @@ class WhatsAppTemplateBuilder
         ?string $headerText = null,
         ?string $footerText = null,
         ?string $bodyExamplesCsv = null,
+        bool $allowCategoryChange = true,
+        int $codeExpirationMinutes = 10,
     ): array {
         $name = self::normalizeName($name);
         $language = trim($language);
@@ -31,8 +33,21 @@ class WhatsAppTemplateBuilder
             throw new InvalidArgumentException('Template name: lowercase letters, numbers, underscores only.');
         }
 
+        if ($category === 'AUTHENTICATION') {
+            return self::buildAuthenticationPayload(
+                $name,
+                $language,
+                $codeExpirationMinutes,
+                $allowCategoryChange,
+            );
+        }
+
         if ($bodyText === '') {
             throw new InvalidArgumentException('Message body is required.');
+        }
+
+        if (filled($headerText) && str_contains((string) $headerText, '{{')) {
+            throw new InvalidArgumentException('Header cannot include variables. Use plain text only.');
         }
 
         $components = [];
@@ -41,7 +56,7 @@ class WhatsAppTemplateBuilder
             $components[] = [
                 'type' => 'HEADER',
                 'format' => 'TEXT',
-                'text' => trim($headerText),
+                'text' => trim((string) $headerText),
             ];
         }
 
@@ -54,8 +69,10 @@ class WhatsAppTemplateBuilder
                 explode(',', (string) $bodyExamplesCsv),
             )));
 
-            while (count($examples) < count($indices)) {
-                $examples[] = 'sample'.(count($examples) + 1);
+            if (count($examples) < count($indices)) {
+                throw new InvalidArgumentException(
+                    'The body has '.count($indices).' variable(s). Fill every sample value below.',
+                );
             }
 
             $body['example'] = [
@@ -68,7 +85,7 @@ class WhatsAppTemplateBuilder
         if (filled($footerText)) {
             $components[] = [
                 'type' => 'FOOTER',
-                'text' => trim($footerText),
+                'text' => trim((string) $footerText),
             ];
         }
 
@@ -77,7 +94,48 @@ class WhatsAppTemplateBuilder
             'language' => $language,
             'category' => $category,
             'components' => $components,
-            'allow_category_change' => true,
+            'allow_category_change' => $allowCategoryChange,
+        ];
+    }
+
+    /**
+     * Meta AUTHENTICATION OTP templates use a fixed structure (not free-form body text).
+     *
+     * @return array<string, mixed>
+     */
+    protected static function buildAuthenticationPayload(
+        string $name,
+        string $language,
+        int $codeExpirationMinutes,
+        bool $allowCategoryChange,
+    ): array {
+        $minutes = max(1, min(90, $codeExpirationMinutes));
+
+        return [
+            'name' => $name,
+            'language' => $language,
+            'category' => 'AUTHENTICATION',
+            'message_send_ttl_seconds' => $minutes * 60,
+            'components' => [
+                [
+                    'type' => 'BODY',
+                    'add_security_recommendation' => true,
+                ],
+                [
+                    'type' => 'FOOTER',
+                    'code_expiration_minutes' => $minutes,
+                ],
+                [
+                    'type' => 'BUTTONS',
+                    'buttons' => [
+                        [
+                            'type' => 'OTP',
+                            'otp_type' => 'COPY_CODE',
+                        ],
+                    ],
+                ],
+            ],
+            'allow_category_change' => $allowCategoryChange,
         ];
     }
 

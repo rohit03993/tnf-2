@@ -89,10 +89,12 @@ class WhatsAppTemplateCatalogService
                 $data['name'],
                 $data['language'],
                 $data['category'],
-                $data['body_text'],
+                $data['body_text'] ?? '',
                 $data['header_text'] ?? null,
                 $data['footer_text'] ?? null,
                 $data['body_examples'] ?? null,
+                (bool) ($data['allow_category_change'] ?? true),
+                (int) ($data['code_expiration_minutes'] ?? 10),
             );
         } catch (\Throwable $e) {
             return ['ok' => false, 'template' => null, 'error' => $e->getMessage()];
@@ -107,13 +109,19 @@ class WhatsAppTemplateCatalogService
             );
 
         if (! $response->successful()) {
-            $error = data_get($response->json(), 'error.message') ?: $response->body();
+            $error = data_get($response->json(), 'error.error_user_msg')
+                ?: data_get($response->json(), 'error.message')
+                ?: $response->body();
 
             return ['ok' => false, 'template' => null, 'error' => (string) $error];
         }
 
         $json = $response->json();
         $status = strtoupper((string) ($json['status'] ?? 'PENDING'));
+        $isAuth = strtoupper((string) $payload['category']) === 'AUTHENTICATION';
+        $bodyText = $isAuth
+            ? 'Your verification code is {{1}}. For your security, do not share this code.'
+            : (string) ($data['body_text'] ?? '');
 
         $template = WhatsappTemplate::query()->updateOrCreate(
             [
@@ -123,8 +131,9 @@ class WhatsAppTemplateCatalogService
             [
                 'status' => $status,
                 'category' => $payload['category'],
-                'param_count' => count(WhatsAppTemplateBuilder::placeholderOrder($data['body_text'])),
-                'body' => $data['body_text'],
+                'param_count' => $isAuth ? 1 : count(WhatsAppTemplateBuilder::placeholderOrder($bodyText)),
+                'param_mappings' => $isAuth ? ['manual'] : null,
+                'body' => $bodyText,
                 'components' => $payload['components'],
                 'meta_template_id' => $json['id'] ?? null,
                 'provider_meta' => $json,

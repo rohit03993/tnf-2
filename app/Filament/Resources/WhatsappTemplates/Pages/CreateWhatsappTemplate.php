@@ -4,9 +4,10 @@ namespace App\Filament\Resources\WhatsappTemplates\Pages;
 
 use App\Filament\Resources\WhatsappTemplates\WhatsappTemplateResource;
 use App\Services\WhatsAppTemplateCatalogService;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Validation\ValidationException;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Support\Exceptions\Halt;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateWhatsappTemplate extends CreateRecord
 {
@@ -29,12 +30,19 @@ class CreateWhatsappTemplate extends CreateRecord
             'header_text' => $data['header_text'] ?? null,
             'footer_text' => $data['footer_text'] ?? null,
             'body_examples' => $data['body_examples'] ?? null,
+            'allow_category_change' => (bool) ($data['allow_category_change'] ?? true),
+            'code_expiration_minutes' => (int) ($data['code_expiration_minutes'] ?? 10),
         ]);
 
         if (! $result['ok'] || ! $result['template']) {
-            throw ValidationException::withMessages([
-                'body_text' => $result['error'] ?: 'Meta rejected the template.',
-            ]);
+            Notification::make()
+                ->title('Meta rejected the template')
+                ->body($result['error'] ?: 'Check Access token, WABA, and template fields, then try again.')
+                ->danger()
+                ->persistent()
+                ->send();
+
+            throw new Halt;
         }
 
         return $result['template'];
