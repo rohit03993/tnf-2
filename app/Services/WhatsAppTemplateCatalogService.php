@@ -51,6 +51,9 @@ class WhatsAppTemplateCatalogService
                     'synced_at' => now(),
                 ],
             );
+
+            $template = WhatsappTemplate::query()->where('name', $name)->where('language', $language)->first();
+            $template?->ensureParamMappings();
         }
 
         $this->whatsApp->syncMessageTemplates();

@@ -2,11 +2,10 @@
 
 namespace App\Jobs;
 
-use App\Models\User;
-use App\Services\WhatsAppCloudService;
-use App\Support\PhoneNumber;
+use App\Services\WhatsAppCampaignService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 
 class SendWhatsAppBroadcastJob implements ShouldQueue
 {
@@ -18,26 +17,25 @@ class SendWhatsAppBroadcastJob implements ShouldQueue
         public string $kind = 'news',
     ) {}
 
-    public function handle(WhatsAppCloudService $whatsApp): void
+    public function handle(WhatsAppCampaignService $campaigns): void
     {
-        if (! $whatsApp->isEnabled()) {
-            return;
+        try {
+            $campaign = $campaigns->createContentBroadcast($this->title, $this->url, $this->kind);
+
+            if ($campaign) {
+                Log::info('WhatsApp content broadcast queued as campaign', [
+                    'campaign_id' => $campaign->id,
+                    'kind' => $this->kind,
+                    'recipients' => $campaign->total_recipients,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('WhatsApp content broadcast campaign failed', [
+                'kind' => $this->kind,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
         }
-
-        User::query()
-            ->where('whatsapp_opt_in', true)
-            ->whereNotNull('phone')
-            ->where('is_active', true)
-            ->orderBy('id')
-            ->chunkById(100, function ($users) use ($whatsApp): void {
-                foreach ($users as $user) {
-                    $phone = PhoneNumber::normalize($user->phone);
-                    if ($phone === null) {
-                        continue;
-                    }
-
-                    $whatsApp->sendContentAlert($phone, $this->title, $this->url, $this->kind);
-                }
-            });
     }
 }

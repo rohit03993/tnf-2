@@ -193,6 +193,21 @@ class WhatsappTemplateResource extends Resource
             TextInput::make('language')->disabled(),
             TextInput::make('category')->disabled(),
             Textarea::make('body')->label('Message body')->disabled()->rows(5)->columnSpanFull(),
+            Placeholder::make('mappings_hint')
+                ->label('Campaign variable mapping')
+                ->content(function (WhatsappTemplate $record): string {
+                    $record->ensureParamMappings();
+                    $sources = $record->paramSources();
+                    if ($sources === []) {
+                        return 'No body variables.';
+                    }
+
+                    return collect($sources)
+                        ->values()
+                        ->map(fn (string $source, int $i): string => '{{'.($i + 1).'}} → '.$source)
+                        ->implode("\n");
+                })
+                ->columnSpanFull(),
             Toggle::make('is_active')->label('Active for sending')->disabled(),
         ];
     }

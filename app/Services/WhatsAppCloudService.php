@@ -411,19 +411,37 @@ class WhatsAppCloudService
         $absoluteUrl = FrontendUrl::to($url);
         $shortTitle = Str::limit(trim($title), 60, '…');
 
-        $components = [
-            [
-                'type' => 'body',
-                'parameters' => [
-                    ['type' => 'text', 'text' => $shortTitle],
-                    ['type' => 'text', 'text' => $absoluteUrl],
-                ],
-            ],
-        ];
+        return $this->sendTemplateBodyParams(
+            phone: $phone,
+            template: $template,
+            language: $language,
+            bodyParams: [$shortTitle, $absoluteUrl],
+            bodyPreview: $shortTitle."\n".$absoluteUrl,
+            type: $kind,
+        );
+    }
 
-        $body = $shortTitle."\n".$absoluteUrl;
+    /**
+     * @param  list<string>  $bodyParams
+     */
+    public function sendTemplateBodyParams(
+        string $phone,
+        string $template,
+        string $language,
+        array $bodyParams,
+        ?string $bodyPreview = null,
+        string $type = 'template',
+    ): bool {
+        $parameters = [];
+        foreach ($bodyParams as $text) {
+            $parameters[] = ['type' => 'text', 'text' => (string) $text];
+        }
 
-        return $this->sendTemplate($phone, $template, $language, $components, $kind, $body);
+        $components = $parameters === []
+            ? []
+            : [['type' => 'body', 'parameters' => $parameters]];
+
+        return $this->sendTemplate($phone, $template, $language, $components, $type, $bodyPreview);
     }
 
     /**
