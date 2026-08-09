@@ -33,6 +33,19 @@ class ManageWhatsAppSettings extends SettingsPage
 
     protected static ?string $slug = 'settings/whatsapp';
 
+    /** @return array<string, string> */
+    protected function antiAutofillAttributes(): array
+    {
+        return [
+            'autocomplete' => 'off',
+            'data-lpignore' => 'true',
+            'data-1p-ignore' => 'true',
+            'data-bwignore' => 'true',
+            'data-form-type' => 'other',
+            'spellcheck' => 'false',
+        ];
+    }
+
     public static function canAccess(): bool
     {
         return auth()->user()?->role === UserRole::Admin;
@@ -67,12 +80,40 @@ class ManageWhatsAppSettings extends SettingsPage
 
     public function mount(): void
     {
+        $this->fillFromDatabase();
+
+        // Re-apply DB values after Chrome autofill runs.
+        $this->js(<<<'JS'
+            setTimeout(() => $wire.call('refillFromDatabase'), 400);
+            setTimeout(() => $wire.call('refillFromDatabase'), 1200);
+        JS);
+    }
+
+    public function refillFromDatabase(): void
+    {
+        $this->fillFromDatabase();
+    }
+
+    protected function fillFromDatabase(): void
+    {
+        // Always reload exactly what is stored — including token/secret — so refresh keeps values.
         $data = $this->loadSettings();
-        $data['whatsapp_access_token'] = '';
-        $data['whatsapp_app_secret'] = '';
+
+        foreach ($this->settingKeys() as $key => $default) {
+            $stored = Setting::get($key, $default);
+            if (is_bool($default)) {
+                $data[$key] = filter_var($stored, FILTER_VALIDATE_BOOLEAN);
+            } else {
+                $data[$key] = $stored ?? '';
+            }
+        }
+
         $data['templates_readonly'] = $this->templateSummaryText();
+        $data['autofill_trap_user'] = '';
+        $data['autofill_trap_pass'] = '';
 
         $this->form->fill($data);
+        $this->data = array_merge(is_array($this->data) ? $this->data : [], $data);
     }
 
     protected function getHeaderActions(): array
@@ -97,7 +138,7 @@ class ManageWhatsAppSettings extends SettingsPage
                     if ($missing !== []) {
                         Notification::make()
                             ->title('Cannot test yet')
-                            ->body('Save these first, then test: '.implode(', ', $missing).'. (Token field looks blank after save on purpose.)')
+                            ->body('Save these first: '.implode(', ', $missing).'. Ignore Gmail autofill in the boxes — look at “Stored on server” above the form.')
                             ->warning()
                             ->persistent()
                             ->send();
@@ -167,8 +208,10 @@ class ManageWhatsAppSettings extends SettingsPage
 
     public function save(): void
     {
-        // Read Livewire state directly — do not hard-fail the whole save on one bad field.
-        $data = is_array($this->data) ? $this->data : [];
+        $raw = $this->form->getRawState();
+        $raw = is_array($raw) ? $raw : (array) $raw;
+        $data = array_merge(is_array($this->data) ? $this->data : [], $raw);
+
         $saved = [];
         $warnings = [];
 
@@ -180,13 +223,31 @@ class ManageWhatsAppSettings extends SettingsPage
             $value = $data[$key];
 
             if (in_array($key, $this->secretKeys(), true) && blank($value)) {
+                // Empty box = keep existing saved secret (do not wipe).
                 continue;
+            }
+
+            if ($key === 'whatsapp_access_token') {
+                $value = trim((string) $value);
+                // Browser often autofills the site login password into this box.
+                if (strlen($value) < 40 || str_contains($value, '@') || str_contains($value, ' ')) {
+                    $warnings[] = 'Access token autofill ignored — kept your previously saved Meta token.';
+                    continue;
+                }
             }
 
             if ($key === 'whatsapp_business_account_id') {
                 $value = trim((string) $value);
                 if ($value !== '' && ! preg_match('/^\d+$/', $value)) {
-                    $warnings[] = 'WABA ID was not saved (must be digits only like 111704343541197, not an email).';
+                    $warnings[] = 'WABA autofill (email) ignored — kept your previously saved WABA ID.';
+                    continue;
+                }
+            }
+
+            if ($key === 'whatsapp_phone_number_id' || $key === 'whatsapp_app_id') {
+                $value = is_string($value) ? trim($value) : $value;
+                if (is_string($value) && $value !== '' && ! preg_match('/^\d+$/', $value)) {
+                    $warnings[] = str_replace('whatsapp_', '', $key).' invalid — kept previous saved value.';
                     continue;
                 }
             }
@@ -194,121 +255,149 @@ class ManageWhatsAppSettings extends SettingsPage
             if ($key === 'whatsapp_webhook_verify_token') {
                 $value = trim((string) $value);
                 if ($value !== '' && str_contains($value, '#')) {
-                    $warnings[] = 'Verify token was not saved (remove # from it).';
+                    $warnings[] = 'Verify token not updated (remove #). Kept previous value.';
                     continue;
                 }
             }
 
-            if ($key === 'whatsapp_phone_number_id' || $key === 'whatsapp_app_id') {
-                $value = is_string($value) ? trim($value) : $value;
+            // Never write empty string over an already-saved important ID.
+            if (in_array($key, [
+                'whatsapp_phone_number_id',
+                'whatsapp_business_account_id',
+                'whatsapp_app_id',
+                'whatsapp_webhook_verify_token',
+                'whatsapp_access_token',
+                'whatsapp_app_secret',
+            ], true) && blank($value) && filled(Setting::get($key))) {
+                continue;
             }
 
             Setting::set($key, $value);
             $saved[] = $key;
         }
 
-        // Prove to the admin what is actually in the DB now.
+        $phone = (string) TnfSetting::get('whatsapp_phone_number_id', '');
+        $waba = (string) TnfSetting::get('whatsapp_business_account_id', '');
         $proof = collect([
             filled(TnfSetting::get('whatsapp_access_token')) ? 'token=YES' : 'token=NO',
-            filled(TnfSetting::get('whatsapp_phone_number_id')) ? 'phoneId=YES' : 'phoneId=NO',
-            filled(TnfSetting::get('whatsapp_business_account_id')) ? 'waba=YES' : 'waba=NO',
+            $phone !== '' ? 'phoneId='.$phone : 'phoneId=NO',
+            $waba !== '' ? 'waba='.$waba : 'waba=NO',
             filled(TnfSetting::get('whatsapp_app_id')) ? 'appId=YES' : 'appId=NO',
             filled(TnfSetting::get('whatsapp_webhook_verify_token')) ? 'verify=YES' : 'verify=NO',
-            TnfSetting::bool('whatsapp_enabled', false) ? 'enabled=ON' : 'enabled=OFF',
         ])->implode(' · ');
 
         if ($saved === []) {
             Notification::make()
-                ->title('Nothing was saved')
-                ->body('No field values reached the server. Re-type the values (do not rely on browser autofill) and click Save again. '.$proof)
+                ->title('Nothing useful was saved')
+                ->body('Chrome autofill may be filling Gmail/password into these boxes. Click each field, delete autofill, paste Meta values, then Save. '.$proof)
                 ->danger()
                 ->persistent()
                 ->send();
 
+            $this->fillFromDatabase();
+
             return;
         }
 
-        $body = 'Stored '.count($saved).' fields. DB check: '.$proof;
-        if ($warnings !== []) {
-            $body .= ' Warnings: '.implode(' ', $warnings);
-        }
-        $body .= ' Access token / App secret boxes go blank after save on purpose.';
-
         Notification::make()
-            ->title($warnings === [] ? 'Settings saved' : 'Settings saved with warnings')
-            ->body($body)
+            ->title($warnings === [] ? 'Settings saved — they will stay after refresh' : 'Saved with warnings — previous good values were kept')
+            ->body(trim('DB now has: '.$proof.($warnings !== [] ? ' | '.implode(' ', $warnings) : '')))
             ->success()
             ->persistent()
             ->send();
 
-        // Reload non-secret fields from DB so you can see they stuck.
-        $fresh = $this->loadSettings();
-        $fresh['whatsapp_access_token'] = '';
-        $fresh['whatsapp_app_secret'] = '';
-        $fresh['templates_readonly'] = $this->templateSummaryText();
-        $this->form->fill($fresh);
+        $this->fillFromDatabase();
     }
 
     public function form(Schema $schema): Schema
     {
         $webhookUrl = url('/webhooks/whatsapp');
+        $anti = $this->antiAutofillAttributes();
 
         return $schema->components([
-            Section::make('Connection status')
-                ->description('1) Fill fields 2) Save settings 3) Confirm green toast shows token=YES phoneId=YES 4) Test connection. Token boxes blank after save means stored, not lost.')
+            Section::make('Stored on server (always kept)')
+                ->description('These values are loaded from the database every time you open this page. After a good Save, they stay forever until you change them.')
                 ->schema([
                     Placeholder::make('secrets_status')
-                        ->label('Currently stored on server')
+                        ->hiddenLabel()
                         ->content(fn (): string => collect([
-                            filled(TnfSetting::get('whatsapp_access_token')) ? 'Access token: saved' : 'Access token: missing',
-                            filled(TnfSetting::get('whatsapp_phone_number_id')) ? 'Phone number ID: '.TnfSetting::get('whatsapp_phone_number_id') : 'Phone number ID: missing',
-                            filled(TnfSetting::get('whatsapp_business_account_id')) ? 'WABA: '.TnfSetting::get('whatsapp_business_account_id') : 'WABA: missing',
-                            filled(TnfSetting::get('whatsapp_app_id')) ? 'App ID: '.TnfSetting::get('whatsapp_app_id') : 'App ID: missing',
-                            filled(TnfSetting::get('whatsapp_webhook_verify_token')) ? 'Verify token: saved' : 'Verify token: missing',
+                            filled(TnfSetting::get('whatsapp_access_token')) ? 'Access token: SAVED (shown in form below)' : 'Access token: missing',
+                            filled(TnfSetting::get('whatsapp_phone_number_id'))
+                                ? 'Phone number ID: '.TnfSetting::get('whatsapp_phone_number_id')
+                                : 'Phone number ID: missing',
+                            filled(TnfSetting::get('whatsapp_business_account_id'))
+                                ? 'WABA: '.TnfSetting::get('whatsapp_business_account_id')
+                                : 'WABA: missing',
+                            filled(TnfSetting::get('whatsapp_app_id'))
+                                ? 'App ID: '.TnfSetting::get('whatsapp_app_id')
+                                : 'App ID: missing',
+                            filled(TnfSetting::get('whatsapp_webhook_verify_token'))
+                                ? 'Verify token: '.TnfSetting::get('whatsapp_webhook_verify_token')
+                                : 'Verify token: missing',
+                            filled(TnfSetting::get('whatsapp_app_secret')) ? 'App secret: SAVED (shown in form below)' : 'App secret: missing',
                             TnfSetting::bool('whatsapp_enabled', false) ? 'Enabled: ON' : 'Enabled: OFF',
-                        ])->implode(' | ')),
+                        ])->implode("\n")),
                     Placeholder::make('webhook_url')
                         ->label('Webhook callback URL')
                         ->content($webhookUrl),
                 ]),
 
             Section::make('Meta API credentials')
-                ->description('WABA must be numbers only (from Meta URL business_id). Never put your Gmail here.')
+                ->description('Save once — values reload from the server on every visit. If Chrome puts Gmail in a box, wait 1 second (we restore saved values) or paste again and Save.')
                 ->schema([
+                    // Decoy fields so Chrome autofills these instead of real Meta fields.
+                    TextInput::make('autofill_trap_user')
+                        ->label('Ignore')
+                        ->default('')
+                        ->dehydrated(false)
+                        ->extraInputAttributes([
+                            'autocomplete' => 'username',
+                            'tabindex' => '-1',
+                            'style' => 'position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;',
+                        ]),
+                    TextInput::make('autofill_trap_pass')
+                        ->label('Ignore')
+                        ->password()
+                        ->default('')
+                        ->dehydrated(false)
+                        ->extraInputAttributes([
+                            'autocomplete' => 'current-password',
+                            'tabindex' => '-1',
+                            'style' => 'position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;',
+                        ]),
                     Toggle::make('whatsapp_enabled')
                         ->label('Enable WhatsApp integration')
-                        ->helperText('Leave OFF until token + phone number ID are saved and Test connection works.'),
-                    TextInput::make('whatsapp_access_token')
+                        ->helperText('Leave OFF until Test connection works.'),
+                    Textarea::make('whatsapp_access_token')
                         ->label('Access token')
-                        ->password()
-                        ->revealable()
-                        ->autocomplete(false)
-                        ->helperText('Paste permanent token, then Save. Field clears after save if stored.')
+                        ->rows(3)
+                        ->extraInputAttributes($anti + ['autocomplete' => 'new-password'])
+                        ->helperText('Saved value stays here after refresh. Leave unchanged to keep it.')
                         ->columnSpanFull(),
                     TextInput::make('whatsapp_phone_number_id')
                         ->label('Phone number ID')
-                        ->autocomplete(false)
-                        ->helperText('Numeric ID from Meta → WhatsApp → API Setup.'),
+                        ->extraInputAttributes($anti)
+                        ->helperText('Stays saved forever until you change it.'),
                     TextInput::make('whatsapp_business_account_id')
                         ->label('WhatsApp Business Account ID (WABA)')
-                        ->autocomplete(false)
-                        ->helperText('Digits only. Example from your Meta URL: 111704343541197'),
+                        ->extraInputAttributes($anti)
+                        ->helperText('Digits only — never an email. Stays saved forever.'),
                     TextInput::make('whatsapp_app_id')
                         ->label('Meta App ID')
-                        ->autocomplete(false)
-                        ->helperText('Example from your Meta URL: 953996650689050'),
-                    TextInput::make('whatsapp_app_secret')
+                        ->extraInputAttributes($anti)
+                        ->helperText('Stays saved forever until you change it.'),
+                    Textarea::make('whatsapp_app_secret')
                         ->label('Meta App Secret')
-                        ->password()
-                        ->revealable()
-                        ->autocomplete(false)
-                        ->helperText('App settings → Basic → App secret. Optional until webhook signatures are required.'),
+                        ->rows(2)
+                        ->extraInputAttributes($anti + ['autocomplete' => 'new-password'])
+                        ->helperText('Saved value stays here after refresh.'),
                     TextInput::make('whatsapp_webhook_verify_token')
                         ->label('Webhook verify token')
-                        ->autocomplete(false)
-                        ->helperText('Same string in Meta webhook. No # character. Example: tnfWhatsAppVerify2026'),
+                        ->extraInputAttributes($anti)
+                        ->helperText('Same string in Meta. No #. Stays saved forever.'),
                     TextInput::make('whatsapp_graph_version')
                         ->label('Graph API version')
+                        ->extraInputAttributes($anti)
                         ->placeholder('v21.0'),
                 ])->columns(2),
 
@@ -319,17 +408,17 @@ class ManageWhatsAppSettings extends SettingsPage
                         ->disabled()
                         ->dehydrated(false)
                         ->rows(8)
-                        ->helperText('Click Sync templates in the header after token + WABA are saved. Then copy an APPROVED name into the fields below.'),
+                        ->helperText('Save token + WABA, then Sync templates. Copy an APPROVED name into the fields below.'),
                 ]),
 
             Section::make('Assign template names')
                 ->schema([
-                    TextInput::make('whatsapp_otp_template')->label('OTP template name'),
-                    TextInput::make('whatsapp_otp_template_lang')->label('OTP language')->default('en'),
-                    TextInput::make('whatsapp_news_template')->label('News alert template'),
-                    TextInput::make('whatsapp_news_template_lang')->label('News language')->default('en'),
-                    TextInput::make('whatsapp_epaper_template')->label('ePaper alert template'),
-                    TextInput::make('whatsapp_epaper_template_lang')->label('ePaper language')->default('en'),
+                    TextInput::make('whatsapp_otp_template')->label('OTP template name')->extraInputAttributes($anti),
+                    TextInput::make('whatsapp_otp_template_lang')->label('OTP language')->default('en')->extraInputAttributes($anti),
+                    TextInput::make('whatsapp_news_template')->label('News alert template')->extraInputAttributes($anti),
+                    TextInput::make('whatsapp_news_template_lang')->label('News language')->default('en')->extraInputAttributes($anti),
+                    TextInput::make('whatsapp_epaper_template')->label('ePaper alert template')->extraInputAttributes($anti),
+                    TextInput::make('whatsapp_epaper_template_lang')->label('ePaper language')->default('en')->extraInputAttributes($anti),
                 ])->columns(2),
 
             Section::make('Auto-share on publish')
@@ -353,7 +442,7 @@ class ManageWhatsAppSettings extends SettingsPage
                 : 'Not synced yet. Save token + WABA, then click Sync templates.';
         }
 
-        $lines = ["Last sync: ".($syncedAt ?: 'unknown')];
+        $lines = ['Last sync: '.($syncedAt ?: 'unknown')];
         foreach ($templates as $template) {
             $lines[] = ($template['status'] ?? '?')
                 .' | '.($template['name'] ?? '')
