@@ -12,8 +12,8 @@ use App\Filament\Resources\WhatsappCampaigns\RelationManagers\RecipientsRelation
 use App\Models\WhatsappCampaign;
 use App\Models\WhatsappTemplate;
 use App\Services\WhatsAppCampaignService;
+use App\Support\WhatsAppCampaignFormHelper;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -57,13 +57,14 @@ class WhatsappCampaignResource extends Resource
     {
         return $schema->components([
             Section::make('1. Template')
-                ->description('Pick an APPROVED Meta template. Map variables on the Templates page if needed.')
+                ->description('Choose the WhatsApp message to send. Per-user fields are filled automatically for each recipient.')
                 ->schema([
                     TextInput::make('name')
                         ->label('Campaign name')
                         ->required()
                         ->maxLength(255)
-                        ->default(fn (): string => now()->format('Y-m-d').'-'.str_pad((string) (WhatsappCampaign::query()->whereDate('created_at', today())->count() + 1), 3, '0', STR_PAD_LEFT)),
+                        ->default(fn (): string => WhatsAppCampaignFormHelper::generateDefaultName())
+                        ->helperText('Auto-generated as YYYY-MM-DD-001. Edit if needed.'),
                     Select::make('whatsapp_template_id')
                         ->label('WhatsApp template')
                         ->options(fn (): array => WhatsappTemplate::query()
@@ -74,29 +75,29 @@ class WhatsappCampaignResource extends Resource
                             ->mapWithKeys(fn (WhatsappTemplate $t): array => [$t->id => $t->label()])
                             ->all())
                         ->searchable()
+                        ->preload()
                         ->required()
+                        ->native(false)
                         ->live()
-                        ->afterStateUpdated(fn (callable $set) => $set('template_manual_params', [])),
-                    Placeholder::make('template_preview')
-                        ->label('Template body')
-                        ->content(function (Get $get): HtmlString {
-                            $id = $get('whatsapp_template_id');
-                            if (! filled($id)) {
-                                return new HtmlString('<span class="text-gray-500">Select a template…</span>');
-                            }
-                            $template = WhatsappTemplate::query()->find($id);
-
-                            return new HtmlString(
-                                '<div class="whitespace-pre-wrap rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">'
-                                .e($template?->body ?: '—')
-                                .'</div>'
-                            );
+                        ->dehydrateStateUsing(fn ($state): ?int => filled($state) ? (int) $state : null)
+                        ->afterStateUpdated(function ($state, callable $set): void {
+                            $set('template_manual_params', []);
+                            $set('campaign_variables', WhatsAppCampaignFormHelper::defaultCampaignVariables(
+                                filled($state) ? (int) $state : null,
+                            ));
                         })
+                        ->placeholder('Choose a template…'),
+                    Placeholder::make('template_preview_card')
+                        ->label('')
+                        ->content(fn (Get $get): HtmlString => WhatsAppCampaignFormHelper::renderTemplatePreviewCard(
+                            filled($get('whatsapp_template_id')) ? (int) $get('whatsapp_template_id') : null,
+                        ))
                         ->visible(fn (Get $get): bool => filled($get('whatsapp_template_id')))
                         ->columnSpanFull(),
-                ]),
+                ])
+                ->columns(1),
             Section::make('2. Audience')
-                ->description('Who receives this campaign.')
+                ->description('Pick who receives this campaign. Only users with a phone number are included.')
                 ->schema([
                     Select::make('audience_type')
                         ->label('Send to')
@@ -105,46 +106,39 @@ class WhatsappCampaignResource extends Resource
                         ])
                         ->default(WhatsAppAudienceType::OptedIn->value)
                         ->required()
+                        ->native(false)
                         ->live(),
-                    Placeholder::make('audience_estimate')
-                        ->label('Estimated recipients')
-                        ->content(function (Get $get): string {
+                    Placeholder::make('estimated_recipients')
+                        ->label('')
+                        ->content(function (Get $get): HtmlString {
                             $count = app(WhatsAppCampaignService::class)->estimateAudienceCount([
                                 'audience_type' => $get('audience_type'),
                             ]);
 
-                            return $count.' user(s) with WhatsApp opt-in + phone';
-                        }),
-                ]),
-            Section::make('3. Campaign content')
-                ->description('Values used for template variables ({{1}}, {{2}}, …).')
-                ->schema([
-                    TextInput::make('campaign_variables.title')
-                        ->label('Title / headline')
-                        ->required()
-                        ->maxLength(60)
-                        ->helperText('Usually fills {{1}}'),
-                    TextInput::make('campaign_variables.url')
-                        ->label('Link URL')
-                        ->required()
-                        ->url()
-                        ->helperText('Usually fills {{2}} — use full https URL'),
-                    Repeater::make('template_manual_params')
-                        ->label('Extra manual variables')
-                        ->schema([
-                            TextInput::make('value')->label('Value')->required(),
-                        ])
-                        ->default([])
-                        ->helperText('Only if the template mapping uses Manual slots beyond title/url.')
+                            return WhatsAppCampaignFormHelper::renderRecipientEstimate($count);
+                        })
                         ->columnSpanFull(),
-                ]),
+                ])
+                ->visible(fn (Get $get): bool => filled($get('whatsapp_template_id'))),
+            Section::make('3. Campaign details')
+                ->description('Fill only the fields this template needs. They apply to every message in this campaign.')
+                ->schema(fn (Get $get): array => WhatsAppCampaignFormHelper::messageDetailFields(
+                    filled($get('whatsapp_template_id')) ? (int) $get('whatsapp_template_id') : null,
+                ))
+                ->columns(2)
+                ->key(fn (Get $get): string => 'message-details-'.($get('whatsapp_template_id') ?? 'none'))
+                ->visible(fn (Get $get): bool => filled($get('whatsapp_template_id'))),
             Section::make('4. Send')
+                ->description('Review, then create the campaign. Large sends may take a few minutes.')
                 ->schema([
                     Toggle::make('send_immediately')
                         ->label('Send immediately after create')
+                        ->helperText('When off, the campaign is saved as draft — start it later from the campaign view.')
                         ->default(true)
-                        ->dehydrated(false),
-                ]),
+                        ->dehydrated(false)
+                        ->inline(false),
+                ])
+                ->visible(fn (Get $get): bool => filled($get('whatsapp_template_id'))),
         ]);
     }
 
@@ -167,11 +161,27 @@ class WhatsappCampaignResource extends Resource
                 TextEntry::make('total_recipients')->label('Recipients'),
                 TextEntry::make('sent_count')->label('Sent'),
                 TextEntry::make('failed_count')->label('Failed'),
-                TextEntry::make('campaign_variables.title')->label('Title'),
-                TextEntry::make('campaign_variables.url')->label('URL'),
                 TextEntry::make('started_at')->dateTime(),
                 TextEntry::make('finished_at')->dateTime(),
             ])->columns(2),
+            Section::make('Message preview')
+                ->schema([
+                    TextEntry::make('resolved_message_preview')
+                        ->label('')
+                        ->state(function (WhatsappCampaign $record): ?string {
+                            $sent = $record->recipients()
+                                ->whereNotNull('message_sent')
+                                ->where('message_sent', '!=', '')
+                                ->orderBy('id')
+                                ->value('message_sent');
+
+                            return filled($sent) ? (string) $sent : $record->template?->body;
+                        })
+                        ->columnSpanFull(),
+                ])
+                ->collapsed()
+                ->visible(fn (WhatsappCampaign $record): bool => filled($record->template?->body)
+                    || $record->recipients()->whereNotNull('message_sent')->exists()),
         ]);
     }
 

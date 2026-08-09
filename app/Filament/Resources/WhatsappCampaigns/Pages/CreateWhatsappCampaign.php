@@ -5,8 +5,10 @@ namespace App\Filament\Resources\WhatsappCampaigns\Pages;
 use App\Enums\WhatsAppAudienceType;
 use App\Filament\Resources\WhatsappCampaigns\WhatsappCampaignResource;
 use App\Services\WhatsAppCampaignService;
+use App\Support\WhatsAppCampaignFormHelper;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class CreateWhatsappCampaign extends CreateRecord
@@ -15,23 +17,44 @@ class CreateWhatsappCampaign extends CreateRecord
 
     protected static ?string $title = 'New WhatsApp campaign';
 
+    public function mount(): void
+    {
+        parent::mount();
+
+        $this->form->fill(array_merge($this->form->getState(), [
+            'name' => WhatsAppCampaignFormHelper::generateDefaultName(),
+            'send_immediately' => true,
+            'audience_type' => WhatsAppAudienceType::OptedIn->value,
+        ]));
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         unset($data['send_immediately']);
 
         $variables = $data['campaign_variables'] ?? [];
         $manual = collect($data['template_manual_params'] ?? [])
-            ->map(fn ($row) => is_array($row) ? ($row['value'] ?? null) : $row)
             ->filter(fn ($value): bool => filled($value))
-            ->values()
             ->all();
 
         if ($manual !== []) {
-            $variables['_manual'] = $manual;
+            $variables['_manual'] = array_values($manual);
+        }
+
+        if (filled($variables['date'] ?? null)) {
+            $variables['date'] = Carbon::parse($variables['date'])->format('d M Y');
+        }
+
+        if (filled($variables['time'] ?? null)) {
+            $variables['time'] = Carbon::parse($variables['time'])->format('g:i A');
         }
 
         $data['campaign_variables'] = $variables === [] ? null : $variables;
         unset($data['template_manual_params']);
+
+        if (blank($data['name'] ?? null)) {
+            $data['name'] = WhatsAppCampaignFormHelper::generateDefaultName();
+        }
 
         $data['audience_type'] = $data['audience_type'] ?? WhatsAppAudienceType::OptedIn->value;
 

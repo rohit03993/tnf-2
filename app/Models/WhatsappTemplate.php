@@ -72,11 +72,11 @@ class WhatsappTemplate extends Model
         }
 
         $defaults = match ($count) {
-            1 => ['campaign.title'],
-            2 => ['campaign.title', 'campaign.url'],
-            3 => ['user.name', 'campaign.title', 'campaign.url'],
+            1 => ['manual'],
+            2 => ['manual', 'manual'],
+            3 => ['user.name', 'manual', 'manual'],
             default => collect(range(1, $count))
-                ->map(fn (int $i): string => $i === 1 ? 'campaign.title' : ($i === 2 ? 'campaign.url' : 'manual.'.$i))
+                ->map(fn (int $i): string => $i === 1 ? 'user.name' : 'manual')
                 ->all(),
         };
 

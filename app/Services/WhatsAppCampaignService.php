@@ -112,6 +112,12 @@ class WhatsAppCampaignService
                     'synced_at' => now(),
                 ],
             );
+        } else {
+            // News/ePaper alerts always use title + URL slots.
+            $template->forceFill([
+                'param_count' => max(2, (int) $template->param_count),
+                'param_mappings' => ['campaign.title', 'campaign.url'],
+            ])->save();
         }
 
         $absoluteUrl = FrontendUrl::to($url);

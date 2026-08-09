@@ -9,23 +9,41 @@ use Illuminate\Support\Str;
 class WhatsAppTemplateParamResolver
 {
     /**
+     * @return array<string, string>
+     */
+    public static function sourceOptions(): array
+    {
+        return [
+            'user.name' => 'User name',
+            'user.phone' => 'User phone',
+            'campaign.title' => 'Campaign title / headline',
+            'campaign.topic' => 'Campaign topic',
+            'campaign.subject' => 'Campaign subject',
+            'campaign.url' => 'Campaign URL / link',
+            'campaign.link' => 'Campaign link',
+            'campaign.kind' => 'Campaign kind (news/epaper)',
+            'campaign.date' => 'Campaign date',
+            'campaign.time' => 'Campaign time',
+            'manual' => 'Manual value (filled on campaign)',
+        ];
+    }
+
+    /**
      * @param  list<string>  $sources
      * @return list<string>
      */
     public function resolveAll(array $sources, ?User $user, WhatsappCampaign $campaign): array
     {
         $manual = data_get($campaign->campaign_variables, '_manual', []);
-        $manual = is_array($manual) ? array_values($manual) : [];
-        $manualIndex = 0;
+        $manual = is_array($manual) ? $manual : [];
 
         $resolved = [];
 
-        foreach ($sources as $source) {
+        foreach ($sources as $index => $source) {
             $source = trim((string) $source);
 
-            if ($source === '' || str_starts_with($source, 'manual')) {
-                $resolved[] = (string) ($manual[$manualIndex] ?? '');
-                $manualIndex++;
+            if ($source === '' || $source === 'manual' || str_starts_with($source, 'manual.')) {
+                $resolved[] = (string) ($manual[$index] ?? '');
 
                 continue;
             }
@@ -38,19 +56,34 @@ class WhatsAppTemplateParamResolver
 
     public function resolveSource(string $source, ?User $user, WhatsappCampaign $campaign): string
     {
+        if (str_starts_with($source, '"') && str_ends_with($source, '"')) {
+            return trim($source, '"');
+        }
+
         return match ($source) {
             'user.name' => (string) ($user?->name ?: 'Reader'),
             'user.phone' => (string) ($user?->phone ?: ''),
-            'campaign.title', 'campaign.topic', 'campaign.headline' => Str::limit(
-                trim((string) $campaign->campaignVariable('title', '')),
+            'campaign.title', 'campaign.topic', 'campaign.subject', 'campaign.headline' => Str::limit(
+                trim((string) (
+                    $campaign->campaignVariable('title', '')
+                    ?: $campaign->campaignVariable('topic', '')
+                    ?: $campaign->campaignVariable('subject', '')
+                    ?: $campaign->campaignVariable('headline', '')
+                )),
                 60,
                 '…',
             ),
-            'campaign.url', 'campaign.link' => trim((string) $campaign->campaignVariable('url', '')),
+            'campaign.url', 'campaign.link' => trim((string) (
+                $campaign->campaignVariable('url', '')
+                ?: $campaign->campaignVariable('link', '')
+            )),
             'campaign.kind' => trim((string) $campaign->campaignVariable('kind', 'news')),
-            default => str_starts_with($source, '"') && str_ends_with($source, '"')
-                ? trim($source, '"')
-                : trim((string) $campaign->campaignVariable($source, '')),
+            'campaign.date' => trim((string) $campaign->campaignVariable('date', '')),
+            'campaign.time' => trim((string) $campaign->campaignVariable('time', '')),
+            default => trim((string) $campaign->campaignVariable(
+                str_starts_with($source, 'campaign.') ? substr($source, 9) : $source,
+                '',
+            )),
         };
     }
 
@@ -80,20 +113,5 @@ class WhatsAppTemplateParamResolver
         }
 
         return true;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public static function sourceOptions(): array
-    {
-        return [
-            'user.name' => 'User name',
-            'user.phone' => 'User phone',
-            'campaign.title' => 'Campaign title / headline',
-            'campaign.url' => 'Campaign URL / link',
-            'campaign.kind' => 'Campaign kind (news/epaper)',
-            'manual' => 'Manual value (filled on campaign)',
-        ];
     }
 }
