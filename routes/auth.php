@@ -16,12 +16,20 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('register', [RegisteredUserController::class, 'store'])
+        ->middleware('throttle:6,1');
+
+    Route::post('register/verify', [RegisteredUserController::class, 'verify'])
+        ->middleware('throttle:12,1')
+        ->name('register.verify');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    Route::get('login/email', [AuthenticatedSessionController::class, 'createEmail'])
+        ->name('login.email');
+
+    Route::post('login/email', [AuthenticatedSessionController::class, 'store']);
 
     Route::get('login/phone', [PhoneLoginController::class, 'create'])
         ->name('login.phone');

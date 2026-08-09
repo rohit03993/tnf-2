@@ -1,7 +1,7 @@
-<x-guest-layout>
+<x-guest-layout subtitle="Staff email login">
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('login') }}" class="space-y-4">
+    <form method="POST" action="{{ route('login.email') }}" class="space-y-4">
         @csrf
 
         <div>
@@ -26,21 +26,11 @@
 
         <button type="submit" class="tnf-auth-submit">{{ __('Log in') }}</button>
 
-        <div class="relative my-4 text-center">
-            <span class="tnf-auth-divider text-tnf-sm text-tnf-muted">or</span>
-        </div>
-
-        <a href="{{ route('login.phone') }}" class="tnf-auth-submit" style="display:block;text-align:center;background:#128C7E;">
-            Login with WhatsApp OTP
-        </a>
-
         <div class="flex items-center justify-between text-tnf-sm">
             @if (Route::has('password.request'))
                 <a class="tnf-auth-link" href="{{ route('password.request') }}">{{ __('Forgot password?') }}</a>
             @endif
-            @if (Route::has('register') && config('tnf.allow_public_registration'))
-                <a class="tnf-auth-link" href="{{ route('register') }}">{{ __('Register') }}</a>
-            @endif
+            <a class="tnf-auth-link" href="{{ route('login') }}">Mobile WhatsApp login</a>
         </div>
     </form>
 </x-guest-layout>

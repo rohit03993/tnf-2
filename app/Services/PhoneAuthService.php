@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class PhoneAuthService
 {
-    public function findOrCreateByVerifiedPhone(string $phone): User
+    public function findOrCreateByVerifiedPhone(string $phone, ?string $name = null): User
     {
         $phone = PhoneNumber::normalize($phone);
 
@@ -18,19 +18,27 @@ class PhoneAuthService
         $user = User::query()->where('phone', $phone)->first();
 
         if ($user) {
-            $user->forceFill([
+            $updates = [
                 'phone_verified_at' => $user->phone_verified_at ?? now(),
                 'whatsapp_opt_in' => true,
                 'whatsapp_opt_in_at' => $user->whatsapp_opt_in_at ?? now(),
                 'is_active' => true,
-            ])->save();
+            ];
+
+            if (filled($name) && (blank($user->name) || str_starts_with((string) $user->name, 'User '))) {
+                $updates['name'] = trim($name);
+            }
+
+            $user->forceFill($updates)->save();
 
             return $user;
         }
 
+        $displayName = filled($name) ? trim($name) : ('User '.substr((string) $phone, -4));
+
         return User::query()->create([
-            'name' => 'User '.substr($phone, -4),
-            'email' => 'wa_'.$phone.'@phone.tnftoday.local',
+            'name' => $displayName,
+            'email' => null,
             'phone' => $phone,
             'phone_verified_at' => now(),
             'whatsapp_opt_in' => true,

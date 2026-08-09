@@ -1,52 +1,66 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
-        @csrf
+<x-guest-layout subtitle="Create your account with mobile">
+    <x-auth-session-status class="mb-4" :status="session('status')" />
 
-        <!-- Name -->
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+    @if($whatsappHint)
+        <div class="mb-4 rounded-tnf-lg border border-amber-200 bg-amber-50 px-4 py-3 text-tnf-sm text-amber-900">
+            {{ $whatsappHint }}
         </div>
+    @endif
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+    @if($step === 'otp')
+        <form method="POST" action="{{ route('register.verify') }}" class="space-y-4">
+            @csrf
+            <input type="hidden" name="phone" value="{{ old('phone', $phone) }}">
+            <input type="hidden" name="name" value="{{ old('name', $name) }}">
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+            <div>
+                <label class="tnf-auth-label">Name</label>
+                <p class="tnf-auth-input bg-tnf-gray-light">{{ old('name', $name) }}</p>
+            </div>
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
+            <div>
+                <label class="tnf-auth-label">Mobile number</label>
+                <p class="tnf-auth-input bg-tnf-gray-light">{{ \App\Support\PhoneNumber::formatDisplay(old('phone', $phone)) }}</p>
+            </div>
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+            <div>
+                <label for="otp" class="tnf-auth-label">WhatsApp OTP</label>
+                <input id="otp" type="text" name="otp" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+                    required autofocus autocomplete="one-time-code" class="tnf-auth-input" placeholder="6-digit code" />
+                <x-input-error :messages="$errors->get('otp')" class="mt-2" />
+            </div>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+            <button type="submit" class="tnf-auth-submit">Verify &amp; create account</button>
 
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
+            <div class="flex items-center justify-between text-tnf-sm">
+                <a class="tnf-auth-link" href="{{ route('register', ['reset' => 1]) }}">Change details</a>
+                <a class="tnf-auth-link" href="{{ route('login') }}">Already registered?</a>
+            </div>
+        </form>
+    @else
+        <form method="POST" action="{{ route('register') }}" class="space-y-4">
+            @csrf
 
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
+            <div>
+                <label for="name" class="tnf-auth-label">Name <span class="text-tnf-red">*</span></label>
+                <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus
+                    autocomplete="name" class="tnf-auth-input" />
+                <x-input-error :messages="$errors->get('name')" class="mt-2" />
+            </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
+            <div>
+                <label for="phone" class="tnf-auth-label">Mobile number <span class="text-tnf-red">*</span></label>
+                <input id="phone" type="tel" name="phone" value="{{ old('phone') }}" required
+                    autocomplete="tel" class="tnf-auth-input" placeholder="98765 43210 or +91…" />
+                <p class="mt-1 text-tnf-sm text-tnf-muted">No email required. We’ll verify this number on WhatsApp.</p>
+                <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+            </div>
 
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
-        </div>
-    </form>
+            <button type="submit" class="tnf-auth-submit" @disabled(! $whatsappReady)>Send OTP on WhatsApp</button>
+
+            <div class="flex items-center justify-between text-tnf-sm">
+                <a class="tnf-auth-link" href="{{ route('login') }}">Already registered?</a>
+            </div>
+        </form>
+    @endif
 </x-guest-layout>

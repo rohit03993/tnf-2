@@ -1,9 +1,9 @@
-<x-guest-layout>
+<x-guest-layout subtitle="Sign in with your mobile number">
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    @if(! $whatsappReady)
+    @if($whatsappHint)
         <div class="mb-4 rounded-tnf-lg border border-amber-200 bg-amber-50 px-4 py-3 text-tnf-sm text-amber-900">
-            Phone login needs WhatsApp API to be connected in Admin → Settings → WhatsApp API.
+            {{ $whatsappHint }}
         </div>
     @endif
 
@@ -27,8 +27,8 @@
             <button type="submit" class="tnf-auth-submit">Verify &amp; log in</button>
 
             <div class="flex items-center justify-between text-tnf-sm">
-                <a class="tnf-auth-link" href="{{ route('login.phone', ['reset' => 1]) }}">Change number</a>
-                <a class="tnf-auth-link" href="{{ route('login') }}">Email login</a>
+                <a class="tnf-auth-link" href="{{ route('login', ['reset' => 1]) }}">Change number</a>
+                <a class="tnf-auth-link" href="{{ route('login.email') }}">Staff email login</a>
             </div>
         </form>
     @else
@@ -36,17 +36,17 @@
             @csrf
 
             <div>
-                <label for="phone" class="tnf-auth-label">Mobile number</label>
+                <label for="phone" class="tnf-auth-label">Mobile number <span class="text-tnf-red">*</span></label>
                 <input id="phone" type="tel" name="phone" value="{{ old('phone') }}" required autofocus
                     autocomplete="tel" class="tnf-auth-input" placeholder="98765 43210 or +91…" />
-                <p class="mt-1 text-tnf-sm text-tnf-muted">We’ll send a one-time code on WhatsApp.</p>
+                <p class="mt-1 text-tnf-sm text-tnf-muted">We’ll send a one-time code on WhatsApp. No email needed.</p>
                 <x-input-error :messages="$errors->get('phone')" class="mt-2" />
             </div>
 
             <button type="submit" class="tnf-auth-submit" @disabled(! $whatsappReady)>Send OTP on WhatsApp</button>
 
             <div class="flex items-center justify-between text-tnf-sm">
-                <a class="tnf-auth-link" href="{{ route('login') }}">Email login</a>
+                <a class="tnf-auth-link" href="{{ route('login.email') }}">Staff email login</a>
                 @if (Route::has('register') && config('tnf.allow_public_registration'))
                     <a class="tnf-auth-link" href="{{ route('register') }}">Register</a>
                 @endif

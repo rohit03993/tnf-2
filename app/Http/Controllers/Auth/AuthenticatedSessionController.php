@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\WhatsAppCloudService;
+use App\Support\WhatsAppOtpReadiness;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,9 +14,9 @@ use Illuminate\View\View;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Default public login is WhatsApp OTP (mobile). Staff can use /login/email.
      */
-    public function create(Request $request): View|RedirectResponse
+    public function create(Request $request, WhatsAppCloudService $whatsApp): View|RedirectResponse
     {
         if (auth()->check()) {
             return redirect(auth()->user()->homeUrl());
@@ -26,12 +28,27 @@ class AuthenticatedSessionController extends Controller
             session(['url.intended' => $redirectTo]);
         }
 
+        if ($request->boolean('reset')) {
+            $request->session()->forget(['phone_login_phone', 'phone_login_name']);
+        }
+
+        return view('auth.phone-login', [
+            'whatsappReady' => WhatsAppOtpReadiness::ready($whatsApp),
+            'whatsappHint' => WhatsAppOtpReadiness::hint($whatsApp),
+            'step' => $request->session()->has('phone_login_phone') ? 'otp' : 'phone',
+            'phone' => $request->session()->get('phone_login_phone'),
+        ]);
+    }
+
+    public function createEmail(): View|RedirectResponse
+    {
+        if (auth()->check()) {
+            return redirect(auth()->user()->homeUrl());
+        }
+
         return view('auth.login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
@@ -41,9 +58,6 @@ class AuthenticatedSessionController extends Controller
         return redirect()->intended(auth()->user()->homeUrl());
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();

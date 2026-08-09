@@ -15,13 +15,14 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200);
+        $response->assertSee('Mobile number');
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_users_can_authenticate_using_email_login_screen(): void
     {
         $user = User::factory()->create();
 
-        $response = $this->post('/login', [
+        $response = $this->post('/login/email', [
             'email' => $user->email,
             'password' => 'password',
         ]);
@@ -34,7 +35,7 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->post('/login', [
+        $this->post('/login/email', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\PhoneAuthService;
 use App\Services\PhoneOtpService;
 use App\Services\WhatsAppCloudService;
+use App\Support\WhatsAppOtpReadiness;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,14 +21,11 @@ class PhoneLoginController extends Controller
         }
 
         if ($request->boolean('reset')) {
-            $request->session()->forget('phone_login_phone');
+            $request->session()->forget(['phone_login_phone', 'phone_login_name']);
         }
 
-        return view('auth.phone-login', [
-            'whatsappReady' => $whatsApp->isEnabled() || app()->environment('local', 'testing'),
-            'step' => $request->session()->has('phone_login_phone') ? 'otp' : 'phone',
-            'phone' => $request->session()->get('phone_login_phone'),
-        ]);
+        // Canonical login is /login (phone OTP).
+        return redirect()->route('login', $request->only('reset', 'redirect_to'));
     }
 
     public function requestOtp(Request $request, PhoneOtpService $otp): RedirectResponse
@@ -41,7 +39,7 @@ class PhoneLoginController extends Controller
         $request->session()->put('phone_login_phone', $phone);
 
         return redirect()
-            ->route('login.phone')
+            ->route('login')
             ->with('status', 'We sent a 6-digit code on WhatsApp.');
     }
 
@@ -57,7 +55,8 @@ class PhoneLoginController extends Controller
             $request->string('otp')->toString(),
         );
 
-        $user = $auth->findOrCreateByVerifiedPhone($phone);
+        $name = $request->session()->get('phone_login_name');
+        $user = $auth->findOrCreateByVerifiedPhone($phone, is_string($name) ? $name : null);
 
         if (! $user->is_active) {
             return back()->withErrors(['otp' => 'This account is inactive.']);
@@ -65,7 +64,7 @@ class PhoneLoginController extends Controller
 
         Auth::login($user, true);
         $request->session()->regenerate();
-        $request->session()->forget('phone_login_phone');
+        $request->session()->forget(['phone_login_phone', 'phone_login_name']);
 
         return redirect()->intended($user->homeUrl());
     }

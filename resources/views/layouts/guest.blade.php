@@ -19,11 +19,11 @@
                 @php($siteLogo = \App\Models\Setting::get('site_logo'))
                 @if(filled($siteLogo))
                     <x-site.brand-mark :logo="$siteLogo" size="auth" :show-wordmark="false" />
-                    <p class="tnf-auth-subtitle">Sign in to your account</p>
+                    <p class="tnf-auth-subtitle">{{ $subtitle ?? 'Sign in to your account' }}</p>
                 @else
                     <div class="tnf-auth-logo-mark">TNF</div>
                     <h1 class="tnf-auth-title">{{ config('app.name', 'TNF Today') }}</h1>
-                    <p class="tnf-auth-subtitle">Sign in to your account</p>
+                    <p class="tnf-auth-subtitle">{{ $subtitle ?? 'Sign in to your account' }}</p>
                 @endif
             </div>
 
