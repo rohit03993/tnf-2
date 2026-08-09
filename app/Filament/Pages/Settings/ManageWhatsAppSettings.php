@@ -9,16 +9,13 @@ use App\Services\WhatsAppCloudService;
 use App\Support\TnfSetting;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\HtmlString;
-use Illuminate\Validation\ValidationException;
 
 class ManageWhatsAppSettings extends SettingsPage
 {
@@ -73,9 +70,7 @@ class ManageWhatsAppSettings extends SettingsPage
         $data = $this->loadSettings();
         $data['whatsapp_access_token'] = '';
         $data['whatsapp_app_secret'] = '';
-        $data['pick_otp_template'] = null;
-        $data['pick_news_template'] = null;
-        $data['pick_epaper_template'] = null;
+        $data['templates_readonly'] = $this->templateSummaryText();
 
         $this->form->fill($data);
     }
@@ -91,6 +86,25 @@ class ManageWhatsAppSettings extends SettingsPage
                 ->label('Test connection')
                 ->icon(Heroicon::OutlinedSignal)
                 ->action(function (): void {
+                    $missing = [];
+                    if (! filled(TnfSetting::get('whatsapp_access_token'))) {
+                        $missing[] = 'Access token';
+                    }
+                    if (! filled(TnfSetting::get('whatsapp_phone_number_id'))) {
+                        $missing[] = 'Phone number ID';
+                    }
+
+                    if ($missing !== []) {
+                        Notification::make()
+                            ->title('Cannot test yet')
+                            ->body('Save these first, then test: '.implode(', ', $missing).'. (Token field looks blank after save on purpose.)')
+                            ->warning()
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    }
+
                     $status = app(WhatsAppCloudService::class)->connectionStatus();
 
                     if ($status['connected']) {
@@ -103,6 +117,7 @@ class ManageWhatsAppSettings extends SettingsPage
                                 $status['quality_rating'] ? 'Quality: '.$status['quality_rating'] : null,
                             ])->filter()->implode(' · ')))
                             ->success()
+                            ->persistent()
                             ->send();
 
                         return;
@@ -110,8 +125,9 @@ class ManageWhatsAppSettings extends SettingsPage
 
                     Notification::make()
                         ->title('Not connected')
-                        ->body($status['error'] ?: 'Check token and Phone Number ID.')
+                        ->body($status['error'] ?: 'Meta rejected the token / Phone number ID.')
                         ->danger()
+                        ->persistent()
                         ->send();
                 }),
             Action::make('syncTemplates')
@@ -124,226 +140,190 @@ class ManageWhatsAppSettings extends SettingsPage
                     if (! $result['ok']) {
                         Notification::make()
                             ->title('Template sync failed')
-                            ->body($result['error'] ?: 'Could not fetch templates from Meta.')
+                            ->body($result['error'] ?: 'Need Access token + numeric WABA ID saved first.')
                             ->danger()
+                            ->persistent()
                             ->send();
 
                         return;
                     }
 
+                    $lines = collect(app(WhatsAppCloudService::class)->cachedMessageTemplates())
+                        ->take(15)
+                        ->map(fn (array $t): string => ($t['status'] ?? '?').' · '.($t['name'] ?? '').' ('.($t['language'] ?? '').')')
+                        ->implode("\n");
+
                     Notification::make()
-                        ->title('Templates synced')
-                        ->body($result['count'].' total · '.$result['approved'].' approved. Use the pickers below to assign them.')
+                        ->title('Templates synced ('.$result['approved'].' approved / '.$result['count'].' total)')
+                        ->body($lines !== '' ? $lines : 'No templates returned.')
                         ->success()
+                        ->persistent()
                         ->send();
 
-                    $this->redirect(static::getUrl());
+                    $this->data['templates_readonly'] = $this->templateSummaryText();
                 }),
         ];
     }
 
     public function save(): void
     {
-        try {
-            $data = $this->form->getState();
-        } catch (ValidationException $exception) {
-            Notification::make()
-                ->title('Save failed — fix the fields below')
-                ->body(collect($exception->errors())->flatten()->take(4)->implode(' '))
-                ->danger()
-                ->persistent()
-                ->send();
+        // Read Livewire state directly — do not hard-fail the whole save on one bad field.
+        $data = is_array($this->data) ? $this->data : [];
+        $saved = [];
+        $warnings = [];
 
-            throw $exception;
-        }
+        foreach ($this->settingKeys() as $key => $default) {
+            if (! array_key_exists($key, $data)) {
+                continue;
+            }
 
-        $waba = trim((string) ($data['whatsapp_business_account_id'] ?? ''));
-        if ($waba !== '' && ! preg_match('/^\d+$/', $waba)) {
-            Notification::make()
-                ->title('Save blocked: WABA ID is wrong')
-                ->body('“WhatsApp Business Account ID” must be digits only (example: 111704343541197). You currently have an email there — replace it, then click Save again.')
-                ->danger()
-                ->persistent()
-                ->send();
+            $value = $data[$key];
 
-            return;
-        }
-
-        $verifyToken = (string) ($data['whatsapp_webhook_verify_token'] ?? '');
-        if ($verifyToken !== '' && str_contains($verifyToken, '#')) {
-            Notification::make()
-                ->title('Save blocked: verify token invalid')
-                ->body('Remove # from the webhook verify token (Meta cannot verify tokens that contain #).')
-                ->danger()
-                ->persistent()
-                ->send();
-
-            return;
-        }
-
-        if (! empty($data['whatsapp_enabled']) && blank($data['whatsapp_phone_number_id'] ?? null)) {
-            Notification::make()
-                ->title('Save blocked: Phone number ID missing')
-                ->body('Either paste the numeric Phone number ID from Meta, or turn OFF “Enable WhatsApp integration”, then Save.')
-                ->danger()
-                ->persistent()
-                ->send();
-
-            return;
-        }
-
-        foreach ($data as $key => $value) {
             if (in_array($key, $this->secretKeys(), true) && blank($value)) {
                 continue;
             }
 
+            if ($key === 'whatsapp_business_account_id') {
+                $value = trim((string) $value);
+                if ($value !== '' && ! preg_match('/^\d+$/', $value)) {
+                    $warnings[] = 'WABA ID was not saved (must be digits only like 111704343541197, not an email).';
+                    continue;
+                }
+            }
+
+            if ($key === 'whatsapp_webhook_verify_token') {
+                $value = trim((string) $value);
+                if ($value !== '' && str_contains($value, '#')) {
+                    $warnings[] = 'Verify token was not saved (remove # from it).';
+                    continue;
+                }
+            }
+
+            if ($key === 'whatsapp_phone_number_id' || $key === 'whatsapp_app_id') {
+                $value = is_string($value) ? trim($value) : $value;
+            }
+
             Setting::set($key, $value);
+            $saved[] = $key;
         }
 
+        // Prove to the admin what is actually in the DB now.
+        $proof = collect([
+            filled(TnfSetting::get('whatsapp_access_token')) ? 'token=YES' : 'token=NO',
+            filled(TnfSetting::get('whatsapp_phone_number_id')) ? 'phoneId=YES' : 'phoneId=NO',
+            filled(TnfSetting::get('whatsapp_business_account_id')) ? 'waba=YES' : 'waba=NO',
+            filled(TnfSetting::get('whatsapp_app_id')) ? 'appId=YES' : 'appId=NO',
+            filled(TnfSetting::get('whatsapp_webhook_verify_token')) ? 'verify=YES' : 'verify=NO',
+            TnfSetting::bool('whatsapp_enabled', false) ? 'enabled=ON' : 'enabled=OFF',
+        ])->implode(' · ');
+
+        if ($saved === []) {
+            Notification::make()
+                ->title('Nothing was saved')
+                ->body('No field values reached the server. Re-type the values (do not rely on browser autofill) and click Save again. '.$proof)
+                ->danger()
+                ->persistent()
+                ->send();
+
+            return;
+        }
+
+        $body = 'Stored '.count($saved).' fields. DB check: '.$proof;
+        if ($warnings !== []) {
+            $body .= ' Warnings: '.implode(' ', $warnings);
+        }
+        $body .= ' Access token / App secret boxes go blank after save on purpose.';
+
         Notification::make()
-            ->title('Settings saved')
-            ->body('Access token / App secret fields go blank on purpose after save — check “Saved secrets” above.')
+            ->title($warnings === [] ? 'Settings saved' : 'Settings saved with warnings')
+            ->body($body)
             ->success()
+            ->persistent()
             ->send();
 
-        $this->redirect(static::getUrl());
+        // Reload non-secret fields from DB so you can see they stuck.
+        $fresh = $this->loadSettings();
+        $fresh['whatsapp_access_token'] = '';
+        $fresh['whatsapp_app_secret'] = '';
+        $fresh['templates_readonly'] = $this->templateSummaryText();
+        $this->form->fill($fresh);
     }
 
     public function form(Schema $schema): Schema
     {
-        $whatsApp = app(WhatsAppCloudService::class);
         $webhookUrl = url('/webhooks/whatsapp');
-        $templates = $whatsApp->cachedMessageTemplates();
-        $syncedAt = Setting::get('whatsapp_templates_synced_at');
-        $pickOptions = $whatsApp->approvedTemplatePickOptions();
 
         return $schema->components([
             Section::make('Connection status')
-                ->description('Fill credentials below, click Save settings (top right), then Test connection. Access token / App secret stay blank after save on purpose — they are stored, not lost.')
+                ->description('1) Fill fields 2) Save settings 3) Confirm green toast shows token=YES phoneId=YES 4) Test connection. Token boxes blank after save means stored, not lost.')
                 ->schema([
-                    Placeholder::make('connection_badge')
-                        ->label('Status')
-                        ->content(fn (): string => filter_var(Setting::get('whatsapp_connected', false), FILTER_VALIDATE_BOOLEAN)
-                            ? 'Connected to Meta WhatsApp Cloud API'
-                            : (TnfSetting::bool('whatsapp_enabled', false) ? 'Enabled but not verified yet' : 'Not connected')),
-                    Placeholder::make('connection_details')
-                        ->label('Number / business')
-                        ->content(fn (): string => collect([
-                            Setting::get('whatsapp_verified_name'),
-                            Setting::get('whatsapp_display_phone'),
-                            ($q = Setting::get('whatsapp_quality_rating')) ? 'Quality: '.$q : null,
-                            ($c = Setting::get('whatsapp_last_checked_at')) ? 'Checked: '.$c : null,
-                        ])->filter()->implode(' · ') ?: '—'),
                     Placeholder::make('secrets_status')
-                        ->label('Saved secrets')
+                        ->label('Currently stored on server')
                         ->content(fn (): string => collect([
                             filled(TnfSetting::get('whatsapp_access_token')) ? 'Access token: saved' : 'Access token: missing',
-                            filled(TnfSetting::get('whatsapp_app_secret')) ? 'App secret: saved' : 'App secret: missing (optional for local)',
-                            filled(TnfSetting::get('whatsapp_phone_number_id')) ? 'Phone number ID: saved' : 'Phone number ID: missing',
-                            filled(TnfSetting::get('whatsapp_business_account_id')) ? 'WABA ID: saved' : 'WABA ID: missing',
+                            filled(TnfSetting::get('whatsapp_phone_number_id')) ? 'Phone number ID: '.TnfSetting::get('whatsapp_phone_number_id') : 'Phone number ID: missing',
+                            filled(TnfSetting::get('whatsapp_business_account_id')) ? 'WABA: '.TnfSetting::get('whatsapp_business_account_id') : 'WABA: missing',
+                            filled(TnfSetting::get('whatsapp_app_id')) ? 'App ID: '.TnfSetting::get('whatsapp_app_id') : 'App ID: missing',
                             filled(TnfSetting::get('whatsapp_webhook_verify_token')) ? 'Verify token: saved' : 'Verify token: missing',
-                        ])->implode(' · ')),
+                            TnfSetting::bool('whatsapp_enabled', false) ? 'Enabled: ON' : 'Enabled: OFF',
+                        ])->implode(' | ')),
                     Placeholder::make('webhook_url')
                         ->label('Webhook callback URL')
                         ->content($webhookUrl),
-                ])->columns(1),
+                ]),
 
             Section::make('Meta API credentials')
-                ->description('From Meta Developer → WhatsApp → API Setup. WABA ID is a long number — never an email. Tip: turn Enable OFF until Phone number ID is filled, then Save, then turn Enable ON.')
+                ->description('WABA must be numbers only (from Meta URL business_id). Never put your Gmail here.')
                 ->schema([
                     Toggle::make('whatsapp_enabled')
                         ->label('Enable WhatsApp integration')
-                        ->helperText('When off, OTP and broadcasts are not sent even if keys are saved.'),
+                        ->helperText('Leave OFF until token + phone number ID are saved and Test connection works.'),
                     TextInput::make('whatsapp_access_token')
                         ->label('Access token')
                         ->password()
                         ->revealable()
-                        ->helperText(fn (): string => filled(TnfSetting::get('whatsapp_access_token'))
-                            ? 'Saved on server. Leave blank to keep it, or paste a new token to replace.'
-                            : 'Paste your permanent System User token, then Save settings.')
+                        ->autocomplete(false)
+                        ->helperText('Paste permanent token, then Save. Field clears after save if stored.')
                         ->columnSpanFull(),
                     TextInput::make('whatsapp_phone_number_id')
                         ->label('Phone number ID')
-                        ->helperText('Numeric ID from Meta API Setup (not your phone number). Required before enabling.'),
+                        ->autocomplete(false)
+                        ->helperText('Numeric ID from Meta → WhatsApp → API Setup.'),
                     TextInput::make('whatsapp_business_account_id')
                         ->label('WhatsApp Business Account ID (WABA)')
-                        ->helperText('Digits only, e.g. 111704343541197 — not an email. Required for Sync templates.')
-                        ->rule('nullable|regex:/^\d*$/')
-                        ->validationMessages([
-                            'regex' => 'WABA ID must be digits only (from Meta), not an email address.',
-                        ]),
+                        ->autocomplete(false)
+                        ->helperText('Digits only. Example from your Meta URL: 111704343541197'),
                     TextInput::make('whatsapp_app_id')
                         ->label('Meta App ID')
-                        ->helperText('From your app dashboard URL / App settings (e.g. 953996650689050).'),
+                        ->autocomplete(false)
+                        ->helperText('Example from your Meta URL: 953996650689050'),
                     TextInput::make('whatsapp_app_secret')
                         ->label('Meta App Secret')
                         ->password()
                         ->revealable()
-                        ->helperText(fn (): string => filled(TnfSetting::get('whatsapp_app_secret'))
-                            ? 'Saved on server. Leave blank to keep it.'
-                            : 'App settings → Basic → App secret. Needed for webhook signature checks.'),
+                        ->autocomplete(false)
+                        ->helperText('App settings → Basic → App secret. Optional until webhook signatures are required.'),
                     TextInput::make('whatsapp_webhook_verify_token')
                         ->label('Webhook verify token')
-                        ->helperText('Must match Meta exactly. Use letters/numbers only — no # or spaces. Example: tnfWhatsAppVerify2026')
-                        ->rule('nullable|regex:/^[^#]*$/')
-                        ->validationMessages([
-                            'regex' => 'Do not use # in the verify token.',
-                        ]),
+                        ->autocomplete(false)
+                        ->helperText('Same string in Meta webhook. No # character. Example: tnfWhatsAppVerify2026'),
                     TextInput::make('whatsapp_graph_version')
                         ->label('Graph API version')
                         ->placeholder('v21.0'),
                 ])->columns(2),
 
-            Section::make('Approved templates from Meta')
-                ->description('Templates are created and approved in Meta. Sync them here, then pick which ones TNF uses.')
+            Section::make('Templates (after sync)')
                 ->schema([
-                    Placeholder::make('templates_table')
-                        ->hiddenLabel()
-                        ->content(fn (): HtmlString => new HtmlString(
-                            view('filament.whatsapp-templates', [
-                                'templates' => $templates,
-                                'syncedAt' => $syncedAt,
-                            ])->render()
-                        ))
-                        ->columnSpanFull(),
+                    Textarea::make('templates_readonly')
+                        ->label('Last synced templates')
+                        ->disabled()
+                        ->dehydrated(false)
+                        ->rows(8)
+                        ->helperText('Click Sync templates in the header after token + WABA are saved. Then copy an APPROVED name into the fields below.'),
                 ]),
 
-            Section::make('Assign templates for TNF')
-                ->description('Pick an APPROVED template from the last sync, or type the name manually. OTP body needs {{1}}; news/ePaper need title {{1}} and link {{2}}.')
+            Section::make('Assign template names')
                 ->schema([
-                    Select::make('pick_otp_template')
-                        ->label('Pick approved OTP template')
-                        ->options($pickOptions)
-                        ->searchable()
-                        ->dehydrated(false)
-                        ->placeholder(count($pickOptions) ? 'Choose approved template…' : 'Sync templates first')
-                        ->disabled(fn (): bool => $pickOptions === [])
-                        ->live()
-                        ->afterStateUpdated(function (?string $state, Set $set): void {
-                            $this->applyPickedTemplate($state, $set, 'whatsapp_otp_template', 'whatsapp_otp_template_lang');
-                        }),
-                    Select::make('pick_news_template')
-                        ->label('Pick approved news template')
-                        ->options($pickOptions)
-                        ->searchable()
-                        ->dehydrated(false)
-                        ->placeholder(count($pickOptions) ? 'Choose approved template…' : 'Sync templates first')
-                        ->disabled(fn (): bool => $pickOptions === [])
-                        ->live()
-                        ->afterStateUpdated(function (?string $state, Set $set): void {
-                            $this->applyPickedTemplate($state, $set, 'whatsapp_news_template', 'whatsapp_news_template_lang');
-                        }),
-                    Select::make('pick_epaper_template')
-                        ->label('Pick approved ePaper template')
-                        ->options($pickOptions)
-                        ->searchable()
-                        ->dehydrated(false)
-                        ->placeholder(count($pickOptions) ? 'Choose approved template…' : 'Sync templates first')
-                        ->disabled(fn (): bool => $pickOptions === [])
-                        ->live()
-                        ->afterStateUpdated(function (?string $state, Set $set): void {
-                            $this->applyPickedTemplate($state, $set, 'whatsapp_epaper_template', 'whatsapp_epaper_template_lang');
-                        }),
                     TextInput::make('whatsapp_otp_template')->label('OTP template name'),
                     TextInput::make('whatsapp_otp_template_lang')->label('OTP language')->default('en'),
                     TextInput::make('whatsapp_news_template')->label('News alert template'),
@@ -353,7 +333,6 @@ class ManageWhatsAppSettings extends SettingsPage
                 ])->columns(2),
 
             Section::make('Auto-share on publish')
-                ->description('Editors can still override with the checkbox on each News / ePaper form.')
                 ->schema([
                     Toggle::make('whatsapp_on_news')
                         ->label('Default: send WhatsApp on news publish'),
@@ -363,14 +342,25 @@ class ManageWhatsAppSettings extends SettingsPage
         ]);
     }
 
-    protected function applyPickedTemplate(?string $state, Set $set, string $nameKey, string $langKey): void
+    protected function templateSummaryText(): string
     {
-        if (! filled($state) || ! str_contains($state, '||')) {
-            return;
+        $syncedAt = Setting::get('whatsapp_templates_synced_at');
+        $templates = app(WhatsAppCloudService::class)->cachedMessageTemplates();
+
+        if ($templates === []) {
+            return $syncedAt
+                ? "Last sync: {$syncedAt}\n(No templates returned.)"
+                : 'Not synced yet. Save token + WABA, then click Sync templates.';
         }
 
-        [$name, $lang] = explode('||', $state, 2);
-        $set($nameKey, $name);
-        $set($langKey, $lang);
+        $lines = ["Last sync: ".($syncedAt ?: 'unknown')];
+        foreach ($templates as $template) {
+            $lines[] = ($template['status'] ?? '?')
+                .' | '.($template['name'] ?? '')
+                .' | '.($template['language'] ?? '')
+                .' | '.($template['category'] ?? '');
+        }
+
+        return implode("\n", $lines);
     }
 }
