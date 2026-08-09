@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\Pages\Settings\Concerns\ManagesSettings;
 use App\Models\Setting;
 use App\Services\WhatsAppCloudService;
+use App\Services\WhatsAppLiveCampaignService;
 use App\Services\WhatsAppTemplateCatalogService;
 use App\Support\TnfSetting;
 use Filament\Actions\Action;
@@ -54,6 +55,9 @@ class ManageWhatsAppSettings extends SettingsPage
             'whatsapp_app_secret' => '',
             'whatsapp_webhook_verify_token' => '',
             'whatsapp_graph_version' => 'v21.0',
+            'whatsapp_otp_live_campaign_id' => '',
+            'whatsapp_news_live_campaign_id' => '',
+            'whatsapp_epaper_live_campaign_id' => '',
             'whatsapp_otp_template' => 'tnf_login_otp',
             'whatsapp_otp_template_lang' => 'en',
             'whatsapp_news_template' => 'tnf_news_alert',
@@ -336,7 +340,28 @@ class ManageWhatsAppSettings extends SettingsPage
                         ->extraInputAttributes($anti),
                 ])->columns(2),
 
-            Section::make('Templates')
+            Section::make('Live campaigns (system sends)')
+                ->description('School-CRM style: create Live campaigns under WhatsApp → Live campaigns, Go live, then pick them here for OTP / news / ePaper.')
+                ->schema([
+                    Select::make('whatsapp_otp_live_campaign_id')
+                        ->label('OTP live campaign')
+                        ->options(fn (): array => app(WhatsAppLiveCampaignService::class)->liveOptions())
+                        ->searchable()
+                        ->helperText('Used for phone login OTP. Must be Live and linked to an AUTHENTICATION template.'),
+                    Select::make('whatsapp_news_live_campaign_id')
+                        ->label('News live campaign')
+                        ->options(fn (): array => app(WhatsAppLiveCampaignService::class)->liveOptions())
+                        ->searchable()
+                        ->helperText('Used when publishing news (auto-share / campaigns).'),
+                    Select::make('whatsapp_epaper_live_campaign_id')
+                        ->label('ePaper live campaign')
+                        ->options(fn (): array => app(WhatsAppLiveCampaignService::class)->liveOptions())
+                        ->searchable()
+                        ->helperText('Used when publishing ePaper editions.'),
+                ])->columns(1),
+
+            Section::make('Template sync / fallback names')
+                ->description('Sync shows Meta templates. Fallback names are only used if no Live campaign is selected above.')
                 ->schema([
                     Textarea::make('templates_readonly')
                         ->label('Last synced templates')
@@ -346,13 +371,13 @@ class ManageWhatsAppSettings extends SettingsPage
                         ->afterStateHydrated(function (Textarea $component): void {
                             $component->state($this->templateSummaryText());
                         }),
-                    TextInput::make('whatsapp_otp_template')->label('OTP template name'),
-                    TextInput::make('whatsapp_otp_template_lang')->label('OTP language'),
-                    TextInput::make('whatsapp_news_template')->label('News template'),
-                    TextInput::make('whatsapp_news_template_lang')->label('News language'),
-                    TextInput::make('whatsapp_epaper_template')->label('ePaper template'),
-                    TextInput::make('whatsapp_epaper_template_lang')->label('ePaper language'),
-                ])->columns(2),
+                    TextInput::make('whatsapp_otp_template')->label('OTP template name (fallback)'),
+                    TextInput::make('whatsapp_otp_template_lang')->label('OTP language (fallback)'),
+                    TextInput::make('whatsapp_news_template')->label('News template (fallback)'),
+                    TextInput::make('whatsapp_news_template_lang')->label('News language (fallback)'),
+                    TextInput::make('whatsapp_epaper_template')->label('ePaper template (fallback)'),
+                    TextInput::make('whatsapp_epaper_template_lang')->label('ePaper language (fallback)'),
+                ])->columns(2)->collapsed(),
 
             Section::make('Auto-share on publish')
                 ->schema([

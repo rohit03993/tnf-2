@@ -78,25 +78,31 @@ class WhatsAppCampaignService
             return null;
         }
 
+        $liveKey = $kind === 'epaper' ? 'whatsapp_epaper_live_campaign_id' : 'whatsapp_news_live_campaign_id';
+        $live = app(WhatsAppLiveCampaignService::class)->resolveById(\App\Support\TnfSetting::get($liveKey));
+
         $templateKey = $kind === 'epaper' ? 'whatsapp_epaper_template' : 'whatsapp_news_template';
         $langKey = $kind === 'epaper' ? 'whatsapp_epaper_template_lang' : 'whatsapp_news_template_lang';
         $defaultName = $kind === 'epaper' ? 'tnf_epaper_alert' : 'tnf_news_alert';
 
-        $templateName = trim((string) \App\Support\TnfSetting::get($templateKey, $defaultName));
-        $language = trim((string) \App\Support\TnfSetting::get($langKey, 'en'));
+        $templateName = $live?->templateName()
+            ?: trim((string) \App\Support\TnfSetting::get($templateKey, $defaultName));
+        $language = $live?->templateLanguage()
+            ?: trim((string) \App\Support\TnfSetting::get($langKey, 'en'));
 
-        $template = WhatsappTemplate::query()
-            ->where('name', $templateName)
-            ->where('language', $language)
-            ->where('status', 'APPROVED')
-            ->first();
+        $template = $live?->template;
 
         if (! $template) {
             $template = WhatsappTemplate::query()
                 ->where('name', $templateName)
+                ->where('language', $language)
                 ->where('status', 'APPROVED')
-                ->orderBy('id')
-                ->first();
+                ->first()
+                ?: WhatsappTemplate::query()
+                    ->where('name', $templateName)
+                    ->where('status', 'APPROVED')
+                    ->orderBy('id')
+                    ->first();
         }
 
         if (! $template) {
@@ -112,12 +118,14 @@ class WhatsAppCampaignService
                     'synced_at' => now(),
                 ],
             );
-        } else {
-            // News/ePaper alerts always use title + URL slots.
-            $template->forceFill([
-                'param_count' => max(2, (int) $template->param_count),
-                'param_mappings' => ['campaign.title', 'campaign.url'],
-            ])->save();
+        } elseif ((int) $template->param_count >= 2) {
+            // News/ePaper alerts use title + URL slots when template has 2+ params.
+            $mappings = $template->param_mappings;
+            if (! is_array($mappings) || count($mappings) < 2) {
+                $template->forceFill([
+                    'param_mappings' => ['campaign.title', 'campaign.url'],
+                ])->save();
+            }
         }
 
         $absoluteUrl = FrontendUrl::to($url);

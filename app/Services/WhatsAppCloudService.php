@@ -372,8 +372,19 @@ class WhatsAppCloudService
             return false;
         }
 
-        $template = trim((string) TnfSetting::get('whatsapp_otp_template', 'tnf_login_otp'));
-        $language = trim((string) TnfSetting::get('whatsapp_otp_template_lang', 'en'));
+        $live = app(WhatsAppLiveCampaignService::class)
+            ->resolveById(TnfSetting::get('whatsapp_otp_live_campaign_id'));
+
+        $template = $live?->templateName()
+            ?: trim((string) TnfSetting::get('whatsapp_otp_template', 'tnf_login_otp'));
+        $language = $live?->templateLanguage()
+            ?: trim((string) TnfSetting::get('whatsapp_otp_template_lang', 'en'));
+
+        if ($template === '') {
+            Log::warning('WhatsApp OTP skipped — no live campaign or fallback template configured');
+
+            return false;
+        }
 
         $components = [
             [
@@ -402,12 +413,17 @@ class WhatsAppCloudService
             return false;
         }
 
+        $liveKey = $kind === 'epaper' ? 'whatsapp_epaper_live_campaign_id' : 'whatsapp_news_live_campaign_id';
+        $live = app(WhatsAppLiveCampaignService::class)->resolveById(TnfSetting::get($liveKey));
+
         $templateKey = $kind === 'epaper' ? 'whatsapp_epaper_template' : 'whatsapp_news_template';
         $langKey = $kind === 'epaper' ? 'whatsapp_epaper_template_lang' : 'whatsapp_news_template_lang';
         $defaultName = $kind === 'epaper' ? 'tnf_epaper_alert' : 'tnf_news_alert';
 
-        $template = trim((string) TnfSetting::get($templateKey, $defaultName));
-        $language = trim((string) TnfSetting::get($langKey, 'en'));
+        $template = $live?->templateName()
+            ?: trim((string) TnfSetting::get($templateKey, $defaultName));
+        $language = $live?->templateLanguage()
+            ?: trim((string) TnfSetting::get($langKey, 'en'));
         $absoluteUrl = FrontendUrl::to($url);
         $shortTitle = Str::limit(trim($title), 60, '…');
 
