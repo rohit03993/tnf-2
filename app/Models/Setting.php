@@ -33,6 +33,11 @@ class Setting extends Model
         );
 
         Cache::forget("setting.{$key}");
-        \App\Services\ContentCacheService::bust();
+
+        try {
+            \App\Services\ContentCacheService::bust();
+        } catch (\Throwable) {
+            // Settings save must not fail because of page-cache busting.
+        }
     }
 }
