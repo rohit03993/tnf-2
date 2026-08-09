@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\EpaperEditions\Pages;
 
 use App\Enums\ContentStatus;
+use App\Filament\Concerns\RequestsWhatsAppBroadcast;
 use App\Filament\Concerns\SyncsFeaturedUpload;
 use App\Filament\Resources\EpaperEditions\EpaperEditionResource;
 use App\Services\PdfProcessingService;
@@ -10,6 +11,7 @@ use Filament\Resources\Pages\CreateRecord;
 
 class CreateEpaperEdition extends CreateRecord
 {
+    use RequestsWhatsAppBroadcast;
     use SyncsFeaturedUpload;
 
     protected static string $resource = EpaperEditionResource::class;
@@ -21,6 +23,8 @@ class CreateEpaperEdition extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $this->captureWhatsAppBroadcastFlag();
+
         if (EpaperEditionResource::statusIsPublished($data['status'] ?? null) && empty($data['published_at'])) {
             $data['published_at'] = now();
         }

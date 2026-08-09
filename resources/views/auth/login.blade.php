@@ -26,6 +26,14 @@
 
         <button type="submit" class="tnf-auth-submit">{{ __('Log in') }}</button>
 
+        <div class="relative my-4 text-center">
+            <span class="tnf-auth-divider text-tnf-sm text-tnf-muted">or</span>
+        </div>
+
+        <a href="{{ route('login.phone') }}" class="tnf-auth-submit" style="display:block;text-align:center;background:#128C7E;">
+            Login with WhatsApp OTP
+        </a>
+
         <div class="flex items-center justify-between text-tnf-sm">
             @if (Route::has('password.request'))
                 <a class="tnf-auth-link" href="{{ route('password.request') }}">{{ __('Forgot password?') }}</a>

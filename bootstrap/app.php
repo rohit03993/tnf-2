@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/whatsapp',
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\DetectCapacitorApp::class,
             \App\Http\Middleware\RedirectAppFromAdmin::class,

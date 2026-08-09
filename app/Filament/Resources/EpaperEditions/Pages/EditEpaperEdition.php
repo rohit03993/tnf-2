@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\EpaperEditions\Pages;
 
+use App\Filament\Concerns\RequestsWhatsAppBroadcast;
 use App\Filament\Concerns\SyncsFeaturedUpload;
 use App\Filament\Resources\EpaperEditions\EpaperEditionResource;
 use App\Services\PdfProcessingService;
@@ -12,6 +13,7 @@ use Filament\Support\Icons\Heroicon;
 
 class EditEpaperEdition extends EditRecord
 {
+    use RequestsWhatsAppBroadcast;
     use SyncsFeaturedUpload;
 
     protected static string $resource = EpaperEditionResource::class;
@@ -43,6 +45,8 @@ class EditEpaperEdition extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        $this->captureWhatsAppBroadcastFlag();
+
         if (EpaperEditionResource::statusIsPublished($data['status'] ?? null) && empty($data['published_at'])) {
             $data['published_at'] = now();
         }

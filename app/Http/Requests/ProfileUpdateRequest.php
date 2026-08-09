@@ -26,6 +26,27 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'phone' => [
+                'nullable',
+                'string',
+                'max:20',
+                Rule::unique(User::class)->ignore($this->user()->id),
+            ],
+            'whatsapp_opt_in' => ['sometimes', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('phone')) {
+            $normalized = \App\Support\PhoneNumber::normalize($this->input('phone'));
+            $this->merge([
+                'phone' => $normalized,
+            ]);
+        }
+
+        $this->merge([
+            'whatsapp_opt_in' => $this->boolean('whatsapp_opt_in'),
+        ]);
     }
 }

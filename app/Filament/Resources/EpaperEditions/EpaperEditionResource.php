@@ -5,6 +5,7 @@ namespace App\Filament\Resources\EpaperEditions;
 use App\Enums\ContentStatus;
 use App\Enums\PdfStatus;
 use App\Enums\UserRole;
+use App\Filament\Concerns\RequestsWhatsAppBroadcast;
 use App\Filament\Concerns\ScopesToAuthor;
 use App\Filament\Resources\EpaperEditions\Pages\CreateEpaperEdition;
 use App\Filament\Resources\EpaperEditions\Pages\EditEpaperEdition;
@@ -31,6 +32,7 @@ use Illuminate\Support\Str;
 
 class EpaperEditionResource extends Resource
 {
+    use RequestsWhatsAppBroadcast;
     use ScopesToAuthor;
 
     protected static ?string $model = EpaperEdition::class;
@@ -79,6 +81,7 @@ class EpaperEditionResource extends Resource
                     ->required(fn (Get $get): bool => static::statusIsPublished($get('status'))),
                 FileUpload::make('pdf_file')->label('PDF file')->acceptedFileTypes(['application/pdf'])
                     ->disk('public')->directory('epaper/pdfs')->required(fn (string $operation) => $operation === 'create'),
+                static::whatsAppBroadcastToggle('whatsapp_on_epaper', true),
             ])->columns(2),
             Section::make('Archive thumbnail')->schema([
                 TnfImageUpload::applyTo(

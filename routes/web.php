@@ -27,11 +27,17 @@ use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\TagController;
 use App\Http\Controllers\Web\VideoArchiveController;
 use App\Http\Controllers\Web\VideoSingleController;
+use App\Http\Controllers\Web\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/storage/{path?}', PublicStorageController::class)
     ->where('path', '.*')
     ->name('storage.serve');
+
+Route::get('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'verify'])
+    ->name('webhooks.whatsapp.verify');
+Route::post('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'receive'])
+    ->name('webhooks.whatsapp.receive');
 
 Route::redirect('/admin/login', '/login');
 Route::permanentRedirect('/admin/login/', '/login');

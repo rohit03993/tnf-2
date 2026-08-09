@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Articles;
 use App\Enums\ContentStatus;
 use App\Enums\UserRole;
 use App\Filament\Concerns\ReporterPublishing;
+use App\Filament\Concerns\RequestsWhatsAppBroadcast;
 use App\Filament\Concerns\ScopesToAuthor;
 use App\Filament\Resources\Articles\Pages\CreateArticle;
 use App\Filament\Resources\Articles\Pages\EditArticle;
@@ -34,6 +35,7 @@ use Illuminate\Support\Str;
 class ArticleResource extends Resource
 {
     use ReporterPublishing;
+    use RequestsWhatsAppBroadcast;
     use ScopesToAuthor;
 
     protected static ?string $model = Article::class;
@@ -140,6 +142,7 @@ class ArticleResource extends Resource
                         ->directory('articles/featured')
                         ->dehydrated(false)
                 ),
+                static::whatsAppBroadcastToggle('whatsapp_on_news', false),
             ])->columns(2),
             Section::make('Engagement')->schema([
                 TextInput::make('readers_count')

@@ -53,6 +53,11 @@ class UserResource extends Resource
         return $schema->components([
             TextInput::make('name')->required(),
             TextInput::make('email')->email()->required()->unique(ignoreRecord: true),
+            TextInput::make('phone')
+                ->label('WhatsApp / phone')
+                ->tel()
+                ->helperText('E.164 digits preferred, e.g. 919876543210'),
+            Toggle::make('whatsapp_opt_in')->label('WhatsApp alerts opted in'),
             TnfImageUpload::applyTo(
                 FileUpload::make('avatar_path')
                     ->label('Profile photo')

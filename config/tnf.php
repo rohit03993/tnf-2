@@ -27,6 +27,15 @@ return [
     'onesignal_rest_key' => env('ONESIGNAL_REST_KEY'),
     'frontend_url' => env('FRONTEND_URL', env('APP_URL')),
 
+    // WhatsApp Cloud API (Meta) — prefer Admin → Settings → WhatsApp API
+    'whatsapp_access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+    'whatsapp_phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+    'whatsapp_business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
+    'whatsapp_app_id' => env('WHATSAPP_APP_ID'),
+    'whatsapp_app_secret' => env('WHATSAPP_APP_SECRET'),
+    'whatsapp_webhook_verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN'),
+    'whatsapp_graph_version' => env('WHATSAPP_GRAPH_VERSION', 'v21.0'),
+
     'developer_credit' => [
         'name' => 'Pal Digital',
         'url' => 'https://paldigital.in/',

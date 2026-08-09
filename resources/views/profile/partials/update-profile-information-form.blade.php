@@ -47,6 +47,20 @@
             @endif
         </div>
 
+        <div>
+            <x-input-label for="phone" :value="__('WhatsApp / mobile')" />
+            <x-text-input id="phone" name="phone" type="tel" class="mt-1 block w-full" :value="old('phone', $user->phone)" autocomplete="tel" placeholder="98765 43210" />
+            <p class="mt-1 text-sm text-gray-600">Used for OTP login and news/ePaper WhatsApp alerts.</p>
+            <x-input-error class="mt-2" :messages="$errors->get('phone')" />
+        </div>
+
+        <div class="flex items-center gap-2">
+            <input id="whatsapp_opt_in" name="whatsapp_opt_in" type="checkbox" value="1"
+                class="rounded border-gray-300 text-tnf-red focus:ring-tnf-red"
+                @checked(old('whatsapp_opt_in', $user->whatsapp_opt_in)) />
+            <x-input-label for="whatsapp_opt_in" :value="__('Send me TNF alerts on WhatsApp')" />
+        </div>
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 

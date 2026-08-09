@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Articles\Pages;
 
 use App\Enums\ContentStatus;
 use App\Enums\UserRole;
+use App\Filament\Concerns\RequestsWhatsAppBroadcast;
 use App\Filament\Concerns\SyncsFeaturedUpload;
 use App\Filament\Resources\Articles\ArticleResource;
 use App\Notifications\ReporterContentPublishedNotification;
@@ -15,6 +16,7 @@ use Filament\Resources\Pages\EditRecord;
 
 class EditArticle extends EditRecord
 {
+    use RequestsWhatsAppBroadcast;
     use SyncsFeaturedUpload;
 
     protected static string $resource = ArticleResource::class;
@@ -83,6 +85,8 @@ class EditArticle extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        $this->captureWhatsAppBroadcastFlag();
+
         $user = auth()->user();
 
         if ($user) {

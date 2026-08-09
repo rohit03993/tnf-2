@@ -15,6 +15,13 @@ class TnfSetting
         'onesignal_app_id' => 'tnf.onesignal_app_id',
         'onesignal_rest_key' => 'tnf.onesignal_rest_key',
         'frontend_url' => 'tnf.frontend_url',
+        'whatsapp_access_token' => 'tnf.whatsapp_access_token',
+        'whatsapp_phone_number_id' => 'tnf.whatsapp_phone_number_id',
+        'whatsapp_business_account_id' => 'tnf.whatsapp_business_account_id',
+        'whatsapp_app_id' => 'tnf.whatsapp_app_id',
+        'whatsapp_app_secret' => 'tnf.whatsapp_app_secret',
+        'whatsapp_webhook_verify_token' => 'tnf.whatsapp_webhook_verify_token',
+        'whatsapp_graph_version' => 'tnf.whatsapp_graph_version',
     ];
 
     public static function get(string $key, mixed $default = null): mixed

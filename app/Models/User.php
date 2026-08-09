@@ -20,6 +20,10 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     protected $fillable = [
         'name',
         'email',
+        'phone',
+        'phone_verified_at',
+        'whatsapp_opt_in',
+        'whatsapp_opt_in_at',
         'avatar_path',
         'password',
         'role',
@@ -37,6 +41,9 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
+            'whatsapp_opt_in_at' => 'datetime',
+            'whatsapp_opt_in' => 'boolean',
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_active' => 'boolean',

@@ -40,6 +40,8 @@ class RohitPanelProvider extends PanelProvider
             ->navigationGroups([
                 NavigationGroup::make('Library')
                     ->collapsed(),
+                NavigationGroup::make('WhatsApp')
+                    ->collapsed(),
                 NavigationGroup::make('Settings')
                     ->collapsed(),
                 NavigationGroup::make('Users')
