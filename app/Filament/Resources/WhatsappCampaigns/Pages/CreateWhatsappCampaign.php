@@ -21,11 +21,11 @@ class CreateWhatsappCampaign extends CreateRecord
     {
         parent::mount();
 
-        $this->form->fill(array_merge($this->form->getState(), [
+        $this->form->fill([
             'name' => WhatsAppCampaignFormHelper::generateDefaultName(),
             'send_immediately' => true,
             'audience_type' => WhatsAppAudienceType::OptedIn->value,
-        ]));
+        ]);
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array

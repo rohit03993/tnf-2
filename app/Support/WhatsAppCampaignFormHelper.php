@@ -22,9 +22,14 @@ class WhatsAppCampaignFormHelper
     public static function generateDefaultName(): string
     {
         $date = now()->format('Y-m-d');
-        $sequence = WhatsappCampaign::query()
-            ->whereDate('created_at', today())
-            ->count() + 1;
+
+        try {
+            $sequence = WhatsappCampaign::query()
+                ->whereDate('created_at', today())
+                ->count() + 1;
+        } catch (\Throwable) {
+            $sequence = 1;
+        }
 
         return sprintf('%s-%03d', $date, $sequence);
     }

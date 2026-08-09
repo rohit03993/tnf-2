@@ -60,8 +60,12 @@ class WhatsappTemplate extends Model
 
     public function ensureParamMappings(): void
     {
-        $count = max(0, (int) $this->param_count);
-        $mappings = is_array($this->param_mappings) ? array_values($this->param_mappings) : [];
+        try {
+            $count = max(0, (int) $this->param_count);
+            $mappings = is_array($this->param_mappings) ? array_values($this->param_mappings) : [];
+        } catch (\Throwable) {
+            return;
+        }
 
         if ($count === 0) {
             return;
@@ -81,9 +85,13 @@ class WhatsappTemplate extends Model
         };
 
         while (count($mappings) < $count) {
-            $mappings[] = $defaults[count($mappings)] ?? ('manual.'.(count($mappings) + 1));
+            $mappings[] = $defaults[count($mappings)] ?? 'manual';
         }
 
-        $this->forceFill(['param_mappings' => array_slice($mappings, 0, $count)])->save();
+        try {
+            $this->forceFill(['param_mappings' => array_slice($mappings, 0, $count)])->save();
+        } catch (\Throwable) {
+            $this->param_mappings = array_slice($mappings, 0, $count);
+        }
     }
 }

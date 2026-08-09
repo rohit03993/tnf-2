@@ -67,13 +67,19 @@ class WhatsappCampaignResource extends Resource
                         ->helperText('Auto-generated as YYYY-MM-DD-001. Edit if needed.'),
                     Select::make('whatsapp_template_id')
                         ->label('WhatsApp template')
-                        ->options(fn (): array => WhatsappTemplate::query()
-                            ->where('status', 'APPROVED')
-                            ->where('is_active', true)
-                            ->orderBy('name')
-                            ->get()
-                            ->mapWithKeys(fn (WhatsappTemplate $t): array => [$t->id => $t->label()])
-                            ->all())
+                        ->options(function (): array {
+                            try {
+                                return WhatsappTemplate::query()
+                                    ->where('status', 'APPROVED')
+                                    ->where('is_active', true)
+                                    ->orderBy('name')
+                                    ->get()
+                                    ->mapWithKeys(fn (WhatsappTemplate $t): array => [$t->id => $t->label()])
+                                    ->all();
+                            } catch (\Throwable) {
+                                return [];
+                            }
+                        })
                         ->searchable()
                         ->preload()
                         ->required()
@@ -126,7 +132,6 @@ class WhatsappCampaignResource extends Resource
                     filled($get('whatsapp_template_id')) ? (int) $get('whatsapp_template_id') : null,
                 ))
                 ->columns(2)
-                ->key(fn (Get $get): string => 'message-details-'.($get('whatsapp_template_id') ?? 'none'))
                 ->visible(fn (Get $get): bool => filled($get('whatsapp_template_id'))),
             Section::make('4. Send')
                 ->description('Review, then create the campaign. Large sends may take a few minutes.')
