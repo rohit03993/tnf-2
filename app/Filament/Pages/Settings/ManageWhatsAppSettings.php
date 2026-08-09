@@ -18,6 +18,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\HtmlString;
+use Illuminate\Validation\ValidationException;
 
 class ManageWhatsAppSettings extends SettingsPage
 {
@@ -85,7 +86,7 @@ class ManageWhatsAppSettings extends SettingsPage
             Action::make('saveSettings')
                 ->label('Save settings')
                 ->icon(Heroicon::OutlinedCheck)
-                ->action(fn () => $this->save()),
+                ->action('save'),
             Action::make('testConnection')
                 ->label('Test connection')
                 ->icon(Heroicon::OutlinedSignal)
@@ -143,14 +144,26 @@ class ManageWhatsAppSettings extends SettingsPage
 
     public function save(): void
     {
-        $data = $this->form->getState();
+        try {
+            $data = $this->form->getState();
+        } catch (ValidationException $exception) {
+            Notification::make()
+                ->title('Save failed — fix the fields below')
+                ->body(collect($exception->errors())->flatten()->take(4)->implode(' '))
+                ->danger()
+                ->persistent()
+                ->send();
+
+            throw $exception;
+        }
 
         $waba = trim((string) ($data['whatsapp_business_account_id'] ?? ''));
         if ($waba !== '' && ! preg_match('/^\d+$/', $waba)) {
             Notification::make()
-                ->title('Invalid WABA ID')
-                ->body('WhatsApp Business Account ID must be numbers only (from Meta), not an email.')
+                ->title('Save blocked: WABA ID is wrong')
+                ->body('“WhatsApp Business Account ID” must be digits only (example: 111704343541197). You currently have an email there — replace it, then click Save again.')
                 ->danger()
+                ->persistent()
                 ->send();
 
             return;
@@ -159,9 +172,21 @@ class ManageWhatsAppSettings extends SettingsPage
         $verifyToken = (string) ($data['whatsapp_webhook_verify_token'] ?? '');
         if ($verifyToken !== '' && str_contains($verifyToken, '#')) {
             Notification::make()
-                ->title('Invalid verify token')
-                ->body('Do not use # in the webhook verify token — Meta URL verification will fail. Use letters/numbers only.')
+                ->title('Save blocked: verify token invalid')
+                ->body('Remove # from the webhook verify token (Meta cannot verify tokens that contain #).')
                 ->danger()
+                ->persistent()
+                ->send();
+
+            return;
+        }
+
+        if (! empty($data['whatsapp_enabled']) && blank($data['whatsapp_phone_number_id'] ?? null)) {
+            Notification::make()
+                ->title('Save blocked: Phone number ID missing')
+                ->body('Either paste the numeric Phone number ID from Meta, or turn OFF “Enable WhatsApp integration”, then Save.')
+                ->danger()
+                ->persistent()
                 ->send();
 
             return;
@@ -175,23 +200,22 @@ class ManageWhatsAppSettings extends SettingsPage
             Setting::set($key, $value);
         }
 
-        Notification::make()->title('Settings saved')->success()->send();
+        Notification::make()
+            ->title('Settings saved')
+            ->body('Access token / App secret fields go blank on purpose after save — check “Saved secrets” above.')
+            ->success()
+            ->send();
+
+        $this->redirect(static::getUrl());
     }
 
     public function form(Schema $schema): Schema
     {
         $whatsApp = app(WhatsAppCloudService::class);
-        $connected = filter_var(Setting::get('whatsapp_connected', false), FILTER_VALIDATE_BOOLEAN);
-        $displayPhone = Setting::get('whatsapp_display_phone');
-        $verifiedName = Setting::get('whatsapp_verified_name');
-        $quality = Setting::get('whatsapp_quality_rating');
-        $lastChecked = Setting::get('whatsapp_last_checked_at');
         $webhookUrl = url('/webhooks/whatsapp');
         $templates = $whatsApp->cachedMessageTemplates();
         $syncedAt = Setting::get('whatsapp_templates_synced_at');
         $pickOptions = $whatsApp->approvedTemplatePickOptions();
-        $tokenSaved = filled(TnfSetting::get('whatsapp_access_token'));
-        $secretSaved = filled(TnfSetting::get('whatsapp_app_secret'));
 
         return $schema->components([
             Section::make('Connection status')
@@ -199,22 +223,25 @@ class ManageWhatsAppSettings extends SettingsPage
                 ->schema([
                     Placeholder::make('connection_badge')
                         ->label('Status')
-                        ->content(fn (): string => $connected
+                        ->content(fn (): string => filter_var(Setting::get('whatsapp_connected', false), FILTER_VALIDATE_BOOLEAN)
                             ? 'Connected to Meta WhatsApp Cloud API'
                             : (TnfSetting::bool('whatsapp_enabled', false) ? 'Enabled but not verified yet' : 'Not connected')),
                     Placeholder::make('connection_details')
                         ->label('Number / business')
                         ->content(fn (): string => collect([
-                            $verifiedName,
-                            $displayPhone,
-                            $quality ? 'Quality: '.$quality : null,
-                            $lastChecked ? 'Checked: '.$lastChecked : null,
+                            Setting::get('whatsapp_verified_name'),
+                            Setting::get('whatsapp_display_phone'),
+                            ($q = Setting::get('whatsapp_quality_rating')) ? 'Quality: '.$q : null,
+                            ($c = Setting::get('whatsapp_last_checked_at')) ? 'Checked: '.$c : null,
                         ])->filter()->implode(' · ') ?: '—'),
                     Placeholder::make('secrets_status')
                         ->label('Saved secrets')
                         ->content(fn (): string => collect([
-                            $tokenSaved ? 'Access token: saved' : 'Access token: missing',
-                            $secretSaved ? 'App secret: saved' : 'App secret: missing (optional for local)',
+                            filled(TnfSetting::get('whatsapp_access_token')) ? 'Access token: saved' : 'Access token: missing',
+                            filled(TnfSetting::get('whatsapp_app_secret')) ? 'App secret: saved' : 'App secret: missing (optional for local)',
+                            filled(TnfSetting::get('whatsapp_phone_number_id')) ? 'Phone number ID: saved' : 'Phone number ID: missing',
+                            filled(TnfSetting::get('whatsapp_business_account_id')) ? 'WABA ID: saved' : 'WABA ID: missing',
+                            filled(TnfSetting::get('whatsapp_webhook_verify_token')) ? 'Verify token: saved' : 'Verify token: missing',
                         ])->implode(' · ')),
                     Placeholder::make('webhook_url')
                         ->label('Webhook callback URL')
@@ -222,7 +249,7 @@ class ManageWhatsAppSettings extends SettingsPage
                 ])->columns(1),
 
             Section::make('Meta API credentials')
-                ->description('From Meta Developer → WhatsApp → API Setup. WABA ID is a long number — never an email.')
+                ->description('From Meta Developer → WhatsApp → API Setup. WABA ID is a long number — never an email. Tip: turn Enable OFF until Phone number ID is filled, then Save, then turn Enable ON.')
                 ->schema([
                     Toggle::make('whatsapp_enabled')
                         ->label('Enable WhatsApp integration')
@@ -231,30 +258,37 @@ class ManageWhatsAppSettings extends SettingsPage
                         ->label('Access token')
                         ->password()
                         ->revealable()
-                        ->helperText($tokenSaved
+                        ->helperText(fn (): string => filled(TnfSetting::get('whatsapp_access_token'))
                             ? 'Saved on server. Leave blank to keep it, or paste a new token to replace.'
                             : 'Paste your permanent System User token, then Save settings.')
                         ->columnSpanFull(),
                     TextInput::make('whatsapp_phone_number_id')
                         ->label('Phone number ID')
-                        ->helperText('Numeric ID from Meta API Setup (not your phone number).')
-                        ->required(fn ($get) => (bool) $get('whatsapp_enabled')),
+                        ->helperText('Numeric ID from Meta API Setup (not your phone number). Required before enabling.'),
                     TextInput::make('whatsapp_business_account_id')
                         ->label('WhatsApp Business Account ID (WABA)')
-                        ->helperText('Digits only, e.g. 111704343541197 — required for Sync templates.'),
+                        ->helperText('Digits only, e.g. 111704343541197 — not an email. Required for Sync templates.')
+                        ->rule('nullable|regex:/^\d*$/')
+                        ->validationMessages([
+                            'regex' => 'WABA ID must be digits only (from Meta), not an email address.',
+                        ]),
                     TextInput::make('whatsapp_app_id')
                         ->label('Meta App ID')
-                        ->helperText('From your app dashboard URL / App settings.'),
+                        ->helperText('From your app dashboard URL / App settings (e.g. 953996650689050).'),
                     TextInput::make('whatsapp_app_secret')
                         ->label('Meta App Secret')
                         ->password()
                         ->revealable()
-                        ->helperText($secretSaved
+                        ->helperText(fn (): string => filled(TnfSetting::get('whatsapp_app_secret'))
                             ? 'Saved on server. Leave blank to keep it.'
                             : 'App settings → Basic → App secret. Needed for webhook signature checks.'),
                     TextInput::make('whatsapp_webhook_verify_token')
                         ->label('Webhook verify token')
-                        ->helperText('Must match Meta exactly. Use letters/numbers only — no # or spaces. Example: tnfWhatsAppVerify2026'),
+                        ->helperText('Must match Meta exactly. Use letters/numbers only — no # or spaces. Example: tnfWhatsAppVerify2026')
+                        ->rule('nullable|regex:/^[^#]*$/')
+                        ->validationMessages([
+                            'regex' => 'Do not use # in the verify token.',
+                        ]),
                     TextInput::make('whatsapp_graph_version')
                         ->label('Graph API version')
                         ->placeholder('v21.0'),
